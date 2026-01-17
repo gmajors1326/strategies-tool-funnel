@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  DM_ENGINE
+  THE_STRATEGY
+  ALL_ACCESS
+}
+
+model User {
+  id                        String    @id @default(cuid())
+  name                      String?
+  email                     String    @unique
+  emailVerifiedAt            DateTime?
+  plan                      Plan      @default(FREE)
+  freeVerifiedRunsRemaining Int       @default(3)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  profile       Profile?
+  toolRuns      ToolRun[]
+  entitlements  PlanEntitlement?
+  otps          Otp[]
+
+  @@index([email])
+  @@index([plan])
+}
+
+model Profile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  followerRange    String?
+  postingFrequency String?
+  engagementTime   String?
+  primaryGoal      String?
+  biggestFriction  String?
+  niche            String?
+  sellingType      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ToolRun {
+  id         String   @id @default(cuid())
+  userId     String?
+  toolKey    String
+  inputsJson Json
+  outputsJson Json
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([toolKey])
+  @@index([createdAt])
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [email], references: [email], onDelete: Cascade)
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model PlanEntitlement {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  dmEngine   Boolean  @default(false)
+  strategy   Boolean  @default(false)
+  allAccess  Boolean  @default(false)
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

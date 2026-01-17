@@ -1,0 +1,76 @@
+import { prisma } from './db'
+import { Plan } from '@prisma/client'
+
+export interface Entitlements {
+  dmEngine: boolean
+  strategy: boolean
+  allAccess: boolean
+  canUseFreeTools: boolean
+  canSaveRuns: boolean
+  canExportPDF: boolean
+  canAccessSWC: boolean
+  freeRunsRemaining: number
+}
+
+export async function getUserEntitlements(userId: string): Promise<Entitlements> {
+  const [user, entitlements] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true, freeVerifiedRunsRemaining: true },
+    }),
+    prisma.planEntitlement.findUnique({
+      where: { userId },
+    }),
+  ])
+
+  if (!user) {
+    return {
+      dmEngine: false,
+      strategy: false,
+      allAccess: false,
+      canUseFreeTools: false,
+      canSaveRuns: false,
+      canExportPDF: false,
+      canAccessSWC: false,
+      freeRunsRemaining: 0,
+    }
+  }
+
+  const plan = user.plan
+  const hasAllAccess = plan === Plan.ALL_ACCESS || entitlements?.allAccess === true
+  const hasDMEngine = plan === Plan.DM_ENGINE || entitlements?.dmEngine === true || hasAllAccess
+  const hasStrategy = plan === Plan.THE_STRATEGY || entitlements?.strategy === true || hasAllAccess
+
+  return {
+    dmEngine: hasDMEngine,
+    strategy: hasStrategy,
+    allAccess: hasAllAccess,
+    canUseFreeTools: true, // Everyone can use free tools
+    canSaveRuns: user.emailVerifiedAt !== null && (hasDMEngine || hasStrategy || hasAllAccess || user.freeVerifiedRunsRemaining > 0),
+    canExportPDF: hasStrategy || hasAllAccess,
+    canAccessSWC: hasAllAccess,
+    freeRunsRemaining: user.freeVerifiedRunsRemaining,
+  }
+}
+
+export async function grantEntitlement(userId: string, plan: Plan): Promise<void> {
+  const entitlements = await prisma.planEntitlement.upsert({
+    where: { userId },
+    create: {
+      userId,
+      dmEngine: plan === Plan.DM_ENGINE || plan === Plan.ALL_ACCESS,
+      strategy: plan === Plan.THE_STRATEGY || plan === Plan.ALL_ACCESS,
+      allAccess: plan === Plan.ALL_ACCESS,
+    },
+    update: {
+      dmEngine: plan === Plan.DM_ENGINE || plan === Plan.ALL_ACCESS,
+      strategy: plan === Plan.THE_STRATEGY || plan === Plan.ALL_ACCESS,
+      allAccess: plan === Plan.ALL_ACCESS,
+    },
+  })
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { plan },
+  })
+}
