@@ -1,0 +1,56 @@
+# Copy this template to create your .env file
+# DO NOT commit .env to git - it contains sensitive data
+
+# ============================================
+# DATABASE (Required)
+# ============================================
+# Get this from Supabase Dashboard → Settings → Database → Connection String
+DATABASE_URL="postgresql://user:password@host:5432/database"
+
+# ============================================
+# AUTH SECRETS (Required)
+# ============================================
+# Generate random 32+ character strings
+# You can use: openssl rand -base64 32
+NEXTAUTH_SECRET="generate-random-32-chars-minimum-here"
+SESSION_SECRET="generate-random-32-chars-minimum-here"
+
+# ============================================
+# EMAIL (Choose ONE option)
+# ============================================
+
+# Option A: Resend (Recommended)
+RESEND_API_KEY="re_xxxxxxxxxxxxx"
+USE_GMAIL_SMTP=false
+
+# Option B: Gmail SMTP (Alternative)
+# USE_GMAIL_SMTP=true
+# GMAIL_USER="your-email@gmail.com"
+# GMAIL_APP_PASSWORD="your-gmail-app-password"
+
+# ============================================
+# ADMIN (Required)
+# ============================================
+ADMIN_EMAIL="your-admin@email.com"
+
+# ============================================
+# STRIPE (Required)
+# ============================================
+# Get from Stripe Dashboard → Developers → API keys
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_xxxxxxxxxxxxx"
+STRIPE_SECRET_KEY="sk_test_xxxxxxxxxxxxx"
+
+# Get from Stripe Dashboard → Developers → Webhooks (after creating webhook)
+STRIPE_WEBHOOK_SECRET="whsec_xxxxxxxxxxxxx"
+
+# Get from Stripe Dashboard → Products → [Product] → Pricing
+STRIPE_PRICE_ID_DM_ENGINE="price_xxxxxxxxxxxxx"
+STRIPE_PRICE_ID_THE_STRATEGY="price_xxxxxxxxxxxxx"
+STRIPE_PRICE_ID_ALL_ACCESS="price_xxxxxxxxxxxxx"
+
+# ============================================
+# APP URL (Required)
+# ============================================
+# Update this after first Vercel deployment
+# Format: https://your-project.vercel.app
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
