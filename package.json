@@ -9,6 +9,8 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
+    "deploy": "node scripts/deploy.js",
+    "deploy:git": "git add . && git commit -m \"Update: Automated deployment\" && git push origin main",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"

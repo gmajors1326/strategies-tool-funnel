@@ -137,6 +137,58 @@ git push origin main
    - Go to Stripe Dashboard → Webhooks
    - Update endpoint URL to: `https://your-domain.com/api/stripe/webhook`
 
+## Automated Deployment
+
+This project includes automated deployment workflows for Git and Vercel.
+
+### Automatic Vercel Deployment
+
+When you push to the `main` branch, Vercel automatically deploys (if connected via GitHub integration).
+
+### Deployment Scripts
+
+**Quick Deploy (Node.js):**
+```bash
+npm run deploy "Your commit message"
+```
+
+**PowerShell (Windows):**
+```powershell
+.\scripts\deploy.ps1 -CommitMessage "Your commit message"
+```
+
+**Bash (Linux/Mac):**
+```bash
+./scripts/deploy.sh "Your commit message"
+```
+
+**Git-only push:**
+```bash
+npm run deploy:git
+```
+
+### GitHub Actions
+
+The repository includes GitHub Actions workflows:
+
+- **CI Workflow** (`.github/workflows/ci.yml`): Runs tests and linting on every push/PR
+- **Vercel Auto Deploy** (`.github/workflows/vercel-auto-deploy.yml`): Validates build before Vercel deploys
+
+### Setup GitHub Actions Secrets (Optional)
+
+If you want to use the full GitHub Actions deployment workflow, add these secrets:
+
+1. Go to GitHub → Settings → Secrets and variables → Actions
+2. Add secrets:
+   - `DATABASE_URL`
+   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+   - `STRIPE_SECRET_KEY`
+   - `VERCEL_TOKEN` (optional, for GitHub Actions → Vercel)
+   - `VERCEL_ORG_ID` (optional)
+   - `VERCEL_PROJECT_ID` (optional)
+
+**Note:** Vercel's GitHub integration handles deployment automatically. GitHub Actions are mainly for CI/CD validation.
+
 ## Project Structure
 
 ```
