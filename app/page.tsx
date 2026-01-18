@@ -33,7 +33,7 @@ export default function HomePage() {
               <Link href="#tools">Try Free Tools</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-slate-700 hover:bg-slate-800">
-              <Link href="#offers">See What's Included</Link>
+              <Link href="#offers">See What&apos;s Included</Link>
             </Button>
           </div>
         </motion.div>
@@ -134,7 +134,7 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             <p className="text-slate-300 mb-4">
-              SWC is Step 2, not a parallel course. It builds on The Strategy by showing you exactly how to convert the engagement you're building into actual revenue.
+              SWC is Step 2, not a parallel course. It builds on The Strategy by showing you exactly how to convert the engagement you&apos;re building into actual revenue.
             </p>
             <p className="text-slate-400 text-sm">
               Available with All Access only.
@@ -157,7 +157,7 @@ export default function HomePage() {
             <AccordionItem value="automation" className="bg-slate-800/50 border-slate-700 rounded-lg px-6">
               <AccordionTrigger className="text-slate-100">Is this automation? Will it risk my account?</AccordionTrigger>
               <AccordionContent className="text-slate-300">
-                No automation. These are strategic frameworks you implement manually. Everything is designed to work within Instagram's guidelines.
+                No automation. These are strategic frameworks you implement manually. Everything is designed to work within Instagram&apos;s guidelines.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="time" className="bg-slate-800/50 border-slate-700 rounded-lg px-6">
@@ -175,11 +175,11 @@ export default function HomePage() {
             <AccordionItem value="swc-fit" className="bg-slate-800/50 border-slate-700 rounded-lg px-6">
               <AccordionTrigger className="text-slate-100">Where does SWC fit?</AccordionTrigger>
               <AccordionContent className="text-slate-300">
-                SWC is the conversion layer. It's Step 2 after The Strategy—showing you how to turn the engagement you're building into revenue. It's included with All Access.
+                SWC is the conversion layer. It&apos;s Step 2 after The Strategy—showing you how to turn the engagement you&apos;re building into revenue. It&apos;s included with All Access.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="services-vs-products" className="bg-slate-800/50 border-slate-700 rounded-lg px-6">
-              <AccordionTrigger className="text-slate-100">What if I'm selling services vs digital products?</AccordionTrigger>
+              <AccordionTrigger className="text-slate-100">What if I&apos;m selling services vs digital products?</AccordionTrigger>
               <AccordionContent className="text-slate-300">
                 The tools adapt to your offer type. DM Engine includes templates for both service-based and product-based businesses. SWC covers conversion strategies for both.
               </AccordionContent>
@@ -192,7 +192,7 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-6 text-slate-100">Ready to Get Started?</h2>
-          <p className="text-xl text-slate-300 mb-8">
+              <p className="text-xl text-slate-300 mb-8">
             Try the free tools or unlock the full system.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
