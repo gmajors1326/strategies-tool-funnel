@@ -24,7 +24,7 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-[#2F6F4E] via-[#3E7B58] to-[#255B3F] bg-clip-text text-transparent">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-[#d8ba8c]">
             The Strategy Tools
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
@@ -43,7 +43,7 @@ export default function HomePage() {
 
       {/* Free Tools Section */}
       <section id="tools" className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-12 text-foreground">Free Tools</h2>
+        <h2 className="text-4xl font-bold text-center mb-12 text-[#d8ba8c]">Free Tools</h2>
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           <EngagementDiagnosticTool />
           <DMOpenerTool />
@@ -52,7 +52,7 @@ export default function HomePage() {
 
       {/* Paid Tools Preview */}
       <section className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-12 text-foreground">Premium Tools</h2>
+        <h2 className="text-4xl font-bold text-center mb-12 text-[#d8ba8c]">Premium Tools</h2>
         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {[
             { title: 'Strategic Engagement Planner', icon: TrendingUp, desc: 'Full breakdown with personalized roadmap' },
@@ -82,7 +82,7 @@ export default function HomePage() {
 
       {/* Offers Section */}
       <section id="offers" className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-12 text-foreground">Choose Your Plan</h2>
+        <h2 className="text-4xl font-bold text-center mb-12 text-[#d8ba8c]">Choose Your Plan</h2>
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <PlanCard
             title="DM Engine"
@@ -147,7 +147,7 @@ export default function HomePage() {
 
       {/* FAQ Section */}
       <section className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-12 text-foreground">Frequently Asked Questions</h2>
+        <h2 className="text-4xl font-bold text-center mb-12 text-[#d8ba8c]">Frequently Asked Questions</h2>
         <div className="max-w-3xl mx-auto">
           <Accordion type="single" collapsible className="space-y-4">
             <AccordionItem value="following" className="bg-card/80 border-border/60 rounded-lg px-6">
@@ -193,7 +193,7 @@ export default function HomePage() {
       {/* Final CTA */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6 text-foreground">Ready to Get Started?</h2>
+          <h2 className="text-4xl font-bold mb-6 text-[#d8ba8c]">Ready to Get Started?</h2>
           <p className="text-xl text-muted-foreground mb-8">
             Try the free tools or unlock the full system.
           </p>
