@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Lock, Sparkles, MessageSquare, TrendingUp, Zap, Clock, Download } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function HomePage() {
   return (
@@ -17,7 +18,19 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
       <div className="relative">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-16 pb-12 md:pt-24 md:pb-16">
+      <section className="relative container mx-auto px-4 pt-16 pb-28 md:pt-24 md:pb-36">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 md:h-56">
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent" />
+          <Image
+            src="/hero-cactus.jpg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-bottom opacity-90"
+            aria-hidden="true"
+          />
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
