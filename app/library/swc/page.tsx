@@ -35,7 +35,7 @@ export default function SWCLibraryPage() {
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-2xl mx-auto text-center">
             <Lock className="h-16 w-16 text-foreground/60 mx-auto mb-6" />
-            <h1 className="text-4xl font-bold mb-4 text-white">SWC Library</h1>
+            <h1 className="text-4xl font-bold mb-4 text-white text-shadow-ink-40">SWC Library</h1>
             <p className="text-xl text-muted-foreground mb-8">
               The conversion layer—turning conversations into revenue. SWC is available with All Access.
             </p>
@@ -63,7 +63,7 @@ export default function SWCLibraryPage() {
       <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 text-white">SWC Library</h1>
+          <h1 className="text-4xl font-bold mb-8 text-white text-shadow-ink-40">SWC Library</h1>
           <p className="text-xl text-muted-foreground mb-12">
             The conversion layer—turning conversations into revenue.
           </p>
