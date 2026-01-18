@@ -22,7 +22,7 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-[#d8ba8c] text-shadow-ink-40" style={{ fontFamily: "Times New Roman, Times, serif", letterSpacing: "-0.01em" }}>
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-[#d8ba8c] text-shadow-ink-40">
             The Strategy Tools
           </h1>
           <p className="text-xl md:text-2xl text-white mb-8 max-w-2xl mx-auto">

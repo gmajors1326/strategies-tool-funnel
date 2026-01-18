@@ -58,10 +58,11 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  h1,
   h2,
   h3,
   h4 {
-    font-family: "Times New Roman", Times, serif;
+    font-family: var(--font-heading), "Times New Roman", Times, serif;
     color: hsl(var(--foreground));
     letter-spacing: -0.01em;
   }
