@@ -59,7 +59,12 @@
   }
 
   h1,
-  h2,
+  h2 {
+    font-family: var(--font-heading), "Times New Roman", Times, serif;
+    color: #f6f6e9;
+    letter-spacing: -0.01em;
+  }
+
   h3,
   h4 {
     font-family: var(--font-heading), "Times New Roman", Times, serif;
