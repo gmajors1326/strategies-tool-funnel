@@ -131,32 +131,32 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto">
           <Accordion type="single" collapsible className="space-y-4">
             <AccordionItem value="following" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-foreground">Do I need a big following?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground/70">
+              <AccordionTrigger className="text-card-foreground text-[15px]">Do I need a big following?</AccordionTrigger>
+              <AccordionContent className="text-card-foreground text-[15px]">
                 No. These tools work at any follower count. The Strategy is designed to help you build engagement regardless of your current size.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="automation" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-foreground">Is this automation? Will it risk my account?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground/70">
+              <AccordionTrigger className="text-card-foreground text-[15px]">Is this automation? Will it risk my account?</AccordionTrigger>
+              <AccordionContent className="text-card-foreground text-[15px]">
                 No automation. These are strategic frameworks you implement manually. Everything is designed to work within Instagram&apos;s guidelines.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="time" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-foreground">How much time does this take per day?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground/70">
+              <AccordionTrigger className="text-card-foreground text-[15px]">How much time does this take per day?</AccordionTrigger>
+              <AccordionContent className="text-card-foreground text-[15px]">
                 The Strategy is designed for 15-30 minutes of focused engagement per day. The tools help you maximize impact in that time.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="dm-only" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-foreground">Can I buy DM Engine without The Strategy?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground/70">
+              <AccordionTrigger className="text-card-foreground text-[15px]">Can I buy DM Engine without The Strategy?</AccordionTrigger>
+              <AccordionContent className="text-card-foreground text-[15px]">
                 Yes. DM Engine is a standalone product focused specifically on DM flows and follow-ups. The Strategy is for overall engagement strategy.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="services-vs-products" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-foreground">What if I&apos;m selling services vs digital products?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground/70">
+              <AccordionTrigger className="text-card-foreground text-[15px]">What if I&apos;m selling services vs digital products?</AccordionTrigger>
+              <AccordionContent className="text-card-foreground text-[15px]">
                 The tools adapt to your offer type. DM Engine includes templates for both service-based and product-based businesses.
               </AccordionContent>
             </AccordionItem>
