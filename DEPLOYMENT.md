@@ -85,7 +85,6 @@ Add all variables from `.env` to Vercel dashboard:
 - [ ] Test Stripe checkout (use test mode)
 - [ ] Verify webhook grants entitlements
 - [ ] Test account page shows saved results
-- [ ] Verify SWC library is locked
 
 ## Production Checklist
 

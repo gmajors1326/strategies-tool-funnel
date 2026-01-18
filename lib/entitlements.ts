@@ -8,7 +8,6 @@ export interface Entitlements {
   canUseFreeTools: boolean
   canSaveRuns: boolean
   canExportPDF: boolean
-  canAccessSWC: boolean
   freeRunsRemaining: number
 }
 
@@ -31,7 +30,6 @@ export async function getUserEntitlements(userId: string): Promise<Entitlements>
       canUseFreeTools: false,
       canSaveRuns: false,
       canExportPDF: false,
-      canAccessSWC: false,
       freeRunsRemaining: 0,
     }
   }
@@ -48,7 +46,6 @@ export async function getUserEntitlements(userId: string): Promise<Entitlements>
     canUseFreeTools: true, // Everyone can use free tools
     canSaveRuns: user.emailVerifiedAt !== null && (hasDMEngine || hasStrategy || hasAllAccess || user.freeVerifiedRunsRemaining > 0),
     canExportPDF: hasStrategy || hasAllAccess,
-    canAccessSWC: hasAllAccess,
     freeRunsRemaining: user.freeVerifiedRunsRemaining,
   }
 }

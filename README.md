@@ -200,7 +200,6 @@ strategy-tools-funnel/
 │   │   └── stripe/        # Stripe integration
 │   ├── account/           # Account page
 │   ├── verify/            # Email verification
-│   ├── library/swc/       # SWC library (locked)
 │   ├── success/           # Stripe success page
 │   ├── cancel/            # Stripe cancel page
 │   └── page.tsx           # Main funnel page
@@ -234,7 +233,7 @@ strategy-tools-funnel/
 ### Plans
 - **DM Engine**: DM flows and follow-ups
 - **The Strategy**: Full engagement system
-- **All Access**: Everything + SWC library
+- **All Access**: Everything in DM Engine + The Strategy
 
 ## Testing
 

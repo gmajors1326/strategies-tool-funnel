@@ -115,11 +115,10 @@ export default function HomePage() {
           />
           <PlanCard
             title="All Access"
-            description="Everything + SWC library"
+            description="Everything in DM Engine + The Strategy"
             features={[
               'DM Engine included',
               'The Strategy included',
-              'SWC library access',
               'All premium tools',
               'Priority support',
             ]}
@@ -127,26 +126,6 @@ export default function HomePage() {
             highlight={false}
           />
         </div>
-      </section>
-
-      {/* SWC Section */}
-      <section className="container mx-auto px-4 py-20">
-        <Card className="bg-card/90 border-border/60 backdrop-blur-sm max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-3xl text-foreground">SWC: The Conversion Layer</CardTitle>
-            <CardDescription className="text-card-foreground/70 text-lg">
-              Turning conversations into revenue. SWC is the conversion layer—the bridge between engagement and sales.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-card-foreground/70 mb-4">
-              SWC is Step 2, not a parallel course. It builds on The Strategy by showing you exactly how to convert the engagement you&apos;re building into actual revenue.
-            </p>
-            <p className="text-card-foreground/60 text-sm">
-              Available with All Access only.
-            </p>
-          </CardContent>
-        </Card>
       </section>
 
       {/* FAQ Section */}
@@ -178,16 +157,10 @@ export default function HomePage() {
                 Yes. DM Engine is a standalone product focused specifically on DM flows and follow-ups. The Strategy is for overall engagement strategy.
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="swc-fit" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-foreground">Where does SWC fit?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground/70">
-                SWC is the conversion layer. It&apos;s Step 2 after The Strategy—showing you how to turn the engagement you&apos;re building into revenue. It&apos;s included with All Access.
-              </AccordionContent>
-            </AccordionItem>
             <AccordionItem value="services-vs-products" className="bg-card/80 border-border/60 rounded-lg px-6">
               <AccordionTrigger className="text-foreground">What if I&apos;m selling services vs digital products?</AccordionTrigger>
               <AccordionContent className="text-card-foreground/70">
-                The tools adapt to your offer type. DM Engine includes templates for both service-based and product-based businesses. SWC covers conversion strategies for both.
+                The tools adapt to your offer type. DM Engine includes templates for both service-based and product-based businesses.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
