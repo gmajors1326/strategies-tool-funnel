@@ -1,22 +1,9 @@
-'use client'
-
-import { useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SuccessPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const sessionId = searchParams.get('session_id')
-
-  useEffect(() => {
-    // In a real app, you might want to verify the session with Stripe
-    // For now, we'll just show success
-  }, [sessionId])
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-slate-800/50 border-slate-700 backdrop-blur-sm">
