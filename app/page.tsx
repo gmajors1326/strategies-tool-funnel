@@ -68,7 +68,7 @@ export default function HomePage() {
                   <tool.icon className="h-6 w-6 text-primary" />
                   <Lock className="h-5 w-5 text-card-foreground/50" />
                 </div>
-                <CardTitle className="text-foreground">{tool.title}</CardTitle>
+                <CardTitle className="text-card-foreground">{tool.title}</CardTitle>
                 <CardDescription className="text-card-foreground/70">{tool.desc}</CardDescription>
               </CardHeader>
               <CardContent>
@@ -222,7 +222,7 @@ function EngagementDiagnosticTool() {
   return (
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
       <CardHeader>
-        <CardTitle className="text-foreground">Engagement Diagnostic (Lite)</CardTitle>
+        <CardTitle className="text-card-foreground">Engagement Diagnostic (Lite)</CardTitle>
         <CardDescription className="text-card-foreground/70">Get your engagement tier and one actionable insight.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -342,7 +342,7 @@ function DMOpenerTool() {
   return (
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
       <CardHeader>
-        <CardTitle className="text-foreground">DM Opener Generator (Lite)</CardTitle>
+        <CardTitle className="text-card-foreground">DM Opener Generator (Lite)</CardTitle>
         <CardDescription className="text-card-foreground/70">Generate a DM opener based on your scenario and tone.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -647,7 +647,7 @@ function PlanCard({ title, description, features, planId, highlight }: any) {
   return (
     <Card className={`bg-card/80 border-border/60 backdrop-blur-sm shadow-sm ${highlight ? 'border-primary/60 ring-2 ring-primary/20' : ''}`}>
       <CardHeader>
-        <CardTitle className="text-foreground">{title}</CardTitle>
+        <CardTitle className="text-card-foreground">{title}</CardTitle>
         <CardDescription className="text-card-foreground/70">{description}</CardDescription>
       </CardHeader>
       <CardContent>
