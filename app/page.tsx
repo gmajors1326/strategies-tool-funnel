@@ -18,19 +18,7 @@ export default function HomePage() {
       style={{ backgroundImage: "url('/hero-cactus.jpg')" }}
     >
       {/* Hero Section */}
-      <section className="relative container mx-auto px-4 pt-16 pb-28 md:pt-24 md:pb-36">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/45 to-background/10" />
-          <Image
-            src="/hero-cactus.jpg"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center opacity-80"
-            aria-hidden="true"
-          />
-        </div>
+      <section className="container mx-auto px-4 pt-16 pb-28 md:pt-24 md:pb-36">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
