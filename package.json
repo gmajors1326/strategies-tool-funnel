@@ -12,7 +12,7 @@
     "deploy": "node scripts/deploy.js",
     "deploy:git": "git add . && git commit -m \"Update: Automated deployment\" && git push origin main",
     "vercel:env": "node scripts/push-env-to-vercel.js",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "npx prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
   },
