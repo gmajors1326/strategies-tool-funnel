@@ -468,7 +468,7 @@ function HookRepurposerTool() {
       </CardHeader>
       <CardContent className="grid gap-8 md:grid-cols-2">
         <div className="space-y-4">
-          <div className="rounded-md border border-border/60 bg-background/60 p-3 text-sm text-card-foreground/70">
+          <div className="rounded-md border border-border/60 bg-[#1F3F2A] p-3 text-sm text-white">
             This is an AI-guided hook intelligence tool. It reframes ideas with strategy—no copying, no trend-chasing.
           </div>
           <div>
