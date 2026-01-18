@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,11 +21,7 @@ export default function AccountPage() {
   const [plan, setPlan] = useState<string>('FREE')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchToolRuns()
-  }, [])
-
-  const fetchToolRuns = async () => {
+  const fetchToolRuns = useCallback(async () => {
     try {
       const res = await fetch('/api/tool-runs')
       if (res.ok) {
@@ -39,7 +35,11 @@ export default function AccountPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    fetchToolRuns()
+  }, [fetchToolRuns])
 
   if (loading) {
     return (
