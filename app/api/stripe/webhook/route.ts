@@ -4,9 +4,8 @@ import { grantEntitlement } from '@/lib/entitlements'
 import { Plan } from '@prisma/client'
 import Stripe from 'stripe'
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-
 export async function POST(request: NextRequest) {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!webhookSecret) {
     return NextResponse.json(
       { error: 'STRIPE_WEBHOOK_SECRET is not set' },
