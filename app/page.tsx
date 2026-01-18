@@ -48,6 +48,9 @@ export default function HomePage() {
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           <EngagementDiagnosticTool />
           <DMOpenerTool />
+          <div className="md:col-span-2">
+            <HookRepurposerTool />
+          </div>
         </div>
       </section>
 
@@ -421,6 +424,234 @@ function DMOpenerTool() {
             </div>
           </div>
         )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function HookRepurposerTool() {
+  const [inputs, setInputs] = useState({
+    hookInput: '',
+    videoContext: '',
+    goal: 'Stop the scroll',
+    tone: 'Calm',
+    platformFocus: 'Reels',
+  })
+  const [results, setResults] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [showWhy, setShowWhy] = useState(false)
+  const [remainingToday, setRemainingToday] = useState<number | null>(null)
+
+  const handleRun = async () => {
+    if (!inputs.hookInput.trim()) {
+      setError('Paste a hook to continue.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/tools/hook-repurposer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hookInput: inputs.hookInput,
+          videoContext: inputs.videoContext || undefined,
+          goal: inputs.goal,
+          tone: inputs.tone,
+          platformFocus: inputs.platformFocus,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Unable to run tool right now.')
+      } else {
+        setResults(data.outputs)
+        setRemainingToday(data.remainingToday)
+      }
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Card className="bg-card/95 border-border/60 backdrop-blur-sm shadow-sm">
+      <CardHeader>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle className="text-card-foreground">Hook Repurposer™</CardTitle>
+            <CardDescription className="text-card-foreground/70">
+              Turn one hook into ten angles that stop the scroll.
+            </CardDescription>
+          </div>
+          <span className="text-xs uppercase tracking-[0.2em] text-card-foreground/60">
+            Strategist mode
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-8 md:grid-cols-2">
+        <div className="space-y-4">
+          <div className="rounded-md border border-border/60 bg-background/60 p-3 text-sm text-card-foreground/70">
+            This is an AI-guided hook intelligence tool. It reframes ideas with strategy—no copying, no trend-chasing.
+          </div>
+          <div>
+            <Label className="text-card-foreground/70">Hook input</Label>
+            <textarea
+              maxLength={200}
+              value={inputs.hookInput}
+              onChange={(e) => setInputs({ ...inputs, hookInput: e.target.value })}
+              placeholder="Paste someone else’s hook or your own"
+              className="mt-1 min-h-[120px] w-full rounded-md border border-input bg-input p-3 text-sm text-card-foreground placeholder:text-card-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            />
+            <p className="mt-2 text-xs text-card-foreground/50">
+              Max 200 characters.
+            </p>
+          </div>
+          <div>
+            <Label className="text-card-foreground/70">Video context (optional)</Label>
+            <Input
+              maxLength={140}
+              value={inputs.videoContext}
+              onChange={(e) => setInputs({ ...inputs, videoContext: e.target.value })}
+              placeholder="Describe what the video shows"
+              className="mt-1"
+            />
+            <p className="mt-2 text-xs text-card-foreground/50">
+              Max 140 characters.
+            </p>
+          </div>
+          <div>
+            <Label className="text-card-foreground/70">Goal</Label>
+            <Select
+              value={inputs.goal}
+              onChange={(e) => setInputs({ ...inputs, goal: e.target.value })}
+            >
+              <option>Stop the scroll</option>
+              <option>Spark curiosity</option>
+              <option>Authority/credibility</option>
+              <option>Drive comments</option>
+              <option>Drive profile clicks</option>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-card-foreground/70">Tone</Label>
+            <Select
+              value={inputs.tone}
+              onChange={(e) => setInputs({ ...inputs, tone: e.target.value })}
+            >
+              <option>Calm</option>
+              <option>Direct</option>
+              <option>Curious</option>
+              <option>Bold</option>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-card-foreground/70">Platform focus</Label>
+            <Select
+              value={inputs.platformFocus}
+              onChange={(e) => setInputs({ ...inputs, platformFocus: e.target.value })}
+            >
+              <option>Reels</option>
+              <option>TikTok</option>
+              <option>Shorts</option>
+            </Select>
+          </div>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          {remainingToday !== null && (
+            <p className="text-xs text-card-foreground/60">
+              Remaining today: {remainingToday}
+            </p>
+          )}
+          <Button onClick={handleRun} disabled={loading} className="w-full">
+            {loading ? 'Generating...' : 'Generate Hook Angles'}
+          </Button>
+          <p className="text-xs text-card-foreground/60">
+            This tool does not copy content. It reframes ideas using strategy, not duplication. Always adapt hooks to your own voice.
+          </p>
+        </div>
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-lg font-semibold text-card-foreground">How this reframes your hook</h4>
+            {results ? (
+              <div className="mt-3 space-y-3">
+                {results.hooks?.map((hook: any, index: number) => (
+                  <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-3">
+                    <div className="text-xs uppercase tracking-[0.2em] text-card-foreground/60">
+                      {hook.angle}
+                    </div>
+                    <p className="mt-2 text-card-foreground/80">{hook.text}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-card-foreground/60">
+                Paste a hook to see 6–8 reframes by angle.
+              </p>
+            )}
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowWhy((prev) => !prev)}
+              className="text-sm text-card-foreground/70 underline-offset-4 hover:underline"
+            >
+              Why this works
+            </button>
+            {showWhy && (
+              <p className="mt-2 text-sm text-card-foreground/70">
+                {results?.explanation || 'Run the tool to see the reasoning behind the strongest angle.'}
+              </p>
+            )}
+          </div>
+          <div>
+            <h4 className="text-lg font-semibold text-card-foreground">Visual pairing ideas</h4>
+            {results ? (
+              <div className="mt-3 space-y-3">
+                <div>
+                  <p className="text-sm text-card-foreground/70">B-roll ideas</p>
+                  <ul className="mt-2 space-y-2 text-sm text-card-foreground/80">
+                    {results.visualSuggestions?.bRoll?.map((item: string, index: number) => (
+                      <li key={`broll-${index}`}>• {item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-sm text-card-foreground/70">Alternate concepts</p>
+                  <ul className="mt-2 space-y-2 text-sm text-card-foreground/80">
+                    {results.visualSuggestions?.alternatives?.map((item: string, index: number) => (
+                      <li key={`alt-${index}`}>• {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-card-foreground/60">
+                Add context to get tailored visual pairing ideas.
+              </p>
+            )}
+          </div>
+          <div className="rounded-md border border-border/60 bg-background/60 p-4">
+            <div className="flex items-center gap-2 text-card-foreground/70">
+              <Lock className="h-4 w-4" />
+              <span>Hook sequences (3-part openers)</span>
+            </div>
+            <div className="mt-2 flex items-center gap-2 text-card-foreground/70">
+              <Lock className="h-4 w-4" />
+              <span>Comment-bait vs authority versions</span>
+            </div>
+            <div className="mt-2 flex items-center gap-2 text-card-foreground/70">
+              <Lock className="h-4 w-4" />
+              <span>CTA-aligned hooks (DM / profile click)</span>
+            </div>
+            <Button asChild className="mt-4 w-full">
+              <Link href="#offers">Unlock full hook systems in The Strategy</Link>
+            </Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

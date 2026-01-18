@@ -222,6 +222,7 @@ strategy-tools-funnel/
 ### Free Tools
 - **Engagement Diagnostic (Lite)**: Get engagement tier and actionable insight
 - **DM Opener Generator (Lite)**: Generate DM openers based on scenario
+- **Hook Repurposer™**: Turn one hook into multiple strategic angles
 
 ### Paid Tools (Locked)
 - Strategic Engagement Planner

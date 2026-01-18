@@ -137,6 +137,21 @@ export default function AccountPage() {
                                 </p>
                               </div>
                             )}
+                            {run.toolKey === 'hook-repurposer' && (
+                              <div>
+                                <p className="text-sm text-card-foreground/60 mb-2">Hook angles:</p>
+                                <div className="space-y-3">
+                                  {(run.outputsJson.hooks || []).slice(0, 3).map((hook: any, index: number) => (
+                                    <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/50 p-3">
+                                      <p className="text-xs uppercase tracking-[0.2em] text-card-foreground/60">
+                                        {hook.angle}
+                                      </p>
+                                      <p className="mt-2 text-card-foreground/80">{hook.text}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </CardContent>
