@@ -552,11 +552,11 @@ function HookRepurposerTool() {
             {results ? (
               <div className="mt-3 space-y-3">
                 {results.hooks?.map((hook: any, index: number) => (
-                  <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-3">
-                    <div className="text-xs uppercase tracking-[0.2em] text-card-foreground/60">
+                  <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-3 text-white">
+                    <div className="text-xs uppercase tracking-[0.2em] text-white/70">
                       {hook.angle}
                     </div>
-                    <p className="mt-2 text-card-foreground/80">{hook.text}</p>
+                    <p className="mt-2 text-white">{hook.text}</p>
                   </div>
                 ))}
               </div>
@@ -585,16 +585,16 @@ function HookRepurposerTool() {
             {results ? (
               <div className="mt-3 space-y-3">
                 <div>
-                  <p className="text-sm text-card-foreground/70">B-roll ideas</p>
-                  <ul className="mt-2 space-y-2 text-sm text-card-foreground/80">
+                  <p className="text-sm text-white/80">B-roll ideas</p>
+                  <ul className="mt-2 space-y-2 text-sm text-white">
                     {results.visualSuggestions?.bRoll?.map((item: string, index: number) => (
                       <li key={`broll-${index}`}>• {item}</li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <p className="text-sm text-card-foreground/70">Alternate concepts</p>
-                  <ul className="mt-2 space-y-2 text-sm text-card-foreground/80">
+                  <p className="text-sm text-white/80">Alternate concepts</p>
+                  <ul className="mt-2 space-y-2 text-sm text-white">
                     {results.visualSuggestions?.alternatives?.map((item: string, index: number) => (
                       <li key={`alt-${index}`}>• {item}</li>
                     ))}
@@ -607,16 +607,16 @@ function HookRepurposerTool() {
               </p>
             )}
           </div>
-          <div className="rounded-md border border-border/60 bg-background/60 p-4">
-            <div className="flex items-center gap-2 text-card-foreground/70">
+          <div className="rounded-md border border-border/60 bg-background/60 p-4 text-white">
+            <div className="flex items-center gap-2 text-white/80">
               <Lock className="h-4 w-4" />
               <span>Hook sequences (3-part openers)</span>
             </div>
-            <div className="mt-2 flex items-center gap-2 text-card-foreground/70">
+            <div className="mt-2 flex items-center gap-2 text-white/80">
               <Lock className="h-4 w-4" />
               <span>Comment-bait vs authority versions</span>
             </div>
-            <div className="mt-2 flex items-center gap-2 text-card-foreground/70">
+            <div className="mt-2 flex items-center gap-2 text-white/80">
               <Lock className="h-4 w-4" />
               <span>CTA-aligned hooks (DM / profile click)</span>
             </div>
