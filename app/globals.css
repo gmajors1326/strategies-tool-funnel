@@ -4,26 +4,48 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-    --radius: 0.5rem;
+    --background: 135 33% 97%;
+    --foreground: 150 33% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 150 33% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 33% 9%;
+    --primary: 151 41% 31%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 145 28% 93%;
+    --secondary-foreground: 151 41% 20%;
+    --muted: 145 24% 92%;
+    --muted-foreground: 152 16% 30%;
+    --accent: 140 23% 86%;
+    --accent-foreground: 150 33% 9%;
+    --destructive: 4 72% 43%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 142 20% 87%;
+    --input: 142 20% 87%;
+    --ring: 151 41% 31%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 150 33% 7%;
+    --foreground: 135 33% 97%;
+    --card: 150 33% 10%;
+    --card-foreground: 135 33% 97%;
+    --popover: 150 33% 10%;
+    --popover-foreground: 135 33% 97%;
+    --primary: 151 41% 55%;
+    --primary-foreground: 150 33% 7%;
+    --secondary: 150 18% 16%;
+    --secondary-foreground: 135 33% 97%;
+    --muted: 150 18% 16%;
+    --muted-foreground: 145 12% 75%;
+    --accent: 150 18% 18%;
+    --accent-foreground: 135 33% 97%;
+    --border: 150 18% 18%;
+    --input: 150 18% 18%;
+    --ring: 151 41% 55%;
+    --destructive: 4 72% 55%;
+    --destructive-foreground: 0 0% 100%;
   }
 }
 
@@ -34,5 +56,26 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .bg-hero-cactus {
+    background:
+      linear-gradient(135deg, #F6FBF7 0%, #EAF6EE 45%, #F7F3E8 100%);
+  }
+
+  .bg-cactus-glow {
+    background:
+      radial-gradient(600px circle at 20% 10%, #CFEBDD 0%, transparent 60%),
+      radial-gradient(700px circle at 80% 20%, #E9E2D0 0%, transparent 60%);
+  }
+
+  .bg-cactus-primary {
+    background: linear-gradient(135deg, #2F6F4E 0%, #255B3F 100%);
+  }
+
+  .bg-card-sheen {
+    background: linear-gradient(180deg, rgba(47,111,78,0.10) 0%, rgba(47,111,78,0.00) 40%);
   }
 }
