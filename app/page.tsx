@@ -143,7 +143,7 @@ export default function HomePage() {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="time" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-card-foreground text-[15px]">How much time does this take per day?</AccordionTrigger>
+              <AccordionTrigger className="text-card-foreground text-[17px]">How much time does this take per day?</AccordionTrigger>
               <AccordionContent className="text-card-foreground text-[15px]">
                 The Strategy is designed for 15-30 minutes of focused engagement per day. The tools help you maximize impact in that time.
               </AccordionContent>
