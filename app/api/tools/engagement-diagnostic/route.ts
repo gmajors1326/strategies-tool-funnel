@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
           data: {
             userId: session.userId,
             toolKey: 'engagement-diagnostic',
-            inputsJson: inputs as Prisma.InputJsonValue,
-            outputsJson: outputs as Prisma.InputJsonValue,
+            inputsJson: inputs as unknown as Prisma.InputJsonValue,
+            outputsJson: outputs as unknown as Prisma.InputJsonValue,
           },
         })
 
