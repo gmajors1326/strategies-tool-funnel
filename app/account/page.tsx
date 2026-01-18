@@ -55,7 +55,7 @@ export default function AccountPage() {
       <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 text-[#d8ba8c]">Account</h1>
+          <h1 className="text-4xl font-bold mb-8 text-white">Account</h1>
 
           {/* Plan Status */}
           <Card className="bg-card/95 border-border/60 backdrop-blur-sm mb-8 shadow-sm">
