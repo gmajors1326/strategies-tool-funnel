@@ -4,46 +4,46 @@
 
 @layer base {
   :root {
-    --background: 135 33% 97%;
-    --foreground: 150 33% 9%;
+    --background: 156 45% 12%;
+    --foreground: 120 20% 98%;
     --card: 0 0% 100%;
-    --card-foreground: 150 33% 9%;
+    --card-foreground: 154 30% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 150 33% 9%;
-    --primary: 151 41% 31%;
+    --popover-foreground: 154 30% 14%;
+    --primary: 151 45% 33%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 145 28% 93%;
-    --secondary-foreground: 151 41% 20%;
-    --muted: 145 24% 92%;
-    --muted-foreground: 152 16% 30%;
-    --accent: 140 23% 86%;
-    --accent-foreground: 150 33% 9%;
+    --secondary: 150 22% 22%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 150 18% 18%;
+    --muted-foreground: 150 20% 75%;
+    --accent: 150 22% 26%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 4 72% 43%;
     --destructive-foreground: 0 0% 100%;
-    --border: 142 20% 87%;
-    --input: 142 20% 87%;
-    --ring: 151 41% 31%;
+    --border: 150 15% 85%;
+    --input: 150 15% 85%;
+    --ring: 151 45% 33%;
     --radius: 1rem;
   }
 
   .dark {
-    --background: 150 33% 7%;
-    --foreground: 135 33% 97%;
-    --card: 150 33% 10%;
-    --card-foreground: 135 33% 97%;
-    --popover: 150 33% 10%;
-    --popover-foreground: 135 33% 97%;
-    --primary: 151 41% 55%;
-    --primary-foreground: 150 33% 7%;
-    --secondary: 150 18% 16%;
-    --secondary-foreground: 135 33% 97%;
-    --muted: 150 18% 16%;
-    --muted-foreground: 145 12% 75%;
-    --accent: 150 18% 18%;
-    --accent-foreground: 135 33% 97%;
-    --border: 150 18% 18%;
-    --input: 150 18% 18%;
-    --ring: 151 41% 55%;
+    --background: 154 35% 8%;
+    --foreground: 120 20% 96%;
+    --card: 154 35% 12%;
+    --card-foreground: 120 20% 96%;
+    --popover: 154 35% 12%;
+    --popover-foreground: 120 20% 96%;
+    --primary: 151 45% 45%;
+    --primary-foreground: 154 35% 8%;
+    --secondary: 154 22% 18%;
+    --secondary-foreground: 120 20% 96%;
+    --muted: 154 22% 18%;
+    --muted-foreground: 150 18% 70%;
+    --accent: 154 22% 20%;
+    --accent-foreground: 120 20% 96%;
+    --border: 154 22% 20%;
+    --input: 154 22% 20%;
+    --ring: 151 45% 45%;
     --destructive: 4 72% 55%;
     --destructive-foreground: 0 0% 100%;
   }
@@ -62,13 +62,13 @@
 @layer utilities {
   .bg-hero-cactus {
     background:
-      linear-gradient(135deg, #F6FBF7 0%, #EAF6EE 45%, #F7F3E8 100%);
+      linear-gradient(135deg, #0F5A3F 0%, #0C4B35 45%, #0B3A2B 100%);
   }
 
   .bg-cactus-glow {
     background:
-      radial-gradient(600px circle at 20% 10%, #CFEBDD 0%, transparent 60%),
-      radial-gradient(700px circle at 80% 20%, #E9E2D0 0%, transparent 60%);
+      radial-gradient(600px circle at 20% 10%, rgba(46, 122, 82, 0.35) 0%, transparent 60%),
+      radial-gradient(700px circle at 80% 20%, rgba(118, 161, 128, 0.25) 0%, transparent 60%);
   }
 
   .bg-cactus-primary {
@@ -76,6 +76,6 @@
   }
 
   .bg-card-sheen {
-    background: linear-gradient(180deg, rgba(47,111,78,0.10) 0%, rgba(47,111,78,0.00) 40%);
+    background: linear-gradient(180deg, rgba(47,111,78,0.12) 0%, rgba(47,111,78,0.00) 40%);
   }
 }

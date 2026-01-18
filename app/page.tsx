@@ -65,10 +65,10 @@ export default function HomePage() {
               <CardHeader>
                 <div className="flex items-center justify-between mb-2">
                   <tool.icon className="h-6 w-6 text-primary" />
-                  <Lock className="h-5 w-5 text-muted-foreground" />
+                  <Lock className="h-5 w-5 text-card-foreground/50" />
                 </div>
                 <CardTitle className="text-foreground">{tool.title}</CardTitle>
-                <CardDescription className="text-muted-foreground">{tool.desc}</CardDescription>
+                <CardDescription className="text-card-foreground/70">{tool.desc}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button variant="outline" className="w-full border-border/60 hover:bg-accent/80">
@@ -130,15 +130,15 @@ export default function HomePage() {
         <Card className="bg-card/90 border-border/60 backdrop-blur-sm max-w-4xl mx-auto">
           <CardHeader>
             <CardTitle className="text-3xl text-foreground">SWC: The Conversion Layer</CardTitle>
-            <CardDescription className="text-muted-foreground text-lg">
+            <CardDescription className="text-card-foreground/70 text-lg">
               Turning conversations into revenue. SWC is the conversion layer—the bridge between engagement and sales.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-card-foreground/70 mb-4">
               SWC is Step 2, not a parallel course. It builds on The Strategy by showing you exactly how to convert the engagement you&apos;re building into actual revenue.
             </p>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-card-foreground/60 text-sm">
               Available with All Access only.
             </p>
           </CardContent>
@@ -152,37 +152,37 @@ export default function HomePage() {
           <Accordion type="single" collapsible className="space-y-4">
             <AccordionItem value="following" className="bg-card/80 border-border/60 rounded-lg px-6">
               <AccordionTrigger className="text-foreground">Do I need a big following?</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
+              <AccordionContent className="text-card-foreground/70">
                 No. These tools work at any follower count. The Strategy is designed to help you build engagement regardless of your current size.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="automation" className="bg-card/80 border-border/60 rounded-lg px-6">
               <AccordionTrigger className="text-foreground">Is this automation? Will it risk my account?</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
+              <AccordionContent className="text-card-foreground/70">
                 No automation. These are strategic frameworks you implement manually. Everything is designed to work within Instagram&apos;s guidelines.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="time" className="bg-card/80 border-border/60 rounded-lg px-6">
               <AccordionTrigger className="text-foreground">How much time does this take per day?</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
+              <AccordionContent className="text-card-foreground/70">
                 The Strategy is designed for 15-30 minutes of focused engagement per day. The tools help you maximize impact in that time.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="dm-only" className="bg-card/80 border-border/60 rounded-lg px-6">
               <AccordionTrigger className="text-foreground">Can I buy DM Engine without The Strategy?</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
+              <AccordionContent className="text-card-foreground/70">
                 Yes. DM Engine is a standalone product focused specifically on DM flows and follow-ups. The Strategy is for overall engagement strategy.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="swc-fit" className="bg-card/80 border-border/60 rounded-lg px-6">
               <AccordionTrigger className="text-foreground">Where does SWC fit?</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
+              <AccordionContent className="text-card-foreground/70">
                 SWC is the conversion layer. It&apos;s Step 2 after The Strategy—showing you how to turn the engagement you&apos;re building into revenue. It&apos;s included with All Access.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="services-vs-products" className="bg-card/80 border-border/60 rounded-lg px-6">
               <AccordionTrigger className="text-foreground">What if I&apos;m selling services vs digital products?</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
+              <AccordionContent className="text-card-foreground/70">
                 The tools adapt to your offer type. DM Engine includes templates for both service-based and product-based businesses. SWC covers conversion strategies for both.
               </AccordionContent>
             </AccordionItem>
@@ -250,11 +250,11 @@ function EngagementDiagnosticTool() {
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
       <CardHeader>
         <CardTitle className="text-foreground">Engagement Diagnostic (Lite)</CardTitle>
-        <CardDescription className="text-muted-foreground">Get your engagement tier and one actionable insight.</CardDescription>
+        <CardDescription className="text-card-foreground/70">Get your engagement tier and one actionable insight.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label className="text-muted-foreground">Follower Range</Label>
+          <Label className="text-card-foreground/70">Follower Range</Label>
           <Select value={inputs.followerRange} onChange={(e) => setInputs({ ...inputs, followerRange: e.target.value })}>
             <option value="">Select...</option>
             <option value="0-500">0-500</option>
@@ -264,7 +264,7 @@ function EngagementDiagnosticTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-muted-foreground">Posting Frequency</Label>
+          <Label className="text-card-foreground/70">Posting Frequency</Label>
           <Select value={inputs.postingFrequency} onChange={(e) => setInputs({ ...inputs, postingFrequency: e.target.value })}>
             <option value="">Select...</option>
             <option value="rarely">Rarely</option>
@@ -274,7 +274,7 @@ function EngagementDiagnosticTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-muted-foreground">Daily Engagement Time</Label>
+          <Label className="text-card-foreground/70">Daily Engagement Time</Label>
           <Select value={inputs.dailyEngagementTime} onChange={(e) => setInputs({ ...inputs, dailyEngagementTime: e.target.value })}>
             <option value="">Select...</option>
             <option value="0-5">0-5 minutes</option>
@@ -284,7 +284,7 @@ function EngagementDiagnosticTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-muted-foreground">Primary Goal</Label>
+          <Label className="text-card-foreground/70">Primary Goal</Label>
           <Select value={inputs.primaryGoal} onChange={(e) => setInputs({ ...inputs, primaryGoal: e.target.value })}>
             <option value="">Select...</option>
             <option value="growth">Growth</option>
@@ -294,7 +294,7 @@ function EngagementDiagnosticTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-muted-foreground">Biggest Friction</Label>
+          <Label className="text-card-foreground/70">Biggest Friction</Label>
           <Select value={inputs.biggestFriction} onChange={(e) => setInputs({ ...inputs, biggestFriction: e.target.value })}>
             <option value="">Select...</option>
             <option value="no reach">No reach</option>
@@ -310,19 +310,19 @@ function EngagementDiagnosticTool() {
         {results && (
           <div className="mt-6 p-4 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-4">
-              <span className="text-sm text-muted-foreground">Engagement Tier:</span>
+              <span className="text-sm text-card-foreground/60">Engagement Tier:</span>
               <div className="text-2xl font-bold text-primary mt-1">{results.engagementTier}</div>
             </div>
             <div className="mb-4">
-              <span className="text-sm text-muted-foreground">Insight:</span>
+              <span className="text-sm text-card-foreground/60">Insight:</span>
               <p className="text-foreground mt-1">{results.insight}</p>
             </div>
             <div className="mb-4">
-              <span className="text-sm text-muted-foreground">Action:</span>
+              <span className="text-sm text-card-foreground/60">Action:</span>
               <p className="text-foreground mt-1">{results.action}</p>
             </div>
             <div className="pt-4 border-t border-border/60">
-              <p className="text-sm text-muted-foreground">{results.teaser}</p>
+              <p className="text-sm text-card-foreground/60">{results.teaser}</p>
               <Button asChild variant="outline" className="mt-3 w-full border-border/60">
                 <Link href="/verify">Email me my full breakdown</Link>
               </Button>
@@ -370,11 +370,11 @@ function DMOpenerTool() {
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
       <CardHeader>
         <CardTitle className="text-foreground">DM Opener Generator (Lite)</CardTitle>
-        <CardDescription className="text-muted-foreground">Generate a DM opener based on your scenario and tone.</CardDescription>
+        <CardDescription className="text-card-foreground/70">Generate a DM opener based on your scenario and tone.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label className="text-muted-foreground">Scenario</Label>
+          <Label className="text-card-foreground/70">Scenario</Label>
           <Select value={inputs.scenario} onChange={(e) => setInputs({ ...inputs, scenario: e.target.value })}>
             <option value="">Select...</option>
             <option value="commenter">Commenter</option>
@@ -385,7 +385,7 @@ function DMOpenerTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-muted-foreground">Tone</Label>
+          <Label className="text-card-foreground/70">Tone</Label>
           <Select value={inputs.tone} onChange={(e) => setInputs({ ...inputs, tone: e.target.value })}>
             <option value="">Select...</option>
             <option value="friendly">Friendly</option>
@@ -395,7 +395,7 @@ function DMOpenerTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-muted-foreground">Intent</Label>
+          <Label className="text-card-foreground/70">Intent</Label>
           <Select value={inputs.intent} onChange={(e) => setInputs({ ...inputs, intent: e.target.value })}>
             <option value="">Select...</option>
             <option value="start convo">Start Conversation</option>
@@ -410,11 +410,11 @@ function DMOpenerTool() {
         {results && (
           <div className="mt-6 p-4 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-4">
-              <span className="text-sm text-muted-foreground">DM Opener:</span>
+              <span className="text-sm text-card-foreground/60">DM Opener:</span>
               <p className="text-foreground mt-2 p-3 bg-card rounded border border-border/60">{results.opener}</p>
             </div>
             <div className="pt-4 border-t border-border/60">
-              <p className="text-sm text-muted-foreground mb-3">{results.followUpHint}</p>
+              <p className="text-sm text-card-foreground/60 mb-3">{results.followUpHint}</p>
               <Button asChild variant="outline" className="w-full border-border/60">
                 <Link href="/verify">Unlock full DM logic</Link>
               </Button>
@@ -447,12 +447,12 @@ function PlanCard({ title, description, features, planId, highlight }: any) {
     <Card className={`bg-card/80 border-border/60 backdrop-blur-sm shadow-sm ${highlight ? 'border-primary/60 ring-2 ring-primary/20' : ''}`}>
       <CardHeader>
         <CardTitle className="text-foreground">{title}</CardTitle>
-        <CardDescription className="text-muted-foreground">{description}</CardDescription>
+        <CardDescription className="text-card-foreground/70">{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <ul className="space-y-2 mb-6">
           {features.map((feature: string, i: number) => (
-            <li key={i} className="flex items-start text-muted-foreground">
+            <li key={i} className="flex items-start text-card-foreground/70">
               <span className="mr-2 text-primary">✓</span>
               {feature}
             </li>

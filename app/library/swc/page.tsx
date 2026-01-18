@@ -21,26 +21,28 @@ export default function SWCLibraryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-        <div className="text-slate-400">Loading...</div>
+      <div className="relative min-h-screen bg-hero-cactus text-foreground flex items-center justify-center">
+        <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
+        <div className="relative text-muted-foreground">Loading...</div>
       </div>
     )
   }
 
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="relative min-h-screen bg-hero-cactus text-foreground">
+        <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
         <div className="container mx-auto px-4 py-20">
           <div className="max-w-2xl mx-auto text-center">
-            <Lock className="h-16 w-16 text-slate-600 mx-auto mb-6" />
-            <h1 className="text-4xl font-bold mb-4 text-slate-100">SWC Library</h1>
-            <p className="text-xl text-slate-300 mb-8">
+            <Lock className="h-16 w-16 text-foreground/60 mx-auto mb-6" />
+            <h1 className="text-4xl font-bold mb-4 text-foreground">SWC Library</h1>
+            <p className="text-xl text-muted-foreground mb-8">
               The conversion layer—turning conversations into revenue. SWC is available with All Access.
             </p>
-            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+            <Card className="bg-card/95 border-border/60 backdrop-blur-sm shadow-sm">
               <CardHeader>
-                <CardTitle className="text-slate-100">Unlock SWC</CardTitle>
-                <CardDescription className="text-slate-400">
+                <CardTitle className="text-card-foreground">Unlock SWC</CardTitle>
+                <CardDescription className="text-card-foreground/70">
                   Get All Access to unlock the SWC library, including conversion templates, objection handling, and revenue frameworks.
                 </CardDescription>
               </CardHeader>
@@ -57,11 +59,12 @@ export default function SWCLibraryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="relative min-h-screen bg-hero-cactus text-foreground">
+      <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 text-slate-100">SWC Library</h1>
-          <p className="text-xl text-slate-300 mb-12">
+          <h1 className="text-4xl font-bold mb-8 text-foreground">SWC Library</h1>
+          <p className="text-xl text-muted-foreground mb-12">
             The conversion layer—turning conversations into revenue.
           </p>
 
@@ -72,13 +75,13 @@ export default function SWCLibraryPage() {
               { title: 'Revenue Frameworks', desc: 'Systematic approaches to closing sales' },
               { title: 'Follow-up Sequences', desc: 'Multi-step sequences for nurturing leads' },
             ].map((module, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+              <Card key={i} className="bg-card/95 border-border/60 backdrop-blur-sm shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-slate-100">{module.title}</CardTitle>
-                  <CardDescription className="text-slate-400">{module.desc}</CardDescription>
+                  <CardTitle className="text-card-foreground">{module.title}</CardTitle>
+                  <CardDescription className="text-card-foreground/70">{module.desc}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="outline" className="w-full border-slate-600">
+                  <Button variant="outline" className="w-full border-border/60">
                     Download Template
                   </Button>
                 </CardContent>

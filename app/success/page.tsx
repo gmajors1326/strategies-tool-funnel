@@ -5,24 +5,25 @@ import Link from 'next/link'
 
 export default function SuccessPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+    <div className="relative min-h-screen bg-hero-cactus text-foreground flex items-center justify-center p-4">
+      <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
+      <Card className="relative w-full max-w-md bg-card/95 border-border/60 backdrop-blur-sm shadow-sm">
         <CardHeader className="text-center">
-          <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
-          <CardTitle className="text-slate-100">Payment Successful</CardTitle>
-          <CardDescription className="text-slate-400">
+          <CheckCircle className="h-16 w-16 text-primary mx-auto mb-4" />
+          <CardTitle className="text-card-foreground">Payment Successful</CardTitle>
+          <CardDescription className="text-card-foreground/70">
             Thank you for your purchase. Your account has been upgraded.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-slate-300 text-center">
+          <p className="text-sm text-card-foreground/70 text-center">
             You now have access to all premium tools and features.
           </p>
           <div className="flex flex-col gap-2">
             <Button asChild className="w-full">
               <Link href="/account">Go to Account</Link>
             </Button>
-            <Button asChild variant="outline" className="w-full border-slate-600">
+            <Button asChild variant="outline" className="w-full border-border/60">
               <Link href="/">Back to Tools</Link>
             </Button>
           </div>

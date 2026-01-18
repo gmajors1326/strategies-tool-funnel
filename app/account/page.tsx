@@ -43,30 +43,32 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-        <div className="text-slate-400">Loading...</div>
+      <div className="relative min-h-screen bg-hero-cactus text-foreground flex items-center justify-center">
+        <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
+        <div className="relative text-muted-foreground">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="relative min-h-screen bg-hero-cactus text-foreground">
+      <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 text-slate-100">Account</h1>
+          <h1 className="text-4xl font-bold mb-8 text-foreground">Account</h1>
 
           {/* Plan Status */}
-          <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm mb-8">
+          <Card className="bg-card/95 border-border/60 backdrop-blur-sm mb-8 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-slate-100">Your Plan</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardTitle className="text-card-foreground">Your Plan</CardTitle>
+              <CardDescription className="text-card-foreground/70">
                 Current plan: {plan === 'FREE' ? 'Free' : plan.replace('_', ' ')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {plan === 'FREE' && (
                 <div>
-                  <p className="text-slate-300 mb-4">Upgrade to unlock premium tools and unlimited saves.</p>
+                  <p className="text-card-foreground/70 mb-4">Upgrade to unlock premium tools and unlimited saves.</p>
                   <Button asChild>
                     <Link href="/#offers">View Plans</Link>
                   </Button>
@@ -76,10 +78,10 @@ export default function AccountPage() {
           </Card>
 
           {/* Saved Results */}
-          <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+          <Card className="bg-card/95 border-border/60 backdrop-blur-sm shadow-sm">
             <CardHeader>
-              <CardTitle className="text-slate-100">Saved Results</CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardTitle className="text-card-foreground">Saved Results</CardTitle>
+              <CardDescription className="text-card-foreground/70">
                 {toolRuns.length === 0 
                   ? 'No saved results yet. Run a tool and save your results to see them here.'
                   : `${toolRuns.length} saved result${toolRuns.length !== 1 ? 's' : ''}`
@@ -89,8 +91,8 @@ export default function AccountPage() {
             <CardContent>
               {toolRuns.length === 0 ? (
                 <div className="text-center py-8">
-                  <Sparkles className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-                  <p className="text-slate-400 mb-4">No saved results yet</p>
+                  <Sparkles className="h-12 w-12 text-card-foreground/40 mx-auto mb-4" />
+                  <p className="text-card-foreground/60 mb-4">No saved results yet</p>
                   <Button asChild variant="outline">
                     <Link href="/">Try Free Tools</Link>
                   </Button>
@@ -98,39 +100,39 @@ export default function AccountPage() {
               ) : (
                 <div className="space-y-4">
                   {toolRuns.map((run) => (
-                    <Card key={run.id} className="bg-slate-900/50 border-slate-700">
+                    <Card key={run.id} className="bg-card/90 border-border/60">
                       <CardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
                           <div>
-                            <h3 className="text-lg font-semibold text-slate-100 capitalize">
+                            <h3 className="text-lg font-semibold text-card-foreground capitalize">
                               {run.toolKey.replace('-', ' ')}
                             </h3>
-                            <p className="text-sm text-slate-400">
+                            <p className="text-sm text-card-foreground/60">
                               {new Date(run.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                           {plan === 'FREE' && (
-                            <Lock className="h-5 w-5 text-slate-600" />
+                            <Lock className="h-5 w-5 text-card-foreground/40" />
                           )}
                         </div>
                         {run.outputsJson && (
-                          <div className="mt-4 p-4 bg-slate-800/50 rounded border border-slate-700">
+                          <div className="mt-4 p-4 bg-background/40 rounded border border-border/60">
                             {run.toolKey === 'engagement-diagnostic' && (
                               <div>
-                                <p className="text-sm text-slate-400 mb-2">Engagement Tier:</p>
-                                <p className="text-lg font-semibold text-purple-400 mb-4">
+                                <p className="text-sm text-card-foreground/60 mb-2">Engagement Tier:</p>
+                                <p className="text-lg font-semibold text-primary mb-4">
                                   {run.outputsJson.engagementTier}
                                 </p>
-                                <p className="text-sm text-slate-400 mb-2">Insight:</p>
-                                <p className="text-slate-300 mb-4">{run.outputsJson.insight}</p>
-                                <p className="text-sm text-slate-400 mb-2">Action:</p>
-                                <p className="text-slate-300">{run.outputsJson.action}</p>
+                                <p className="text-sm text-card-foreground/60 mb-2">Insight:</p>
+                                <p className="text-card-foreground/80 mb-4">{run.outputsJson.insight}</p>
+                                <p className="text-sm text-card-foreground/60 mb-2">Action:</p>
+                                <p className="text-card-foreground/80">{run.outputsJson.action}</p>
                               </div>
                             )}
                             {run.toolKey === 'dm-opener' && (
                               <div>
-                                <p className="text-sm text-slate-400 mb-2">DM Opener:</p>
-                                <p className="text-slate-300 p-3 bg-slate-900 rounded border border-slate-700">
+                                <p className="text-sm text-card-foreground/60 mb-2">DM Opener:</p>
+                                <p className="text-card-foreground/80 p-3 bg-card rounded border border-border/60">
                                   {run.outputsJson.opener}
                                 </p>
                               </div>

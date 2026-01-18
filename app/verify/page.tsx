@@ -69,11 +69,12 @@ export default function VerifyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+    <div className="relative min-h-screen bg-hero-cactus text-foreground flex items-center justify-center p-4">
+      <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
+      <Card className="relative w-full max-w-md bg-card/95 border-border/60 backdrop-blur-sm shadow-sm">
         <CardHeader>
-          <CardTitle className="text-slate-100">Email Verification</CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardTitle className="text-card-foreground">Email Verification</CardTitle>
+          <CardDescription className="text-card-foreground/70">
             {step === 'start' 
               ? 'Enter your details to receive a verification code'
               : 'Enter the 6-digit code sent to your email'}
@@ -83,25 +84,25 @@ export default function VerifyPage() {
           {step === 'start' ? (
             <form onSubmit={handleStart} className="space-y-4">
               <div>
-                <Label htmlFor="name" className="text-slate-300">Name (optional)</Label>
+                <Label htmlFor="name" className="text-card-foreground/70">Name (optional)</Label>
                 <Input
                   id="name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1 bg-slate-900 border-slate-700 text-slate-100"
+                  className="mt-1"
                   placeholder="Your name"
                 />
               </div>
               <div>
-                <Label htmlFor="email" className="text-slate-300">Email</Label>
+                <Label htmlFor="email" className="text-card-foreground/70">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="mt-1 bg-slate-900 border-slate-700 text-slate-100"
+                  className="mt-1"
                   placeholder="your@email.com"
                 />
               </div>
@@ -113,7 +114,7 @@ export default function VerifyPage() {
           ) : (
             <form onSubmit={handleVerify} className="space-y-4">
               <div>
-                <Label htmlFor="code" className="text-slate-300">Verification Code</Label>
+                <Label htmlFor="code" className="text-card-foreground/70">Verification Code</Label>
                 <Input
                   id="code"
                   type="text"
@@ -121,10 +122,10 @@ export default function VerifyPage() {
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   required
                   maxLength={6}
-                  className="mt-1 bg-slate-900 border-slate-700 text-slate-100 text-center text-2xl tracking-widest"
+                  className="mt-1 text-center text-2xl tracking-widest"
                   placeholder="000000"
                 />
-                <p className="text-xs text-slate-500 mt-2">Check your email for the 6-digit code</p>
+                <p className="text-xs text-card-foreground/60 mt-2">Check your email for the 6-digit code</p>
               </div>
               {error && <p className="text-sm text-red-400">{error}</p>}
               <div className="flex gap-2">
