@@ -16,7 +16,7 @@ export async function getUserEntitlements(userId: string): Promise<Entitlements>
   const [user, entitlements] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { plan: true, freeVerifiedRunsRemaining: true },
+      select: { plan: true, freeVerifiedRunsRemaining: true, emailVerifiedAt: true },
     }),
     prisma.planEntitlement.findUnique({
       where: { userId },
