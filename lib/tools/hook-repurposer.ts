@@ -18,7 +18,7 @@ export interface HookRepurposerInputs {
 }
 
 export interface HookVariation {
-  angle: string
+  angle: (typeof ANGLES)[number] | (typeof EXTRA_ANGLES)[number]
   text: string
 }
 
@@ -39,6 +39,8 @@ const ANGLES = [
   'Observation-based',
   'Pattern interrupt',
 ] as const
+
+const EXTRA_ANGLES = ['Comment prompt'] as const
 
 function trimHook(hook: string): string {
   return hook.replace(/\s+/g, ' ').trim().replace(/^["']|["']$/g, '')
@@ -79,7 +81,7 @@ function buildHooks(core: string, tone: HookTone, goal?: HookGoal): HookVariatio
     'Pattern interrupt': `Quick reset: ${core} is backwards.`,
   }
 
-  const hooks = ANGLES.map((angle) => ({
+  const hooks: HookVariation[] = ANGLES.map((angle) => ({
     angle,
     text: applyTone(baseHooks[angle], tone),
   }))
