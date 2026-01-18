@@ -15,7 +15,7 @@
     --secondary: 150 22% 22%;
     --secondary-foreground: 0 0% 98%;
     --muted: 150 18% 18%;
-    --muted-foreground: 150 20% 75%;
+    --muted-foreground: 154 30% 14%;
     --accent: 150 22% 26%;
     --accent-foreground: 0 0% 98%;
     --destructive: 4 72% 43%;
@@ -55,8 +55,18 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "Times New Roman", Times, serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h2,
+  h3,
+  h4 {
+    font-family: "Times New Roman", Times, serif;
+    color: hsl(var(--card-foreground));
+  }
+
+  p {
+    color: hsl(var(--card-foreground));
   }
 }
 
