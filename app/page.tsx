@@ -10,13 +10,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Lock, Sparkles, MessageSquare, TrendingUp, Zap, Clock, Download } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import Image from 'next/image'
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen bg-hero-cactus text-foreground overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
-      <div className="relative">
+    <div
+      className="min-h-screen bg-background bg-cover bg-center bg-no-repeat text-foreground"
+      style={{ backgroundImage: "url('/hero-cactus.jpg')" }}
+    >
       {/* Hero Section */}
       <section className="relative container mx-auto px-4 pt-16 pb-28 md:pt-24 md:pb-36">
         <div className="pointer-events-none absolute inset-0">
@@ -220,7 +220,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      </div>
     </div>
   )
 }
