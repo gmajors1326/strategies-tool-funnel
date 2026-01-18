@@ -13,10 +13,7 @@ import Link from 'next/link'
 
 export default function HomePage() {
   return (
-    <div
-      className="min-h-screen bg-background bg-cover bg-center bg-no-repeat text-foreground"
-      style={{ backgroundImage: "url('/hero-cactus.jpg')" }}
-    >
+    <div className="min-h-screen bg-[#7d9b76] text-foreground">
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-16 pb-28 md:pt-24 md:pb-36">
         <motion.div
