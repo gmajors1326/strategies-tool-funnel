@@ -4,6 +4,7 @@ import { getUserEntitlements } from '@/lib/entitlements'
 import { prisma } from '@/lib/db'
 import { generateDMOpener, type DMOpenerInputs } from '@/lib/tools/dm-opener'
 import { z } from 'zod'
+import type { Prisma } from '@prisma/client'
 
 const openerSchema = z.object({
   scenario: z.enum(['commenter', 'story reply', 'inbound DM', 'warm lead', 'cold-ish lead']),
@@ -32,8 +33,8 @@ export async function POST(request: NextRequest) {
           data: {
             userId: session.userId,
             toolKey: 'dm-opener',
-            inputsJson: inputs,
-            outputsJson: outputs,
+            inputsJson: inputs as Prisma.InputJsonValue,
+            outputsJson: outputs as Prisma.InputJsonValue,
           },
         })
 

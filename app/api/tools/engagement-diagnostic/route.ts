@@ -4,6 +4,7 @@ import { getUserEntitlements } from '@/lib/entitlements'
 import { prisma } from '@/lib/db'
 import { runEngagementDiagnostic, type EngagementDiagnosticInputs } from '@/lib/tools/engagement-diagnostic'
 import { z } from 'zod'
+import type { Prisma } from '@prisma/client'
 
 const diagnosticSchema = z.object({
   followerRange: z.enum(['0-500', '500-2k', '2k-10k', '10k+']),
@@ -34,8 +35,8 @@ export async function POST(request: NextRequest) {
           data: {
             userId: session.userId,
             toolKey: 'engagement-diagnostic',
-            inputsJson: inputs,
-            outputsJson: outputs,
+            inputsJson: inputs as Prisma.InputJsonValue,
+            outputsJson: outputs as Prisma.InputJsonValue,
           },
         })
 
