@@ -55,6 +55,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "Times New Roman", Times, serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -62,13 +63,13 @@
 @layer utilities {
   .bg-hero-cactus {
     background:
-      linear-gradient(135deg, #0F5A3F 0%, #0C4B35 45%, #0B3A2B 100%);
+      linear-gradient(135deg, #1F7A54 0%, #1A6B4A 45%, #155C41 100%);
   }
 
   .bg-cactus-glow {
     background:
-      radial-gradient(600px circle at 20% 10%, rgba(46, 122, 82, 0.35) 0%, transparent 60%),
-      radial-gradient(700px circle at 80% 20%, rgba(118, 161, 128, 0.25) 0%, transparent 60%);
+      radial-gradient(600px circle at 20% 10%, rgba(76, 156, 113, 0.35) 0%, transparent 60%),
+      radial-gradient(700px circle at 80% 20%, rgba(148, 189, 158, 0.3) 0%, transparent 60%);
   }
 
   .bg-cactus-primary {

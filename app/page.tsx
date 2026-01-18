@@ -17,7 +17,7 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
       <div className="relative">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 md:py-32">
+      <section className="container mx-auto px-4 pt-16 pb-12 md:pt-24 md:pb-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
