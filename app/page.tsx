@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -55,29 +55,36 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-20">
         <h2 className="text-4xl font-bold text-center mb-12 text-white text-shadow-ink-40">Premium Tools</h2>
         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {[
-            { title: 'Strategic Engagement Planner', icon: TrendingUp, desc: 'Full breakdown with personalized roadmap' },
-            { title: 'Comment Impact Engine', icon: MessageSquare, desc: 'Optimize every comment for maximum impact' },
-            { title: 'DM Engine Full Flows', icon: Zap, desc: 'Complete DM sequences and follow-ups' },
-            { title: 'Timing Engine', icon: Clock, desc: 'Know exactly when to post and engage' },
-            { title: 'Saved Results & Exports', icon: Download, desc: 'Save unlimited runs and export PDFs' },
-          ].map((tool, i) => (
-            <Card key={i} className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
-              <CardHeader>
-                <div className="flex items-center justify-between mb-2">
-                  <tool.icon className="h-6 w-6 text-primary" />
-                  <Lock className="h-5 w-5 text-card-foreground/50" />
-                </div>
-                <CardTitle className="text-card-foreground">{tool.title}</CardTitle>
-                <CardDescription className="text-card-foreground/70">{tool.desc}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button asChild variant="outline" className="w-full border-border/60 hover:bg-accent/80">
-                  <Link href="#offers">Unlock</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+          <PremiumToolCard
+            title="Strategic Engagement Planner"
+            icon={TrendingUp}
+            desc="Full breakdown with personalized roadmap"
+            requiredPlan="the_strategy"
+          />
+          <PremiumToolCard
+            title="Comment Impact Engine"
+            icon={MessageSquare}
+            desc="Optimize every comment for maximum impact"
+            requiredPlan="the_strategy"
+          />
+          <PremiumToolCard
+            title="DM Engine Full Flows"
+            icon={Zap}
+            desc="Complete DM sequences and follow-ups"
+            requiredPlan="dm_engine"
+          />
+          <PremiumToolCard
+            title="Timing Engine"
+            icon={Clock}
+            desc="Know exactly when to post and engage"
+            requiredPlan="the_strategy"
+          />
+          <PremiumToolCard
+            title="Saved Results & Exports"
+            icon={Download}
+            desc="Save unlimited runs and export PDFs"
+            requiredPlan="the_strategy"
+          />
         </div>
       </section>
 
@@ -636,6 +643,105 @@ function HookRepurposerTool() {
             </Button>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function PremiumToolCard({ title, icon: Icon, desc, requiredPlan }: { title: string; icon: any; desc: string; requiredPlan: string }) {
+  const [error, setError] = useState('')
+  const [hasAccess, setHasAccess] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  // Check user entitlements on mount
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const res = await fetch('/api/tool-runs')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.entitlements) {
+            const { dmEngine, strategy, allAccess } = data.entitlements
+            const planMap: Record<string, boolean> = {
+              dm_engine: dmEngine || allAccess,
+              the_strategy: strategy || allAccess,
+              all_access: allAccess,
+            }
+            setHasAccess(planMap[requiredPlan] || false)
+          }
+        }
+      } catch (error) {
+        console.error('[premium-tool] Error checking access:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    checkAccess()
+  }, [requiredPlan])
+
+  const handleCheckout = async () => {
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId: requiredPlan }),
+      })
+      const data = await res.json()
+      if (res.status === 401) {
+        setError('Verify your email to continue.')
+        window.location.href = '/verify'
+        return
+      }
+      if (!res.ok) {
+        const errorMsg = data?.error || data?.details || 'Checkout is unavailable right now.'
+        console.error('[checkout] Error:', errorMsg, data)
+        setError(errorMsg)
+        return
+      }
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setError('Checkout is unavailable right now.')
+      }
+    } catch (error: any) {
+      console.error('[checkout] Exception:', error)
+      setError(error?.message || 'Failed to create checkout session. Please try again.')
+    }
+  }
+
+  return (
+    <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
+      <CardHeader>
+        <div className="flex items-center justify-between mb-2">
+          <Icon className="h-6 w-6 text-primary" />
+          {!hasAccess && <Lock className="h-5 w-5 text-card-foreground/50" />}
+        </div>
+        <CardTitle className="text-card-foreground">{title}</CardTitle>
+        <CardDescription className="text-card-foreground/70">{desc}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Button variant="outline" className="w-full border-border/60" disabled>
+            Loading...
+          </Button>
+        ) : hasAccess ? (
+          <Button variant="outline" className="w-full border-border/60 hover:bg-accent/80 bg-green-500/10 border-green-500/30">
+            Access Tool
+          </Button>
+        ) : (
+          <>
+            <Button
+              onClick={handleCheckout}
+              variant="outline"
+              className="w-full border-border/60 hover:bg-accent/80"
+            >
+              Unlock
+            </Button>
+            {error && (
+              <p className="mt-3 text-xs text-red-600">{error}</p>
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
   )
