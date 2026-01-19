@@ -58,10 +58,11 @@ export async function POST(request: NextRequest) {
     console.error('[stripe/checkout] Error:', errorMessage)
     console.error('[stripe/checkout] Stack:', error instanceof Error ? error.stack : 'No stack')
     
+    // Always return error details for debugging
     return NextResponse.json(
       { 
         error: 'Failed to create checkout session',
-        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+        details: errorMessage
       },
       { status: 500 }
     )

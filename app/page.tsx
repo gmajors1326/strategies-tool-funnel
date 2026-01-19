@@ -644,7 +644,9 @@ function PlanCard({ title, description, features, planId, highlight }: any) {
         return
       }
       if (!res.ok) {
-        setError(data?.error || 'Checkout is unavailable right now.')
+        const errorMsg = data?.error || data?.details || 'Checkout is unavailable right now.'
+        console.error('[checkout] Error:', errorMsg, data)
+        setError(errorMsg)
         return
       }
       if (data.url) {
@@ -652,9 +654,9 @@ function PlanCard({ title, description, features, planId, highlight }: any) {
       } else {
         setError('Checkout is unavailable right now.')
       }
-    } catch (error) {
-      console.error(error)
-      setError('Checkout is unavailable right now.')
+    } catch (error: any) {
+      console.error('[checkout] Exception:', error)
+      setError(error?.message || 'Failed to create checkout session. Please try again.')
     }
   }
 
