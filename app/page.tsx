@@ -233,13 +233,13 @@ function EngagementDiagnosticTool() {
   return (
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
       <CardHeader>
-        <CardTitle className="text-card-foreground">Engagement Diagnostic (Lite)</CardTitle>
+        <CardTitle className="text-lg text-card-foreground">Engagement Diagnostic (Lite)</CardTitle>
         <CardDescription className="text-card-foreground/70">Get your engagement tier and one actionable insight.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2">
         <div>
-          <Label className="text-card-foreground/70">Follower Range</Label>
-          <Select value={inputs.followerRange} onChange={(e) => setInputs({ ...inputs, followerRange: e.target.value })}>
+          <Label className="text-xs text-card-foreground/70">Follower Range</Label>
+          <Select value={inputs.followerRange} onChange={(e) => setInputs({ ...inputs, followerRange: e.target.value })} className="mt-1 text-sm">
             <option value="">Select...</option>
             <option value="0-500">0-500</option>
             <option value="500-2k">500-2k</option>
@@ -248,8 +248,8 @@ function EngagementDiagnosticTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-card-foreground/70">Posting Frequency</Label>
-          <Select value={inputs.postingFrequency} onChange={(e) => setInputs({ ...inputs, postingFrequency: e.target.value })}>
+          <Label className="text-xs text-card-foreground/70">Posting Frequency</Label>
+          <Select value={inputs.postingFrequency} onChange={(e) => setInputs({ ...inputs, postingFrequency: e.target.value })} className="mt-1 text-sm">
             <option value="">Select...</option>
             <option value="rarely">Rarely</option>
             <option value="1-2x/week">1-2x/week</option>
@@ -258,8 +258,8 @@ function EngagementDiagnosticTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-card-foreground/70">Daily Engagement Time</Label>
-          <Select value={inputs.dailyEngagementTime} onChange={(e) => setInputs({ ...inputs, dailyEngagementTime: e.target.value })}>
+          <Label className="text-xs text-card-foreground/70">Daily Engagement Time</Label>
+          <Select value={inputs.dailyEngagementTime} onChange={(e) => setInputs({ ...inputs, dailyEngagementTime: e.target.value })} className="mt-1 text-sm">
             <option value="">Select...</option>
             <option value="0-5">0-5 minutes</option>
             <option value="5-15">5-15 minutes</option>
@@ -268,8 +268,8 @@ function EngagementDiagnosticTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-card-foreground/70">Primary Goal</Label>
-          <Select value={inputs.primaryGoal} onChange={(e) => setInputs({ ...inputs, primaryGoal: e.target.value })}>
+          <Label className="text-xs text-card-foreground/70">Primary Goal</Label>
+          <Select value={inputs.primaryGoal} onChange={(e) => setInputs({ ...inputs, primaryGoal: e.target.value })} className="mt-1 text-sm">
             <option value="">Select...</option>
             <option value="growth">Growth</option>
             <option value="DMs">DMs</option>
@@ -278,8 +278,8 @@ function EngagementDiagnosticTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-card-foreground/70">Biggest Friction</Label>
-          <Select value={inputs.biggestFriction} onChange={(e) => setInputs({ ...inputs, biggestFriction: e.target.value })}>
+          <Label className="text-xs text-card-foreground/70">Biggest Friction</Label>
+          <Select value={inputs.biggestFriction} onChange={(e) => setInputs({ ...inputs, biggestFriction: e.target.value })} className="mt-1 text-sm">
             <option value="">Select...</option>
             <option value="no reach">No reach</option>
             <option value="low engagement">Low engagement</option>
@@ -288,26 +288,26 @@ function EngagementDiagnosticTool() {
             <option value="burnout">Burnout</option>
           </Select>
         </div>
-        <Button onClick={handleRun} disabled={loading} className="w-full">
+        <Button onClick={handleRun} disabled={loading} className="w-full mt-2" size="sm">
           {loading ? 'Running...' : 'Run Diagnostic'}
         </Button>
         {results && (
-          <div className="mt-4 p-3 bg-background/70 rounded-lg border border-border/60">
+          <div className="mt-3 p-2 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-2">
               <span className="text-xs text-card-foreground/60">Engagement Tier:</span>
-              <div className="text-lg font-bold text-primary mt-1">{results.engagementTier}</div>
+              <div className="text-base font-bold text-primary mt-0.5">{results.engagementTier}</div>
             </div>
             <div className="mb-2">
               <span className="text-xs text-card-foreground/60">Insight:</span>
-              <p className="text-sm text-foreground mt-1">{results.insight}</p>
+              <p className="text-xs text-foreground mt-0.5">{results.insight}</p>
             </div>
             <div className="mb-2">
               <span className="text-xs text-card-foreground/60">Action:</span>
-              <p className="text-sm text-foreground mt-1">{results.action}</p>
+              <p className="text-xs text-foreground mt-0.5">{results.action}</p>
             </div>
-            <div className="pt-3 border-t border-border/60">
+            <div className="pt-2 border-t border-border/60">
               <p className="text-xs text-card-foreground/60 mb-2">{results.teaser}</p>
-              <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs">
+              <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs h-8">
                 <Link href="/verify">Email me my full breakdown</Link>
               </Button>
             </div>
@@ -353,13 +353,13 @@ function DMOpenerTool() {
   return (
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
       <CardHeader>
-        <CardTitle className="text-card-foreground">DM Opener Generator (Lite)</CardTitle>
+        <CardTitle className="text-lg text-card-foreground">DM Opener Generator (Lite)</CardTitle>
         <CardDescription className="text-card-foreground/70">Generate a DM opener based on your scenario and tone.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2">
         <div>
-          <Label className="text-card-foreground/70">Scenario</Label>
-          <Select value={inputs.scenario} onChange={(e) => setInputs({ ...inputs, scenario: e.target.value })}>
+          <Label className="text-xs text-card-foreground/70">Scenario</Label>
+          <Select value={inputs.scenario} onChange={(e) => setInputs({ ...inputs, scenario: e.target.value })} className="mt-1 text-sm">
             <option value="">Select...</option>
             <option value="commenter">Commenter</option>
             <option value="story reply">Story Reply</option>
@@ -369,8 +369,8 @@ function DMOpenerTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-card-foreground/70">Tone</Label>
-          <Select value={inputs.tone} onChange={(e) => setInputs({ ...inputs, tone: e.target.value })}>
+          <Label className="text-xs text-card-foreground/70">Tone</Label>
+          <Select value={inputs.tone} onChange={(e) => setInputs({ ...inputs, tone: e.target.value })} className="mt-1 text-sm">
             <option value="">Select...</option>
             <option value="friendly">Friendly</option>
             <option value="direct">Direct</option>
@@ -379,8 +379,8 @@ function DMOpenerTool() {
           </Select>
         </div>
         <div>
-          <Label className="text-card-foreground/70">Intent</Label>
-          <Select value={inputs.intent} onChange={(e) => setInputs({ ...inputs, intent: e.target.value })}>
+          <Label className="text-xs text-card-foreground/70">Intent</Label>
+          <Select value={inputs.intent} onChange={(e) => setInputs({ ...inputs, intent: e.target.value })} className="mt-1 text-sm">
             <option value="">Select...</option>
             <option value="start convo">Start Conversation</option>
             <option value="qualify">Qualify</option>
@@ -388,18 +388,18 @@ function DMOpenerTool() {
             <option value="book call">Book Call</option>
           </Select>
         </div>
-        <Button onClick={handleRun} disabled={loading} className="w-full">
+        <Button onClick={handleRun} disabled={loading} className="w-full mt-2" size="sm">
           {loading ? 'Generating...' : 'Generate Opener'}
         </Button>
         {results && (
-          <div className="mt-4 p-3 bg-background/70 rounded-lg border border-border/60">
+          <div className="mt-3 p-2 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-2">
               <span className="text-xs text-card-foreground/60">DM Opener:</span>
-              <p className="text-sm text-foreground mt-2 p-2 bg-card rounded border border-border/60">{results.opener}</p>
+              <p className="text-xs text-foreground mt-1 p-2 bg-card rounded border border-border/60">{results.opener}</p>
             </div>
-            <div className="pt-3 border-t border-border/60">
+            <div className="pt-2 border-t border-border/60">
               <p className="text-xs text-card-foreground/60 mb-2">{results.followUpHint}</p>
-              <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs">
+              <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs h-8">
                 <Link href="/verify">Unlock full DM logic</Link>
               </Button>
             </div>
@@ -464,7 +464,7 @@ function HookRepurposerTool() {
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <CardTitle className="text-card-foreground">Hook Repurposer™</CardTitle>
+            <CardTitle className="text-lg text-card-foreground">Hook Repurposer™</CardTitle>
             <CardDescription className="text-card-foreground/70">
               Turn one hook into ten angles that stop the scroll.
             </CardDescription>
@@ -474,42 +474,43 @@ function HookRepurposerTool() {
           </span>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-3">
+      <CardContent className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-2">
           <div className="rounded-md border border-border/60 bg-[#1F3F2A] p-2 text-xs text-white">
             This is an AI-guided hook intelligence tool. It reframes ideas with strategy—no copying, no trend-chasing.
           </div>
           <div>
-            <Label className="text-card-foreground/70">Hook input</Label>
+            <Label className="text-xs text-card-foreground/70">Hook input</Label>
             <textarea
               maxLength={200}
               value={inputs.hookInput}
               onChange={(e) => setInputs({ ...inputs, hookInput: e.target.value })}
               placeholder="Paste someone else's hook or your own"
-              className="mt-1 min-h-[80px] w-full rounded-md border border-input bg-input p-2 text-sm text-card-foreground placeholder:text-card-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-1 min-h-[60px] w-full rounded-md border border-input bg-input p-2 text-xs text-card-foreground placeholder:text-card-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
             <p className="mt-2 text-xs text-card-foreground/50">
               Max 200 characters.
             </p>
           </div>
           <div>
-            <Label className="text-card-foreground/70">Video context (optional)</Label>
+            <Label className="text-xs text-card-foreground/70">Video context (optional)</Label>
             <Input
               maxLength={140}
               value={inputs.videoContext}
               onChange={(e) => setInputs({ ...inputs, videoContext: e.target.value })}
               placeholder="Describe what the video shows"
-              className="mt-1"
+              className="mt-1 text-sm h-8"
             />
-            <p className="mt-2 text-xs text-card-foreground/50">
+            <p className="mt-1 text-xs text-card-foreground/50">
               Max 140 characters.
             </p>
           </div>
           <div>
-            <Label className="text-card-foreground/70">Goal</Label>
+            <Label className="text-xs text-card-foreground/70">Goal</Label>
             <Select
               value={inputs.goal}
               onChange={(e) => setInputs({ ...inputs, goal: e.target.value })}
+              className="mt-1 text-sm"
             >
               <option>Stop the scroll</option>
               <option>Spark curiosity</option>
@@ -519,10 +520,11 @@ function HookRepurposerTool() {
             </Select>
           </div>
           <div>
-            <Label className="text-card-foreground/70">Tone</Label>
+            <Label className="text-xs text-card-foreground/70">Tone</Label>
             <Select
               value={inputs.tone}
               onChange={(e) => setInputs({ ...inputs, tone: e.target.value })}
+              className="mt-1 text-sm"
             >
               <option>Calm</option>
               <option>Direct</option>
@@ -531,23 +533,24 @@ function HookRepurposerTool() {
             </Select>
           </div>
           <div>
-            <Label className="text-card-foreground/70">Platform focus</Label>
+            <Label className="text-xs text-card-foreground/70">Platform focus</Label>
             <Select
               value={inputs.platformFocus}
               onChange={(e) => setInputs({ ...inputs, platformFocus: e.target.value })}
+              className="mt-1 text-sm"
             >
               <option>Reels</option>
               <option>TikTok</option>
               <option>Shorts</option>
             </Select>
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-xs text-red-500">{error}</p>}
           {remainingToday !== null && (
             <p className="text-xs text-card-foreground/60">
               Remaining today: {remainingToday}
             </p>
           )}
-          <Button onClick={handleRun} disabled={loading} className="w-full">
+          <Button onClick={handleRun} disabled={loading} className="w-full mt-2" size="sm">
             {loading ? 'Generating...' : 'Generate Hook Angles'}
           </Button>
           <p className="text-xs text-card-foreground/60">
