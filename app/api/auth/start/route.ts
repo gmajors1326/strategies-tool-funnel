@@ -86,9 +86,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error('Auth start error:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('[auth/start] Error:', errorMessage)
+    console.error('[auth/start] Stack:', error instanceof Error ? error.stack : 'No stack')
+    
     return NextResponse.json(
-      { error: 'Failed to send verification code' },
+      { error: 'Failed to send verification code', details: process.env.NODE_ENV === 'development' ? errorMessage : undefined },
       { status: 500 }
     )
   }

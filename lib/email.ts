@@ -1,34 +1,49 @@
 import { Resend } from 'resend'
 import nodemailer from 'nodemailer'
 
-const USE_GMAIL_SMTP = process.env.USE_GMAIL_SMTP === 'true'
-const RESEND_API_KEY = process.env.RESEND_API_KEY
-const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev'
-const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME || 'The Strategy Tools'
-const GMAIL_USER = process.env.GMAIL_USER
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com'
+const USE_GMAIL_SMTP = process.env.USE_GMAIL_SMTP?.toLowerCase().trim() === 'true'
+const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim()
+const RESEND_FROM = process.env.RESEND_FROM?.trim() || 'onboarding@resend.dev'
+const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME?.trim() || 'The Strategy Tools'
+const GMAIL_USER = process.env.GMAIL_USER?.trim()
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD?.trim()
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim() || 'admin@example.com'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 let resend: Resend | null = null
 let gmailTransporter: nodemailer.Transporter | null = null
 
-if (!USE_GMAIL_SMTP && RESEND_API_KEY) {
+// Initialize email providers
+if (USE_GMAIL_SMTP) {
+  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+    console.error('[email] Gmail SMTP enabled but GMAIL_USER or GMAIL_APP_PASSWORD missing')
+  } else {
+    gmailTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: GMAIL_USER,
+        pass: GMAIL_APP_PASSWORD,
+      },
+    })
+    console.info('[email] Gmail SMTP initialized')
+  }
+} else if (RESEND_API_KEY) {
   resend = new Resend(RESEND_API_KEY)
-}
-
-if (USE_GMAIL_SMTP && GMAIL_USER && GMAIL_APP_PASSWORD) {
-  gmailTransporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: GMAIL_USER,
-      pass: GMAIL_APP_PASSWORD,
-    },
-  })
+  console.info('[email] Resend initialized')
+} else {
+  console.error('[email] No email provider configured - USE_GMAIL_SMTP:', USE_GMAIL_SMTP, 'RESEND_API_KEY:', RESEND_API_KEY ? 'set' : 'missing')
 }
 
 export async function sendVerificationCode(email: string, code: string, name?: string): Promise<void> {
-  console.info('[email] provider', resend ? 'resend' : gmailTransporter ? 'gmail' : 'none')
+  const provider = resend ? 'resend' : gmailTransporter ? 'gmail' : 'none'
+  console.info('[email] sending via', provider, 'to', email)
+  
+  if (!resend && !gmailTransporter) {
+    const error = 'No email provider configured. USE_GMAIL_SMTP=' + USE_GMAIL_SMTP + ', RESEND_API_KEY=' + (RESEND_API_KEY ? 'set' : 'missing') + ', GMAIL_USER=' + (GMAIL_USER ? 'set' : 'missing')
+    console.error('[email]', error)
+    throw new Error(error)
+  }
+
   const subject = 'Your verification code'
   const html = `
     <!DOCTYPE html>
@@ -54,22 +69,27 @@ export async function sendVerificationCode(email: string, code: string, name?: s
     </html>
   `
 
-  if (resend) {
-    await resend.emails.send({
-      from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
-      to: email,
-      subject,
-      html,
-    })
-  } else if (gmailTransporter) {
-    await gmailTransporter.sendMail({
-      from: GMAIL_USER,
-      to: email,
-      subject,
-      html,
-    })
-  } else {
-    throw new Error('No email provider configured')
+  try {
+    if (resend) {
+      const result = await resend.emails.send({
+        from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
+        to: email,
+        subject,
+        html,
+      })
+      console.info('[email] Resend result:', result)
+    } else if (gmailTransporter) {
+      const result = await gmailTransporter.sendMail({
+        from: GMAIL_USER!,
+        to: email,
+        subject,
+        html,
+      })
+      console.info('[email] Gmail result:', result.messageId)
+    }
+  } catch (error: any) {
+    console.error('[email] Send failed:', error.message, error.response || error)
+    throw error
   }
 }
 
