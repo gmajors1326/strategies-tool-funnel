@@ -628,6 +628,8 @@ function HookRepurposerTool() {
 }
 
 function PlanCard({ title, description, features, planId, highlight }: any) {
+  const [error, setError] = useState('')
+
   const handleCheckout = async () => {
     try {
       const res = await fetch('/api/stripe/checkout', {
@@ -636,11 +638,23 @@ function PlanCard({ title, description, features, planId, highlight }: any) {
         body: JSON.stringify({ planId }),
       })
       const data = await res.json()
+      if (res.status === 401) {
+        setError('Verify your email to continue.')
+        window.location.href = '/verify'
+        return
+      }
+      if (!res.ok) {
+        setError(data?.error || 'Checkout is unavailable right now.')
+        return
+      }
       if (data.url) {
         window.location.href = data.url
+      } else {
+        setError('Checkout is unavailable right now.')
       }
     } catch (error) {
       console.error(error)
+      setError('Checkout is unavailable right now.')
     }
   }
 
@@ -666,6 +680,9 @@ function PlanCard({ title, description, features, planId, highlight }: any) {
         >
           Get {title}
         </Button>
+        {error && (
+          <p className="mt-3 text-xs text-red-600">{error}</p>
+        )}
       </CardContent>
     </Card>
   )
