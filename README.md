@@ -41,6 +41,8 @@ SESSION_SECRET="your-session-secret-here-min-32-chars"
 
 # Email (Resend - default)
 RESEND_API_KEY="re_xxxxxxxxxxxxx"
+RESEND_FROM="hello@yourdomain.com"
+RESEND_FROM_NAME="The Strategy Tools"
 
 # Email (Gmail SMTP - optional fallback)
 USE_GMAIL_SMTP=false

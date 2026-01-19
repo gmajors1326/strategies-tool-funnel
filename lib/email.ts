@@ -3,6 +3,8 @@ import nodemailer from 'nodemailer'
 
 const USE_GMAIL_SMTP = process.env.USE_GMAIL_SMTP === 'true'
 const RESEND_API_KEY = process.env.RESEND_API_KEY
+const RESEND_FROM = process.env.RESEND_FROM || 'onboarding@resend.dev'
+const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME || 'The Strategy Tools'
 const GMAIL_USER = process.env.GMAIL_USER
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@example.com'
@@ -53,7 +55,7 @@ export async function sendVerificationCode(email: string, code: string, name?: s
 
   if (resend) {
     await resend.emails.send({
-      from: 'The Strategy Tools <noreply@resend.dev>',
+      from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
       to: email,
       subject,
       html,
@@ -100,7 +102,7 @@ export async function sendAdminNotification(email: string, name?: string, profil
 
   if (resend) {
     await resend.emails.send({
-      from: 'The Strategy Tools <noreply@resend.dev>',
+      from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
       to: ADMIN_EMAIL,
       subject,
       html,

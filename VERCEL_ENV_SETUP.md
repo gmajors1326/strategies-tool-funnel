@@ -79,6 +79,8 @@ Based on `.env.example`, you need to set:
 ### Email (Choose one)
 **Option A: Resend (Recommended)**
 - `RESEND_API_KEY` - Your Resend API key
+- `RESEND_FROM` - Verified sender email (e.g., `hello@yourdomain.com`)
+- `RESEND_FROM_NAME` - Sender name (optional)
 
 **Option B: Gmail SMTP**
 - `USE_GMAIL_SMTP=true`
