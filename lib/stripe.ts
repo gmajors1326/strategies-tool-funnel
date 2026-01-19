@@ -33,10 +33,16 @@ export async function createCheckoutSession(
   const stripe = getStripe()
   const priceId = PLAN_PRICE_IDS[planId]
   
-  console.info('[stripe] Creating checkout session:', { planId, priceId, email })
+  console.info('[stripe] Creating checkout session:', { planId, priceId: priceId || 'MISSING', email })
   
-  if (!priceId) {
-    const error = `Invalid plan ID: ${planId}. Available plans: ${Object.keys(PLAN_PRICE_IDS).join(', ')}`
+  if (!priceId || priceId.trim() === '') {
+    const envVarMap: Record<string, string> = {
+      dm_engine: 'STRIPE_PRICE_ID_DM_ENGINE',
+      the_strategy: 'STRIPE_PRICE_ID_THE_STRATEGY',
+      all_access: 'STRIPE_PRICE_ID_ALL_ACCESS',
+    }
+    const envVarName = envVarMap[planId] || `STRIPE_PRICE_ID_${planId.toUpperCase()}`
+    const error = `Stripe price ID not configured for plan "${planId}". Please set ${envVarName} in Vercel Production environment variables.`
     console.error('[stripe]', error)
     throw new Error(error)
   }
