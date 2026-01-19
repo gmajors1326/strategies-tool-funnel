@@ -28,6 +28,7 @@ if (USE_GMAIL_SMTP && GMAIL_USER && GMAIL_APP_PASSWORD) {
 }
 
 export async function sendVerificationCode(email: string, code: string, name?: string): Promise<void> {
+  console.info('[email] provider', resend ? 'resend' : gmailTransporter ? 'gmail' : 'none')
   const subject = 'Your verification code'
   const html = `
     <!DOCTYPE html>
@@ -73,6 +74,7 @@ export async function sendVerificationCode(email: string, code: string, name?: s
 }
 
 export async function sendAdminNotification(email: string, name?: string, profileData?: any): Promise<void> {
+  console.info('[email] admin provider', resend ? 'resend' : gmailTransporter ? 'gmail' : 'none')
   if (!ADMIN_EMAIL) return
 
   const subject = `New user verification: ${email}`
