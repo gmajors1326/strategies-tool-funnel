@@ -42,6 +42,18 @@ export async function POST(request: NextRequest) {
     // Expiry time
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000)
 
+    // Create or update user FIRST (required for foreign key constraint)
+    await prisma.user.upsert({
+      where: { email },
+      create: {
+        email,
+        name: name || null,
+      },
+      update: {
+        name: name || undefined,
+      },
+    })
+
     // Clean up old OTPs
     await prisma.otp.deleteMany({
       where: {
@@ -52,25 +64,13 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Create or update OTP
+    // Create or update OTP (after User exists)
     await prisma.otp.create({
       data: {
         email,
         codeHash,
         expiresAt,
         attempts: 0,
-      },
-    })
-
-    // Create or update user
-    await prisma.user.upsert({
-      where: { email },
-      create: {
-        email,
-        name: name || null,
-      },
-      update: {
-        name: name || undefined,
       },
     })
 
