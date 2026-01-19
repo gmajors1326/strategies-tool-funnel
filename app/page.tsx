@@ -123,6 +123,24 @@ export default function HomePage() {
             highlight={false}
           />
         </div>
+        <div className="mt-8 text-center">
+          <a
+            href="https://stripe.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <svg className="w-20 h-5" viewBox="0 0 113 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32.5 0L28.5 12.5L24.5 0H20.5L16.5 12.5L12.5 0H8.5L14.5 20H18.5L22.5 7.5L26.5 20H30.5L36.5 0H32.5Z" fill="currentColor"/>
+              <path d="M48.5 0V20H52.5V0H48.5Z" fill="currentColor"/>
+              <path d="M64.5 0V4H60.5V20H64.5V24H56.5V0H64.5Z" fill="currentColor"/>
+              <path d="M80.5 0V4H76.5V20H80.5V24H72.5V0H80.5Z" fill="currentColor"/>
+              <path d="M96.5 0V20H100.5V0H96.5Z" fill="currentColor"/>
+              <path d="M112.5 0V4H108.5V20H112.5V24H104.5V0H112.5Z" fill="currentColor"/>
+            </svg>
+            <span className="text-xs">Secure payments</span>
+          </a>
+        </div>
       </section>
 
       {/* FAQ Section */}
