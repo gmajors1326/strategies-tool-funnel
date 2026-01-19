@@ -295,7 +295,7 @@ function EngagementDiagnosticTool() {
           <div className="mt-2 p-2 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-2">
               <span className="text-xs text-white">Engagement Tier:</span>
-              <div className="text-base font-bold text-primary mt-0.5">{results.engagementTier}</div>
+              <div className="text-base font-bold text-green-500 mt-0.5">{results.engagementTier}</div>
             </div>
             <div className="mb-2">
               <span className="text-xs text-white">Insight:</span>
