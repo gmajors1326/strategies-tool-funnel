@@ -9,6 +9,7 @@ Premium funnel landing page with embedded interactive tools for strategic engage
 - **Styling**: TailwindCSS + shadcn/ui
 - **Payments**: Stripe Checkout
 - **Email**: Resend (default) or Gmail SMTP (fallback)
+- **AI**: OpenAI GPT-4 Turbo (on-demand, server-side)
 - **Animations**: Framer Motion
 
 ## Prerequisites
@@ -17,6 +18,7 @@ Premium funnel landing page with embedded interactive tools for strategic engage
 - PostgreSQL database (Supabase)
 - Stripe account
 - Resend account (or Gmail for SMTP)
+- OpenAI API key (for AI features)
 
 ## Setup Instructions
 
@@ -62,6 +64,11 @@ STRIPE_PRICE_ID_ALL_ACCESS="price_xxxxxxxxxxxxx"
 
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# AI Provider (Required for AI features)
+OPENAI_API_KEY="sk-xxxxxxxxxxxxx"
+# Optional: Override default model
+# OPENAI_MODEL="gpt-4-turbo-preview"
 ```
 
 ### 3. Database Setup
@@ -71,8 +78,13 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 npm run prisma:generate
 
 # Run migrations (create database first in Supabase)
-npm run prisma:migrate
+npm run migrate:run
+
+# Seed Knowledge Vault (strategy content, prompts, rubrics)
+npm run seed:knowledge
 ```
+
+**Note**: The Knowledge Vault contains curated strategy content, prompt profiles (Strategist/Closer voices), and tool-specific rubrics. This powers the AI enhancement layer.
 
 ### 4. Stripe Setup
 
@@ -91,7 +103,27 @@ npm run prisma:migrate
    - Events: `checkout.session.completed`
    - Copy webhook secret to `STRIPE_WEBHOOK_SECRET`
 
-### 5. Local Development
+### 5. Knowledge Vault Setup
+
+The Knowledge Vault is a database-backed intelligence system that ensures AI outputs are consistent, premium, and non-generic.
+
+**Seed the Knowledge Vault**:
+```bash
+npm run seed:knowledge
+```
+
+This populates:
+- **Prompt Profiles**: Strategist and Closer voice guidelines
+- **Knowledge Items**: Strategy content, playbooks, guardrails, templates
+- **Prompt Rubrics**: Tool-specific input/output schemas and reasoning rules
+
+**Knowledge Vault Structure**:
+- `KnowledgeItem`: Curated content chunks (diagnostic, engagement, DM, objections, conversion, guardrails, voice)
+- `PromptProfile`: Voice guidelines for Strategist (calm, diagnostic) vs Closer (direct, conversion-focused)
+- `PromptRubric`: Tool-specific schemas and safety rules
+- `AiUsageLog`: Tracks AI usage for rate limiting and cost monitoring
+
+### 6. Local Development
 
 ```bash
 # Start development server
@@ -100,7 +132,7 @@ npm run dev
 
 Visit `http://localhost:3000`
 
-### 6. Stripe Webhook Testing (Local)
+### 7. Stripe Webhook Testing (Local)
 
 ```bash
 # Install Stripe CLI
@@ -213,7 +245,11 @@ strategy-tools-funnel/
 │   ├── email.ts           # Email sending
 │   ├── entitlements.ts    # Plan entitlements
 │   ├── stripe.ts          # Stripe client
-│   └── tools/             # Tool logic
+│   ├── ai.ts              # AI service (OpenAI)
+│   ├── ai-usage.ts         # AI rate limiting
+│   ├── knowledge.ts       # Knowledge Vault retrieval
+│   ├── tool-execution.ts  # Unified tool execution with AI
+│   └── tools/             # Tool logic (deterministic)
 ├── prisma/                # Prisma schema
 └── __tests__/             # Unit tests
 ```
@@ -230,6 +266,20 @@ strategy-tools-funnel/
 - Comment Impact Engine
 - DM Engine Full Flows
 - Timing Engine
+
+### AI Enhancement Layer
+- **On-demand AI**: AI runs only on explicit tool submissions (not a chat interface)
+- **Dual Response Styles**:
+  - **Strategist**: Calm, diagnostic, prioritization-focused (for planning/diagnostic tools)
+  - **Closer**: Direct, action-forward, objection-aware (for DM/conversion tools)
+- **Knowledge Vault**: Database-backed intelligence ensures consistent, premium outputs
+- **Rate Limiting**: Plan-based daily AI usage caps
+  - Anonymous: No AI access
+  - Verified Free: 3 AI calls/day (preview)
+  - DM Engine: 20 AI calls/day
+  - The Strategy: 30 AI calls/day
+  - All Access: 50 AI calls/day
+- **Cost Controls**: Token tracking, cost estimation, usage logging
 - Saved Results & Exports
 
 ### Plans

@@ -31,6 +31,7 @@ model User {
   toolRuns      ToolRun[]
   entitlements  PlanEntitlement?
   otps          Otp[]
+  aiUsageLogs   AiUsageLog[]
 
   @@index([email])
   @@index([plan])
@@ -94,4 +95,66 @@ model PlanEntitlement {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model KnowledgeItem {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  category     String   // diagnostic | profile | engagement | dm | objections | conversion | guardrails | voice
+  tags         String[] // scenario, tone, intent, warmth, platform
+  content      String   @db.Text
+  priority     Int      @default(0)
+  planRequired String   @default("free") // free | dm_engine | the_strategy | all_access
+  style        String   @default("both") // strategist | closer | both
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category])
+  @@index([planRequired])
+  @@index([style])
+  @@index([priority])
+}
+
+model PromptProfile {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  style        String   // strategist | closer
+  dos          String   @db.Text
+  donts        String   @db.Text
+  bannedPhrases String[]
+  toneNotes    String   @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([style])
+}
+
+model PromptRubric {
+  id             String   @id @default(cuid())
+  toolKey        String   @unique
+  inputHints     String   @db.Text
+  outputSchemaJson Json
+  reasoningRules String   @db.Text
+  safetyRules    String   @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([toolKey])
+}
+
+model AiUsageLog {
+  id            String   @id @default(cuid())
+  userId        String?
+  toolKey       String
+  style         String?  // strategist | closer
+  tokensIn      Int?
+  tokensOut     Int?
+  costEstimate  Float?
+  createdAt     DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([toolKey])
+  @@index([createdAt])
 }

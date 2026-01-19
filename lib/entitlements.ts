@@ -1,5 +1,6 @@
 import { prisma } from './db'
 import { Plan } from '@prisma/client'
+import { checkAiUsageLimit } from './ai-usage'
 
 export interface Entitlements {
   dmEngine: boolean
@@ -9,6 +10,12 @@ export interface Entitlements {
   canSaveRuns: boolean
   canExportPDF: boolean
   freeRunsRemaining: number
+  aiUsage: {
+    canUseAi: boolean
+    dailyLimit: number
+    usedToday: number
+    remaining: number
+  }
 }
 
 export async function getUserEntitlements(userId: string): Promise<Entitlements> {
@@ -31,6 +38,12 @@ export async function getUserEntitlements(userId: string): Promise<Entitlements>
       canSaveRuns: false,
       canExportPDF: false,
       freeRunsRemaining: 0,
+      aiUsage: {
+        canUseAi: false,
+        dailyLimit: 0,
+        usedToday: 0,
+        remaining: 0,
+      },
     }
   }
 
@@ -38,6 +51,9 @@ export async function getUserEntitlements(userId: string): Promise<Entitlements>
   const hasAllAccess = plan === Plan.ALL_ACCESS || entitlements?.allAccess === true
   const hasDMEngine = plan === Plan.DM_ENGINE || entitlements?.dmEngine === true || hasAllAccess
   const hasStrategy = plan === Plan.THE_STRATEGY || entitlements?.strategy === true || hasAllAccess
+
+  // Check AI usage limits
+  const aiUsage = await checkAiUsageLimit(userId, plan, user.emailVerifiedAt)
 
   return {
     dmEngine: hasDMEngine,
@@ -47,6 +63,7 @@ export async function getUserEntitlements(userId: string): Promise<Entitlements>
     canSaveRuns: user.emailVerifiedAt !== null && (hasDMEngine || hasStrategy || hasAllAccess || user.freeVerifiedRunsRemaining > 0),
     canExportPDF: hasStrategy || hasAllAccess,
     freeRunsRemaining: user.freeVerifiedRunsRemaining,
+    aiUsage,
   }
 }
 

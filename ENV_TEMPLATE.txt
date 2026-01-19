@@ -54,3 +54,13 @@ STRIPE_PRICE_ID_ALL_ACCESS="price_xxxxxxxxxxxxx"
 # Update this after first Vercel deployment
 # Format: https://your-project.vercel.app
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# ============================================
+# AI PROVIDER (Required for AI features)
+# ============================================
+# Get from OpenAI Dashboard → API keys
+# https://platform.openai.com/api-keys
+OPENAI_API_KEY="sk-xxxxxxxxxxxxx"
+
+# Optional: Override default model
+# OPENAI_MODEL="gpt-4-turbo-preview"

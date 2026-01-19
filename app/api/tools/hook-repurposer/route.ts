@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { runHookRepurposer, type HookRepurposerInputs } from '@/lib/tools/hook-repurposer'
+import { executeTool } from '@/lib/tool-execution'
 import { getSession } from '@/lib/auth'
 import { getUserEntitlements } from '@/lib/entitlements'
-import { runHookRepurposer, type HookRepurposerInputs } from '@/lib/tools/hook-repurposer'
-import type { Prisma } from '@prisma/client'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
@@ -41,6 +40,7 @@ export async function POST(request: NextRequest) {
     const session = await getSession()
     const entitlements = session ? await getUserEntitlements(session.userId) : null
 
+    // Anonymous rate limiting (keep existing logic)
     const usageCookie = request.cookies.get('hook-repurposer-usage')?.value
     const today = new Date().toISOString().split('T')[0]
     const { date, count } = getUsageCookieValue(usageCookie)
@@ -56,39 +56,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const outputs = runHookRepurposer(inputs)
+    // Run deterministic logic first
+    const deterministicOutput = runHookRepurposer(inputs)
 
-    let saved = false
-    if (session && inputs.save) {
-      if (entitlements?.canSaveRuns && entitlements.freeRunsRemaining > 0) {
-        await prisma.toolRun.create({
-          data: {
-            userId: session.userId,
-            toolKey: 'hook-repurposer',
-            inputsJson: inputs as unknown as Prisma.InputJsonValue,
-            outputsJson: outputs as unknown as Prisma.InputJsonValue,
-          },
-        })
-
-        if (session.plan === 'FREE') {
-          await prisma.user.update({
-            where: { id: session.userId },
-            data: {
-              freeVerifiedRunsRemaining: {
-                decrement: 1,
-              },
-            },
-          })
-        }
-
-        saved = true
-      }
-    }
+    // Execute tool with optional AI enhancement
+    const result = await executeTool({
+      toolKey: 'hook-repurposer',
+      inputs,
+      deterministicOutput,
+      deterministicFn: runHookRepurposer,
+      style: 'strategist', // Hook repurposer uses strategist style
+      save: inputs.save,
+    })
 
     const response = NextResponse.json({
       success: true,
-      outputs,
-      saved,
+      outputs: result.outputs,
+      saved: result.saved,
+      enhanced: result.enhanced,
+      aiUsageRemaining: result.aiUsageRemaining,
       remainingToday: shouldLimit ? Math.max(0, DAILY_LIMIT - (dailyCount + 1)) : null,
     })
 

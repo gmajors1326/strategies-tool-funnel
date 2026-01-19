@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth'
-import { getUserEntitlements } from '@/lib/entitlements'
-import { prisma } from '@/lib/db'
 import { runEngagementDiagnostic, type EngagementDiagnosticInputs } from '@/lib/tools/engagement-diagnostic'
+import { executeTool } from '@/lib/tool-execution'
 import { z } from 'zod'
-import type { Prisma } from '@prisma/client'
 
 const diagnosticSchema = z.object({
   followerRange: z.enum(['0-500', '500-2k', '2k-10k', '10k+']),
@@ -13,6 +10,7 @@ const diagnosticSchema = z.object({
   primaryGoal: z.enum(['growth', 'DMs', 'sales', 'authority']),
   biggestFriction: z.enum(['no reach', 'low engagement', 'no DMs', 'no sales', 'burnout']),
   save: z.boolean().optional(),
+  userText: z.string().max(2000).optional(), // Optional user-provided context
 })
 
 export async function POST(request: NextRequest) {
@@ -20,46 +18,26 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const inputs = diagnosticSchema.parse(body)
 
-    // Run diagnostic (free tool, always available)
-    const outputs = runEngagementDiagnostic(inputs)
+    // Run deterministic logic first
+    const deterministicOutput = runEngagementDiagnostic(inputs)
 
-    // Save if user is verified and has remaining runs
-    const session = await getSession()
-    let saved = false
-
-    if (session && inputs.save) {
-      const entitlements = await getUserEntitlements(session.userId)
-
-      if (entitlements.canSaveRuns && entitlements.freeRunsRemaining > 0) {
-        await prisma.toolRun.create({
-          data: {
-            userId: session.userId,
-            toolKey: 'engagement-diagnostic',
-            inputsJson: inputs as unknown as Prisma.InputJsonValue,
-            outputsJson: outputs as unknown as Prisma.InputJsonValue,
-          },
-        })
-
-        // Decrement free runs if not paid
-        if (session.plan === 'FREE') {
-          await prisma.user.update({
-            where: { id: session.userId },
-            data: {
-              freeVerifiedRunsRemaining: {
-                decrement: 1,
-              },
-            },
-          })
-        }
-
-        saved = true
-      }
-    }
+    // Execute tool with optional AI enhancement
+    const result = await executeTool({
+      toolKey: 'engagement-diagnostic',
+      inputs,
+      deterministicOutput,
+      deterministicFn: runEngagementDiagnostic,
+      userText: inputs.userText,
+      style: 'strategist', // Engagement diagnostic uses strategist style
+      save: inputs.save,
+    })
 
     return NextResponse.json({
       success: true,
-      outputs,
-      saved,
+      outputs: result.outputs,
+      saved: result.saved,
+      enhanced: result.enhanced,
+      aiUsageRemaining: result.aiUsageRemaining,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
