@@ -40,9 +40,9 @@ export default function HomePage() {
       </section>
 
       {/* Free Tools Section */}
-      <section id="tools" className="container mx-auto px-3 sm:px-4 py-12 sm:py-20">
-        <h2 className="text-2xl sm:text-4xl font-bold text-center mb-6 sm:mb-12 text-white text-shadow-ink-40">Free Tools</h2>
-        <div className="grid md:grid-cols-2 gap-4 sm:gap-8 max-w-6xl mx-auto">
+      <section id="tools" className="container mx-auto px-4 py-20">
+        <h2 className="text-4xl font-bold text-center mb-12 text-white text-shadow-ink-40">Free Tools</h2>
+        <div className="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
           <EngagementDiagnosticTool />
           <DMOpenerTool />
           <div className="md:col-span-2">
@@ -232,11 +232,11 @@ function EngagementDiagnosticTool() {
 
   return (
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
-      <CardHeader className="p-4 sm:p-6">
-        <CardTitle className="text-lg sm:text-xl text-card-foreground">Engagement Diagnostic (Lite)</CardTitle>
-        <CardDescription className="text-sm text-card-foreground/70">Get your engagement tier and one actionable insight.</CardDescription>
+      <CardHeader>
+        <CardTitle className="text-card-foreground">Engagement Diagnostic (Lite)</CardTitle>
+        <CardDescription className="text-card-foreground/70">Get your engagement tier and one actionable insight.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
+      <CardContent className="space-y-3">
         <div>
           <Label className="text-card-foreground/70">Follower Range</Label>
           <Select value={inputs.followerRange} onChange={(e) => setInputs({ ...inputs, followerRange: e.target.value })}>
@@ -292,22 +292,22 @@ function EngagementDiagnosticTool() {
           {loading ? 'Running...' : 'Run Diagnostic'}
         </Button>
         {results && (
-          <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-background/70 rounded-lg border border-border/60">
-            <div className="mb-3 sm:mb-4">
-              <span className="text-xs sm:text-sm text-card-foreground/60">Engagement Tier:</span>
-              <div className="text-xl sm:text-2xl font-bold text-primary mt-1">{results.engagementTier}</div>
+          <div className="mt-4 p-3 bg-background/70 rounded-lg border border-border/60">
+            <div className="mb-2">
+              <span className="text-xs text-card-foreground/60">Engagement Tier:</span>
+              <div className="text-lg font-bold text-primary mt-1">{results.engagementTier}</div>
             </div>
-            <div className="mb-3 sm:mb-4">
-              <span className="text-xs sm:text-sm text-card-foreground/60">Insight:</span>
-              <p className="text-sm sm:text-base text-foreground mt-1">{results.insight}</p>
+            <div className="mb-2">
+              <span className="text-xs text-card-foreground/60">Insight:</span>
+              <p className="text-sm text-foreground mt-1">{results.insight}</p>
             </div>
-            <div className="mb-3 sm:mb-4">
-              <span className="text-xs sm:text-sm text-card-foreground/60">Action:</span>
-              <p className="text-sm sm:text-base text-foreground mt-1">{results.action}</p>
+            <div className="mb-2">
+              <span className="text-xs text-card-foreground/60">Action:</span>
+              <p className="text-sm text-foreground mt-1">{results.action}</p>
             </div>
-            <div className="pt-3 sm:pt-4 border-t border-border/60">
-              <p className="text-xs sm:text-sm text-card-foreground/60">{results.teaser}</p>
-              <Button asChild variant="outline" size="sm" className="mt-2 sm:mt-3 w-full border-border/60 text-xs sm:text-sm">
+            <div className="pt-3 border-t border-border/60">
+              <p className="text-xs text-card-foreground/60 mb-2">{results.teaser}</p>
+              <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs">
                 <Link href="/verify">Email me my full breakdown</Link>
               </Button>
             </div>
@@ -352,11 +352,11 @@ function DMOpenerTool() {
 
   return (
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
-      <CardHeader className="p-4 sm:p-6">
-        <CardTitle className="text-lg sm:text-xl text-card-foreground">DM Opener Generator (Lite)</CardTitle>
-        <CardDescription className="text-sm text-card-foreground/70">Generate a DM opener based on your scenario and tone.</CardDescription>
+      <CardHeader>
+        <CardTitle className="text-card-foreground">DM Opener Generator (Lite)</CardTitle>
+        <CardDescription className="text-card-foreground/70">Generate a DM opener based on your scenario and tone.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3 sm:space-y-4 p-4 sm:p-6">
+      <CardContent className="space-y-3">
         <div>
           <Label className="text-card-foreground/70">Scenario</Label>
           <Select value={inputs.scenario} onChange={(e) => setInputs({ ...inputs, scenario: e.target.value })}>
@@ -392,14 +392,14 @@ function DMOpenerTool() {
           {loading ? 'Generating...' : 'Generate Opener'}
         </Button>
         {results && (
-          <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-background/70 rounded-lg border border-border/60">
-            <div className="mb-3 sm:mb-4">
-              <span className="text-xs sm:text-sm text-card-foreground/60">DM Opener:</span>
-              <p className="text-sm sm:text-base text-foreground mt-2 p-2 sm:p-3 bg-card rounded border border-border/60">{results.opener}</p>
+          <div className="mt-4 p-3 bg-background/70 rounded-lg border border-border/60">
+            <div className="mb-2">
+              <span className="text-xs text-card-foreground/60">DM Opener:</span>
+              <p className="text-sm text-foreground mt-2 p-2 bg-card rounded border border-border/60">{results.opener}</p>
             </div>
-            <div className="pt-3 sm:pt-4 border-t border-border/60">
-              <p className="text-xs sm:text-sm text-card-foreground/60 mb-2 sm:mb-3">{results.followUpHint}</p>
-              <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs sm:text-sm">
+            <div className="pt-3 border-t border-border/60">
+              <p className="text-xs text-card-foreground/60 mb-2">{results.followUpHint}</p>
+              <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs">
                 <Link href="/verify">Unlock full DM logic</Link>
               </Button>
             </div>
@@ -461,11 +461,11 @@ function HookRepurposerTool() {
 
   return (
     <Card className="bg-card/95 border-border/60 backdrop-blur-sm shadow-sm">
-      <CardHeader className="p-4 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+      <CardHeader>
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <CardTitle className="text-lg sm:text-xl text-card-foreground">Hook Repurposer™</CardTitle>
-            <CardDescription className="text-sm text-card-foreground/70">
+            <CardTitle className="text-card-foreground">Hook Repurposer™</CardTitle>
+            <CardDescription className="text-card-foreground/70">
               Turn one hook into ten angles that stop the scroll.
             </CardDescription>
           </div>
@@ -474,19 +474,19 @@ function HookRepurposerTool() {
           </span>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-4 sm:gap-8 md:grid-cols-2 p-4 sm:p-6">
-        <div className="space-y-3 sm:space-y-4">
-          <div className="rounded-md border border-border/60 bg-[#1F3F2A] p-2 sm:p-3 text-xs sm:text-sm text-white">
+      <CardContent className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-3">
+          <div className="rounded-md border border-border/60 bg-[#1F3F2A] p-2 text-xs text-white">
             This is an AI-guided hook intelligence tool. It reframes ideas with strategy—no copying, no trend-chasing.
           </div>
           <div>
-            <Label className="text-sm text-card-foreground/70">Hook input</Label>
+            <Label className="text-card-foreground/70">Hook input</Label>
             <textarea
               maxLength={200}
               value={inputs.hookInput}
               onChange={(e) => setInputs({ ...inputs, hookInput: e.target.value })}
               placeholder="Paste someone else's hook or your own"
-              className="mt-1 min-h-[100px] sm:min-h-[120px] w-full rounded-md border border-input bg-input p-2 sm:p-3 text-sm text-card-foreground placeholder:text-card-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-1 min-h-[80px] w-full rounded-md border border-input bg-input p-2 text-sm text-card-foreground placeholder:text-card-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
             <p className="mt-2 text-xs text-card-foreground/50">
               Max 200 characters.
@@ -554,22 +554,22 @@ function HookRepurposerTool() {
             This tool does not copy content. It reframes ideas using strategy, not duplication. Always adapt hooks to your own voice.
           </p>
         </div>
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-4">
           <div>
-            <h4 className="text-base sm:text-lg font-semibold text-card-foreground">How this reframes your hook</h4>
+            <h4 className="text-sm font-semibold text-card-foreground">How this reframes your hook</h4>
             {results ? (
-              <div className="mt-2 sm:mt-3 space-y-2 sm:space-y-3">
+              <div className="mt-2 space-y-2">
                 {results.hooks?.map((hook: any, index: number) => (
-                  <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-2 sm:p-3 text-white">
+                  <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-2 text-white">
                     <div className="text-xs uppercase tracking-[0.2em] text-white/70">
                       {hook.angle}
                     </div>
-                    <p className="mt-1 sm:mt-2 text-sm sm:text-base text-white">{hook.text}</p>
+                    <p className="mt-1 text-xs text-white">{hook.text}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="mt-2 text-xs sm:text-sm text-card-foreground/60">
+              <p className="mt-2 text-xs text-card-foreground/60">
                 Paste a hook to see 6–8 reframes by angle.
               </p>
             )}
@@ -589,9 +589,9 @@ function HookRepurposerTool() {
             )}
           </div>
           <div>
-            <h4 className="text-base sm:text-lg font-semibold text-card-foreground">Visual pairing ideas</h4>
+            <h4 className="text-sm font-semibold text-card-foreground">Visual pairing ideas</h4>
             {results ? (
-              <div className="mt-2 sm:mt-3 space-y-2 sm:space-y-3">
+              <div className="mt-2 space-y-2">
                 <div>
                   <p className="text-sm text-white/80">B-roll ideas</p>
                   <ul className="mt-2 space-y-2 text-sm text-white">
