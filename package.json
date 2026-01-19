@@ -16,7 +16,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "migrate:run": "node scripts/run-migration.js",
-    "seed:knowledge": "node scripts/seed-knowledge-vault.js"
+    "seed:knowledge": "node scripts/seed-knowledge-vault.js",
+    "test:grant": "node scripts/grant-test-entitlements.js"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",

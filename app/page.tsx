@@ -72,8 +72,8 @@ export default function HomePage() {
                 <CardDescription className="text-card-foreground/70">{tool.desc}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="outline" className="w-full border-border/60 hover:bg-accent/80">
-                  Unlock
+                <Button asChild variant="outline" className="w-full border-border/60 hover:bg-accent/80">
+                  <Link href="#offers">Unlock</Link>
                 </Button>
               </CardContent>
             </Card>
