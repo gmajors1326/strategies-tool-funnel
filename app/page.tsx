@@ -581,18 +581,18 @@ function HookRepurposerTool() {
             <button
               type="button"
               onClick={() => setShowWhy((prev) => !prev)}
-              className="text-xs text-white underline-offset-4 hover:underline"
+              className="text-xs text-card-foreground underline-offset-4 hover:underline"
             >
               Why this works
             </button>
             {showWhy && (
-              <p className="mt-1.5 text-xs text-white">
+              <p className="mt-1.5 text-xs text-card-foreground">
                 {results?.explanation || 'Run the tool to see the reasoning behind the strongest angle.'}
               </p>
             )}
           </div>
           <div>
-            <h4 className="text-xs font-semibold text-white">Visual pairing ideas</h4>
+            <h4 className="text-xs font-semibold text-card-foreground">Visual pairing ideas</h4>
             {results ? (
               <div className="mt-1.5 space-y-1.5">
                 <div>
@@ -613,7 +613,7 @@ function HookRepurposerTool() {
                 </div>
               </div>
             ) : (
-              <p className="mt-1.5 text-xs text-white">
+              <p className="mt-1.5 text-xs text-card-foreground">
                 Add context to get tailored visual pairing ideas.
               </p>
             )}
