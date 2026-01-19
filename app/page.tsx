@@ -294,19 +294,19 @@ function EngagementDiagnosticTool() {
         {results && (
           <div className="mt-2 p-2 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-2">
-              <span className="text-xs text-card-foreground/60">Engagement Tier:</span>
+              <span className="text-xs text-card-foreground">Engagement Tier:</span>
               <div className="text-base font-bold text-primary mt-0.5">{results.engagementTier}</div>
             </div>
             <div className="mb-2">
-              <span className="text-xs text-card-foreground/60">Insight:</span>
-              <p className="text-xs text-foreground mt-0.5">{results.insight}</p>
+              <span className="text-xs text-card-foreground">Insight:</span>
+              <p className="text-xs text-card-foreground mt-0.5">{results.insight}</p>
             </div>
             <div className="mb-2">
-              <span className="text-xs text-card-foreground/60">Action:</span>
-              <p className="text-xs text-foreground mt-0.5">{results.action}</p>
+              <span className="text-xs text-card-foreground">Action:</span>
+              <p className="text-xs text-card-foreground mt-0.5">{results.action}</p>
             </div>
             <div className="pt-2 border-t border-border/60">
-              <p className="text-xs text-card-foreground/60 mb-2">{results.teaser}</p>
+              <p className="text-xs text-card-foreground mb-2">{results.teaser}</p>
               <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs h-8">
                 <Link href="/verify">Email me my full breakdown</Link>
               </Button>
@@ -394,11 +394,11 @@ function DMOpenerTool() {
         {results && (
           <div className="mt-2 p-2 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-2">
-              <span className="text-xs text-card-foreground/60">DM Opener:</span>
-              <p className="text-xs text-foreground mt-1 p-2 bg-card rounded border border-border/60">{results.opener}</p>
+              <span className="text-xs text-card-foreground">DM Opener:</span>
+              <p className="text-xs text-card-foreground mt-1 p-2 bg-card rounded border border-border/60">{results.opener}</p>
             </div>
             <div className="pt-2 border-t border-border/60">
-              <p className="text-xs text-card-foreground/60 mb-2">{results.followUpHint}</p>
+              <p className="text-xs text-card-foreground mb-2">{results.followUpHint}</p>
               <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs h-8">
                 <Link href="/verify">Unlock full DM logic</Link>
               </Button>
@@ -572,7 +572,7 @@ function HookRepurposerTool() {
                 ))}
               </div>
             ) : (
-              <p className="mt-1.5 text-xs text-card-foreground/60">
+              <p className="mt-1.5 text-xs text-card-foreground">
                 Paste a hook to see 6–8 reframes by angle.
               </p>
             )}
@@ -581,12 +581,12 @@ function HookRepurposerTool() {
             <button
               type="button"
               onClick={() => setShowWhy((prev) => !prev)}
-              className="text-sm text-card-foreground/70 underline-offset-4 hover:underline"
+              className="text-xs text-card-foreground underline-offset-4 hover:underline"
             >
               Why this works
             </button>
             {showWhy && (
-              <p className="mt-2 text-sm text-card-foreground/70">
+              <p className="mt-1.5 text-xs text-card-foreground">
                 {results?.explanation || 'Run the tool to see the reasoning behind the strongest angle.'}
               </p>
             )}
@@ -613,7 +613,7 @@ function HookRepurposerTool() {
                 </div>
               </div>
             ) : (
-              <p className="mt-1.5 text-xs text-card-foreground/60">
+              <p className="mt-1.5 text-xs text-card-foreground">
                 Add context to get tailored visual pairing ideas.
               </p>
             )}
