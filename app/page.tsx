@@ -233,13 +233,13 @@ function EngagementDiagnosticTool() {
   return (
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg text-card-foreground">Engagement Diagnostic (Lite)</CardTitle>
+        <CardTitle className="text-card-foreground">Engagement Diagnostic (Lite)</CardTitle>
         <CardDescription className="text-card-foreground/70">Get your engagement tier and one actionable insight.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-1.5">
         <div>
           <Label className="text-xs text-card-foreground/70">Follower Range</Label>
-          <Select value={inputs.followerRange} onChange={(e) => setInputs({ ...inputs, followerRange: e.target.value })} className="mt-1 text-sm">
+          <Select value={inputs.followerRange} onChange={(e) => setInputs({ ...inputs, followerRange: e.target.value })} className="mt-0.5 h-8 text-xs">
             <option value="">Select...</option>
             <option value="0-500">0-500</option>
             <option value="500-2k">500-2k</option>
@@ -249,7 +249,7 @@ function EngagementDiagnosticTool() {
         </div>
         <div>
           <Label className="text-xs text-card-foreground/70">Posting Frequency</Label>
-          <Select value={inputs.postingFrequency} onChange={(e) => setInputs({ ...inputs, postingFrequency: e.target.value })} className="mt-1 text-sm">
+          <Select value={inputs.postingFrequency} onChange={(e) => setInputs({ ...inputs, postingFrequency: e.target.value })} className="mt-0.5 h-8 text-xs">
             <option value="">Select...</option>
             <option value="rarely">Rarely</option>
             <option value="1-2x/week">1-2x/week</option>
@@ -259,7 +259,7 @@ function EngagementDiagnosticTool() {
         </div>
         <div>
           <Label className="text-xs text-card-foreground/70">Daily Engagement Time</Label>
-          <Select value={inputs.dailyEngagementTime} onChange={(e) => setInputs({ ...inputs, dailyEngagementTime: e.target.value })} className="mt-1 text-sm">
+          <Select value={inputs.dailyEngagementTime} onChange={(e) => setInputs({ ...inputs, dailyEngagementTime: e.target.value })} className="mt-0.5 h-8 text-xs">
             <option value="">Select...</option>
             <option value="0-5">0-5 minutes</option>
             <option value="5-15">5-15 minutes</option>
@@ -269,7 +269,7 @@ function EngagementDiagnosticTool() {
         </div>
         <div>
           <Label className="text-xs text-card-foreground/70">Primary Goal</Label>
-          <Select value={inputs.primaryGoal} onChange={(e) => setInputs({ ...inputs, primaryGoal: e.target.value })} className="mt-1 text-sm">
+          <Select value={inputs.primaryGoal} onChange={(e) => setInputs({ ...inputs, primaryGoal: e.target.value })} className="mt-0.5 h-8 text-xs">
             <option value="">Select...</option>
             <option value="growth">Growth</option>
             <option value="DMs">DMs</option>
@@ -279,7 +279,7 @@ function EngagementDiagnosticTool() {
         </div>
         <div>
           <Label className="text-xs text-card-foreground/70">Biggest Friction</Label>
-          <Select value={inputs.biggestFriction} onChange={(e) => setInputs({ ...inputs, biggestFriction: e.target.value })} className="mt-1 text-sm">
+          <Select value={inputs.biggestFriction} onChange={(e) => setInputs({ ...inputs, biggestFriction: e.target.value })} className="mt-0.5 h-8 text-xs">
             <option value="">Select...</option>
             <option value="no reach">No reach</option>
             <option value="low engagement">Low engagement</option>
@@ -288,11 +288,11 @@ function EngagementDiagnosticTool() {
             <option value="burnout">Burnout</option>
           </Select>
         </div>
-        <Button onClick={handleRun} disabled={loading} className="w-full mt-2" size="sm">
+        <Button onClick={handleRun} disabled={loading} className="w-full mt-1.5" size="sm">
           {loading ? 'Running...' : 'Run Diagnostic'}
         </Button>
         {results && (
-          <div className="mt-3 p-2 bg-background/70 rounded-lg border border-border/60">
+          <div className="mt-2 p-2 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-2">
               <span className="text-xs text-card-foreground/60">Engagement Tier:</span>
               <div className="text-base font-bold text-primary mt-0.5">{results.engagementTier}</div>
@@ -353,13 +353,13 @@ function DMOpenerTool() {
   return (
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg text-card-foreground">DM Opener Generator (Lite)</CardTitle>
+        <CardTitle className="text-card-foreground">DM Opener Generator (Lite)</CardTitle>
         <CardDescription className="text-card-foreground/70">Generate a DM opener based on your scenario and tone.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-1.5">
         <div>
           <Label className="text-xs text-card-foreground/70">Scenario</Label>
-          <Select value={inputs.scenario} onChange={(e) => setInputs({ ...inputs, scenario: e.target.value })} className="mt-1 text-sm">
+          <Select value={inputs.scenario} onChange={(e) => setInputs({ ...inputs, scenario: e.target.value })} className="mt-0.5 h-8 text-xs">
             <option value="">Select...</option>
             <option value="commenter">Commenter</option>
             <option value="story reply">Story Reply</option>
@@ -370,7 +370,7 @@ function DMOpenerTool() {
         </div>
         <div>
           <Label className="text-xs text-card-foreground/70">Tone</Label>
-          <Select value={inputs.tone} onChange={(e) => setInputs({ ...inputs, tone: e.target.value })} className="mt-1 text-sm">
+          <Select value={inputs.tone} onChange={(e) => setInputs({ ...inputs, tone: e.target.value })} className="mt-0.5 h-8 text-xs">
             <option value="">Select...</option>
             <option value="friendly">Friendly</option>
             <option value="direct">Direct</option>
@@ -380,7 +380,7 @@ function DMOpenerTool() {
         </div>
         <div>
           <Label className="text-xs text-card-foreground/70">Intent</Label>
-          <Select value={inputs.intent} onChange={(e) => setInputs({ ...inputs, intent: e.target.value })} className="mt-1 text-sm">
+          <Select value={inputs.intent} onChange={(e) => setInputs({ ...inputs, intent: e.target.value })} className="mt-0.5 h-8 text-xs">
             <option value="">Select...</option>
             <option value="start convo">Start Conversation</option>
             <option value="qualify">Qualify</option>
@@ -388,11 +388,11 @@ function DMOpenerTool() {
             <option value="book call">Book Call</option>
           </Select>
         </div>
-        <Button onClick={handleRun} disabled={loading} className="w-full mt-2" size="sm">
+        <Button onClick={handleRun} disabled={loading} className="w-full mt-1.5" size="sm">
           {loading ? 'Generating...' : 'Generate Opener'}
         </Button>
         {results && (
-          <div className="mt-3 p-2 bg-background/70 rounded-lg border border-border/60">
+          <div className="mt-2 p-2 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-2">
               <span className="text-xs text-card-foreground/60">DM Opener:</span>
               <p className="text-xs text-foreground mt-1 p-2 bg-card rounded border border-border/60">{results.opener}</p>
@@ -464,7 +464,7 @@ function HookRepurposerTool() {
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <CardTitle className="text-lg text-card-foreground">Hook Repurposer™</CardTitle>
+            <CardTitle className="text-card-foreground">Hook Repurposer™</CardTitle>
             <CardDescription className="text-card-foreground/70">
               Turn one hook into ten angles that stop the scroll.
             </CardDescription>
@@ -474,9 +474,9 @@ function HookRepurposerTool() {
           </span>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-3 md:grid-cols-2">
-        <div className="space-y-2">
-          <div className="rounded-md border border-border/60 bg-[#1F3F2A] p-2 text-xs text-white">
+      <CardContent className="grid gap-2 md:grid-cols-2">
+        <div className="space-y-1.5">
+          <div className="rounded-md border border-border/60 bg-[#1F3F2A] p-1.5 text-xs text-white">
             This is an AI-guided hook intelligence tool. It reframes ideas with strategy—no copying, no trend-chasing.
           </div>
           <div>
@@ -486,7 +486,7 @@ function HookRepurposerTool() {
               value={inputs.hookInput}
               onChange={(e) => setInputs({ ...inputs, hookInput: e.target.value })}
               placeholder="Paste someone else's hook or your own"
-              className="mt-1 min-h-[60px] w-full rounded-md border border-input bg-input p-2 text-xs text-card-foreground placeholder:text-card-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="mt-0.5 min-h-[50px] w-full rounded-md border border-input bg-input p-1.5 text-xs text-card-foreground placeholder:text-card-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
             <p className="mt-2 text-xs text-card-foreground/50">
               Max 200 characters.
@@ -499,9 +499,9 @@ function HookRepurposerTool() {
               value={inputs.videoContext}
               onChange={(e) => setInputs({ ...inputs, videoContext: e.target.value })}
               placeholder="Describe what the video shows"
-              className="mt-1 text-sm h-8"
+              className="mt-0.5 text-xs h-8"
             />
-            <p className="mt-1 text-xs text-card-foreground/50">
+            <p className="mt-0.5 text-xs text-card-foreground/50">
               Max 140 characters.
             </p>
           </div>
@@ -510,7 +510,7 @@ function HookRepurposerTool() {
             <Select
               value={inputs.goal}
               onChange={(e) => setInputs({ ...inputs, goal: e.target.value })}
-              className="mt-1 text-sm"
+              className="mt-0.5 h-8 text-xs"
             >
               <option>Stop the scroll</option>
               <option>Spark curiosity</option>
@@ -524,7 +524,7 @@ function HookRepurposerTool() {
             <Select
               value={inputs.tone}
               onChange={(e) => setInputs({ ...inputs, tone: e.target.value })}
-              className="mt-1 text-sm"
+              className="mt-0.5 h-8 text-xs"
             >
               <option>Calm</option>
               <option>Direct</option>
@@ -537,7 +537,7 @@ function HookRepurposerTool() {
             <Select
               value={inputs.platformFocus}
               onChange={(e) => setInputs({ ...inputs, platformFocus: e.target.value })}
-              className="mt-1 text-sm"
+              className="mt-0.5 h-8 text-xs"
             >
               <option>Reels</option>
               <option>TikTok</option>
@@ -550,29 +550,29 @@ function HookRepurposerTool() {
               Remaining today: {remainingToday}
             </p>
           )}
-          <Button onClick={handleRun} disabled={loading} className="w-full mt-2" size="sm">
+          <Button onClick={handleRun} disabled={loading} className="w-full mt-1.5" size="sm">
             {loading ? 'Generating...' : 'Generate Hook Angles'}
           </Button>
           <p className="text-xs text-card-foreground/60">
             This tool does not copy content. It reframes ideas using strategy, not duplication. Always adapt hooks to your own voice.
           </p>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <h4 className="text-sm font-semibold text-card-foreground">How this reframes your hook</h4>
+            <h4 className="text-xs font-semibold text-card-foreground">How this reframes your hook</h4>
             {results ? (
-              <div className="mt-2 space-y-2">
+              <div className="mt-1.5 space-y-1.5">
                 {results.hooks?.map((hook: any, index: number) => (
-                  <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-2 text-white">
+                  <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-1.5 text-white">
                     <div className="text-xs uppercase tracking-[0.2em] text-white/70">
                       {hook.angle}
                     </div>
-                    <p className="mt-1 text-xs text-white">{hook.text}</p>
+                    <p className="mt-0.5 text-xs text-white">{hook.text}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="mt-2 text-xs text-card-foreground/60">
+              <p className="mt-1.5 text-xs text-card-foreground/60">
                 Paste a hook to see 6–8 reframes by angle.
               </p>
             )}
@@ -592,20 +592,20 @@ function HookRepurposerTool() {
             )}
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-card-foreground">Visual pairing ideas</h4>
+            <h4 className="text-xs font-semibold text-card-foreground">Visual pairing ideas</h4>
             {results ? (
-              <div className="mt-2 space-y-2">
+              <div className="mt-1.5 space-y-1.5">
                 <div>
-                  <p className="text-sm text-white/80">B-roll ideas</p>
-                  <ul className="mt-2 space-y-2 text-sm text-white">
+                  <p className="text-xs text-white/80">B-roll ideas</p>
+                  <ul className="mt-1 space-y-1 text-xs text-white">
                     {results.visualSuggestions?.bRoll?.map((item: string, index: number) => (
                       <li key={`broll-${index}`}>• {item}</li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <p className="text-sm text-white/80">Alternate concepts</p>
-                  <ul className="mt-2 space-y-2 text-sm text-white">
+                  <p className="text-xs text-white/80">Alternate concepts</p>
+                  <ul className="mt-1 space-y-1 text-xs text-white">
                     {results.visualSuggestions?.alternatives?.map((item: string, index: number) => (
                       <li key={`alt-${index}`}>• {item}</li>
                     ))}
@@ -613,25 +613,25 @@ function HookRepurposerTool() {
                 </div>
               </div>
             ) : (
-              <p className="mt-2 text-sm text-card-foreground/60">
+              <p className="mt-1.5 text-xs text-card-foreground/60">
                 Add context to get tailored visual pairing ideas.
               </p>
             )}
           </div>
-          <div className="rounded-md border border-border/60 bg-background/60 p-4 text-white">
-            <div className="flex items-center gap-2 text-white/80">
-              <Lock className="h-4 w-4" />
+          <div className="rounded-md border border-border/60 bg-background/60 p-2 text-white">
+            <div className="flex items-center gap-1.5 text-xs text-white/80">
+              <Lock className="h-3 w-3" />
               <span>Hook sequences (3-part openers)</span>
             </div>
-            <div className="mt-2 flex items-center gap-2 text-white/80">
-              <Lock className="h-4 w-4" />
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-white/80">
+              <Lock className="h-3 w-3" />
               <span>Comment-bait vs authority versions</span>
             </div>
-            <div className="mt-2 flex items-center gap-2 text-white/80">
-              <Lock className="h-4 w-4" />
+            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-white/80">
+              <Lock className="h-3 w-3" />
               <span>CTA-aligned hooks (DM / profile click)</span>
             </div>
-            <Button asChild className="mt-4 w-full">
+            <Button asChild size="sm" className="mt-2 w-full text-xs">
               <Link href="#offers">Unlock full hook systems in The Strategy</Link>
             </Button>
           </div>
