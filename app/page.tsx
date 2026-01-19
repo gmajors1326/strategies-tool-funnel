@@ -395,7 +395,7 @@ function DMOpenerTool() {
           <div className="mt-2 p-2 bg-background/70 rounded-lg border border-border/60">
             <div className="mb-2">
               <span className="text-xs text-white">DM Opener:</span>
-              <p className="text-xs text-white mt-1 p-2 bg-card rounded border border-border/60">{results.opener}</p>
+              <p className="text-xs text-card-foreground mt-1 p-2 bg-card rounded border border-border/60">{results.opener}</p>
             </div>
             <div className="pt-2 border-t border-border/60">
               <p className="text-xs text-white mb-2">{results.followUpHint}</p>
@@ -563,16 +563,16 @@ function HookRepurposerTool() {
             {results ? (
               <div className="mt-1.5 space-y-1.5">
                 {results.hooks?.map((hook: any, index: number) => (
-                  <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-1.5 text-white">
-                    <div className="text-xs uppercase tracking-[0.2em] text-white/70">
+                  <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-1.5">
+                    <div className="text-xs uppercase tracking-[0.2em] text-card-foreground/70">
                       {hook.angle}
                     </div>
-                    <p className="mt-0.5 text-xs text-white">{hook.text}</p>
+                    <p className="mt-0.5 text-xs text-card-foreground">{hook.text}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="mt-1.5 text-xs text-white">
+              <p className="mt-1.5 text-xs text-card-foreground">
                 Paste a hook to see 6–8 reframes by angle.
               </p>
             )}
