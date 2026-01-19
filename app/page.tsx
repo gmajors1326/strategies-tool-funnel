@@ -596,16 +596,16 @@ function HookRepurposerTool() {
             {results ? (
               <div className="mt-1.5 space-y-1.5">
                 <div>
-                  <p className="text-xs text-white">B-roll ideas</p>
-                  <ul className="mt-1 space-y-1 text-xs text-white">
+                  <p className="text-xs text-card-foreground">B-roll ideas</p>
+                  <ul className="mt-1 space-y-1 text-xs text-card-foreground">
                     {results.visualSuggestions?.bRoll?.map((item: string, index: number) => (
                       <li key={`broll-${index}`}>• {item}</li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <p className="text-xs text-white">Alternate concepts</p>
-                  <ul className="mt-1 space-y-1 text-xs text-white">
+                  <p className="text-xs text-card-foreground">Alternate concepts</p>
+                  <ul className="mt-1 space-y-1 text-xs text-card-foreground">
                     {results.visualSuggestions?.alternatives?.map((item: string, index: number) => (
                       <li key={`alt-${index}`}>• {item}</li>
                     ))}
