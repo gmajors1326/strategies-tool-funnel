@@ -564,10 +564,10 @@ function HookRepurposerTool() {
               <div className="mt-1.5 space-y-1.5">
                 {results.hooks?.map((hook: any, index: number) => (
                   <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/60 p-1.5">
-                    <div className="text-xs uppercase tracking-[0.2em] text-card-foreground/70">
+                    <div className="text-xs uppercase tracking-[0.2em] text-white/70">
                       {hook.angle}
                     </div>
-                    <p className="mt-0.5 text-xs text-card-foreground">{hook.text}</p>
+                    <p className="mt-0.5 text-xs text-white">{hook.text}</p>
                   </div>
                 ))}
               </div>
