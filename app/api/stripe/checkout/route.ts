@@ -20,7 +20,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { planId } = checkoutSchema.parse(body)
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    // Get app URL from env or construct from request
+    let appUrl = process.env.NEXT_PUBLIC_APP_URL
+    if (!appUrl || !appUrl.startsWith('http')) {
+      const host = request.headers.get('host') || 'localhost:3000'
+      const protocol = request.headers.get('x-forwarded-proto') || 'https'
+      appUrl = `${protocol}://${host}`
+    }
+    
+    // Ensure URL has https:// scheme
+    if (!appUrl.startsWith('http://') && !appUrl.startsWith('https://')) {
+      appUrl = `https://${appUrl}`
+    }
+    
+    console.info('[stripe/checkout] Using app URL:', appUrl)
+    
     const checkoutSession = await createCheckoutSession(
       session.userId,
       session.email,
