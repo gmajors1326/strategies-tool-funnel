@@ -29,10 +29,10 @@ export default function HomePage() {
             Strategic engagement tools that turn conversations into revenue.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-cactus-primary text-white hover:opacity-90">
+            <Button asChild size="lg" className="bg-cactus-primary text-white hover:opacity-90 shadow-ink-40">
               <Link href="#tools">Try Free Tools</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-border/60 hover:bg-accent/60">
+            <Button asChild size="lg" variant="outline" className="border-border/60 hover:bg-accent/60 shadow-ink-40">
               <Link href="#offers">See What&apos;s Included</Link>
             </Button>
           </div>
@@ -183,10 +183,10 @@ export default function HomePage() {
             Try the free tools or unlock the full system.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-cactus-primary text-white hover:opacity-90">
+            <Button asChild size="lg" className="bg-cactus-primary text-white hover:opacity-90 shadow-ink-40">
               <Link href="#tools">Start Free → Get Your Results</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-border/60 hover:bg-accent/60">
+            <Button asChild size="lg" variant="outline" className="border-border/60 hover:bg-accent/60 shadow-ink-40">
               <Link href="#offers">Unlock the Full System</Link>
             </Button>
           </div>
