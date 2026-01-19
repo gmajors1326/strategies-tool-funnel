@@ -33,26 +33,37 @@ export async function createCheckoutSession(
   const stripe = getStripe()
   const priceId = PLAN_PRICE_IDS[planId]
   
+  console.info('[stripe] Creating checkout session:', { planId, priceId, email })
+  
   if (!priceId) {
-    throw new Error(`Invalid plan ID: ${planId}`)
+    const error = `Invalid plan ID: ${planId}. Available plans: ${Object.keys(PLAN_PRICE_IDS).join(', ')}`
+    console.error('[stripe]', error)
+    throw new Error(error)
   }
 
-  return stripe.checkout.sessions.create({
-    customer_email: email,
-    client_reference_id: userId,
-    mode: 'payment',
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
+  try {
+    const session = await stripe.checkout.sessions.create({
+      customer_email: email,
+      client_reference_id: userId,
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        userId,
+        planId,
       },
-    ],
-    success_url: successUrl,
-    cancel_url: cancelUrl,
-    metadata: {
-      userId,
-      planId,
-    },
-  })
+    })
+    console.info('[stripe] Checkout session created:', session.id)
+    return session
+  } catch (error: any) {
+    console.error('[stripe] Checkout session creation failed:', error.message, error.type)
+    throw error
+  }
 }
