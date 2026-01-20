@@ -71,8 +71,6 @@ export default function HomePage() {
 
       {/* All Tools Section */}
       <section className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-12 text-white text-shadow-ink-40">All Tools</h2>
-        
         {/* DM Intelligence Engine - Full Tool */}
         <DMIntelligenceEngineTool />
       </section>
