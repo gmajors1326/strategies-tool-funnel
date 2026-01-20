@@ -10,7 +10,7 @@ const startSchema = z.object({
 })
 
 const OTP_EXPIRY_MINUTES = 10
-const MAX_ATTEMPTS = 5
+// MAX_ATTEMPTS removed - not currently used in this route
 
 export async function POST(request: NextRequest) {
   try {
