@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
       'hook_pressure_test',
       'retention_leak_finder',
       'algorithm_training_mode',
+      'post_type_recommender',
     ]
 
     if (!validToolIds.includes(toolId as ToolId)) {

@@ -78,6 +78,19 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
         next_post_recommendations: ['Post consistently', 'Test different content types'],
         content_pattern_analysis: 'Need more data to analyze pattern',
       }
+    case 'post_type_recommender':
+      return {
+        ...base,
+        recommended_post_type: 'Insufficient signal',
+        one_liner: 'Select a primary goal to get a recommendation.',
+        rules_to_execute: ['Select your primary growth goal', 'Provide account context if available', 'Review the recommended post type'],
+        do_list: ['Follow the execution rules', 'Use the provided examples as templates', 'Test one variation at a time'],
+        dont_list: ['Mix multiple post types', 'Skip the execution rules', 'Overthink the recommendation'],
+        hook_examples: ['Example hook 1', 'Example hook 2', 'Example hook 3', 'Example hook 4', 'Example hook 5'],
+        caption_examples: ['Example caption 1', 'Example caption 2', 'Example caption 3'],
+        soft_cta_suggestions: ['Save this post', 'Follow for more', 'DM me'],
+        spicy_experiment: 'Test this post type with a different hook style.',
+      }
     default:
       return base
   }

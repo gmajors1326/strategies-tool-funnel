@@ -69,11 +69,34 @@ export const algorithmTrainingModeSchema = baseOutputSchema.extend({
   content_pattern_analysis: z.string(),
 })
 
+// Post Type Recommender
+export const postTypeRecommenderSchema = baseOutputSchema.extend({
+  recommended_post_type: z.enum([
+    'Pattern-Breaker Posts',
+    'Calm Insight Reels',
+    'Nobody-Tells-You-This Posts',
+    'Framework / Mental Model Posts',
+    'Before/After Thinking Shifts',
+    'Identity Alignment Posts',
+    'Soft Direction Posts',
+    'Insufficient signal',
+  ]),
+  one_liner: z.string(),
+  rules_to_execute: z.array(z.string()).min(3).max(6),
+  do_list: z.array(z.string()).min(3).max(5),
+  dont_list: z.array(z.string()).min(3).max(5),
+  hook_examples: z.array(z.string()).length(5),
+  caption_examples: z.array(z.string()).length(3),
+  soft_cta_suggestions: z.array(z.string()).length(3),
+  spicy_experiment: z.string(),
+})
+
 // Union type for all tool schemas
 export type WhyPostFailedOutput = z.infer<typeof whyPostFailedSchema>
 export type HookPressureTestOutput = z.infer<typeof hookPressureTestSchema>
 export type RetentionLeakFinderOutput = z.infer<typeof retentionLeakFinderSchema>
 export type AlgorithmTrainingModeOutput = z.infer<typeof algorithmTrainingModeSchema>
+export type PostTypeRecommenderOutput = z.infer<typeof postTypeRecommenderSchema>
 
 // Schema registry
 export const toolSchemas = {
@@ -81,6 +104,7 @@ export const toolSchemas = {
   hook_pressure_test: hookPressureTestSchema,
   retention_leak_finder: retentionLeakFinderSchema,
   algorithm_training_mode: algorithmTrainingModeSchema,
+  post_type_recommender: postTypeRecommenderSchema,
 } as const
 
 export type ToolId = keyof typeof toolSchemas
