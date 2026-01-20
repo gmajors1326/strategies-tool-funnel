@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const inputs = dmIntelligenceSchema.parse(body)
 
     // Check session (optional - allow anonymous users)
-    const session = await getSession()
+    await getSession()
 
     // Run deterministic logic first
     const deterministicOutput = runDMIntelligence(inputs)
