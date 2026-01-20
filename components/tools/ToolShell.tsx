@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { AppCard, AppCardContent, AppCardDescription, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -43,7 +43,6 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
   const [validationWarnings, setValidationWarnings] = useState<Record<string, string[]>>({})
   const [recentRuns, setRecentRuns] = useState<any[]>([])
   const [lastError, setLastError] = useState<string | null>(null)
-  const searchInputRef = useRef<HTMLInputElement>(null)
   
   // Load persisted results on mount
   useEffect(() => {
