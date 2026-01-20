@@ -8,10 +8,9 @@ interface CacheStore {
 
 class MemoryCache implements CacheStore {
   private store = new Map<string, { value: string; expiresAt: number }>()
-  private cleanupInterval: NodeJS.Timeout
 
   constructor() {
-    this.cleanupInterval = setInterval(() => {
+    setInterval(() => {
       const now = Date.now()
       for (const [key, entry] of this.store.entries()) {
         if (entry.expiresAt <= now) {
