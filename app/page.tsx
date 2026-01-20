@@ -9,8 +9,9 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 
 export default function HomePage() {
-  const whyPostFailedConfig = getToolConfig('why_post_failed')
   const postTypeRecommenderConfig = getToolConfig('post_type_recommender')
+  const hookPressureTestConfig = getToolConfig('hook_pressure_test')
+  const whyPostFailedConfig = getToolConfig('why_post_failed')
 
   return (
     <div className="min-h-screen bg-[#7d9b76] text-foreground">
@@ -43,6 +44,7 @@ export default function HomePage() {
       <section id="tool" className="container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-7xl mx-auto space-y-12">
           <ToolShell config={postTypeRecommenderConfig} />
+          <ToolShell config={hookPressureTestConfig} />
           <ToolShell config={whyPostFailedConfig} />
         </div>
       </section>
