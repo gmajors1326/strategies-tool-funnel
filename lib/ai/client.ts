@@ -23,7 +23,6 @@ export function getAIClient(): OpenAI {
   }
 
   const provider = (process.env.AI_PROVIDER || 'openai') as AIProvider
-  const model = process.env.AI_MODEL || 'gpt-4-turbo-preview'
 
   if (provider !== 'openai') {
     throw new Error(`Provider ${provider} not yet implemented. Only OpenAI is supported.`)
