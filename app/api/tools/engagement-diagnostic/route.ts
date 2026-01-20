@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { runEngagementDiagnostic, type EngagementDiagnosticInputs } from '@/lib/tools/engagement-diagnostic'
+import { runEngagementDiagnostic } from '@/lib/tools/engagement-diagnostic'
 import { executeTool } from '@/lib/tool-execution'
 import { z } from 'zod'
 

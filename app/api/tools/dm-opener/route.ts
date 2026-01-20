@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateDMOpener, type DMOpenerInputs } from '@/lib/tools/dm-opener'
+import { generateDMOpener } from '@/lib/tools/dm-opener'
 import { executeTool } from '@/lib/tool-execution'
 import { z } from 'zod'
 

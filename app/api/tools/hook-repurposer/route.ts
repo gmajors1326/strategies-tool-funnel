@@ -34,7 +34,7 @@ function getUsageCookieValue(cookie?: string) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const inputs = hookSchema.parse(body) as HookRepurposerInputs & { save?: boolean }
+    const inputs = hookSchema.parse(body) as { save?: boolean }
 
     const session = await getSession()
     const entitlements = session ? await getUserEntitlements(session.userId) : null
