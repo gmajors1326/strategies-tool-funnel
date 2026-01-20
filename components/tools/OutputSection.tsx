@@ -14,7 +14,7 @@ interface OutputSectionProps {
   sectionKey: string
 }
 
-export function OutputSection({ title, content, type, copyable, sectionKey }: OutputSectionProps) {
+export function OutputSection({ title, content, type, copyable }: OutputSectionProps) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
