@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
-import { runDMIntelligence, type DMIntelligenceInputs } from '@/lib/tools/dm-intelligence'
+import { runDMIntelligence } from '@/lib/tools/dm-intelligence'
 import { executeTool } from '@/lib/tool-execution'
 import { z } from 'zod'
 
