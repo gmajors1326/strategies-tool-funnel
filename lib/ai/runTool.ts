@@ -40,18 +40,6 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
   }
 
   switch (toolId) {
-    case 'post_types_to_outperform':
-      return {
-        ...base,
-        recommended_post_type: 'Pattern-Breaker Posts',
-        post_type_one_liner: 'Run a controlled test: change only the hook.',
-        rules_to_execute: ['Test one variable at a time', 'Track results', 'Iterate based on data'],
-        dos: ['Test systematically', 'Track metrics', 'Iterate'],
-        donts: ['Change everything at once', 'Ignore data', 'Give up too early'],
-        hook_examples: ['Test hook 1', 'Test hook 2', 'Test hook 3', 'Test hook 4', 'Test hook 5'],
-        caption_examples: ['Test caption 1', 'Test caption 2', 'Test caption 3'],
-        cta_suggestions: ['Save this', 'Follow for more', 'DM me'],
-      }
     case 'why_post_failed':
       return {
         ...base,

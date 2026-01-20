@@ -49,24 +49,6 @@ export default function HomePage() {
             <HookRepurposerTool />
           </div>
           <div className="md:col-span-2">
-            <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-card-foreground">Post Types To Outperform</CardTitle>
-                <CardDescription className="text-card-foreground/70">
-                  Map your growth goal to the exact post type and execution rules that deliver results.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-card-foreground/80 mb-4">
-                  Decision engine that maps your current growth goal → best post type → exact execution rules → example hooks, captions, and CTA suggestions.
-                </p>
-                <Button asChild className="w-full">
-                  <Link href="/tools/post-types-to-outperform">Open Tool →</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="md:col-span-2">
             {/* DM Intelligence Engine - Full Tool */}
             <DMIntelligenceEngineTool />
           </div>

@@ -28,63 +28,6 @@ export interface OutputSection {
 }
 
 export const toolRegistry: Record<ToolId, ToolConfig> = {
-  post_types_to_outperform: {
-    toolId: 'post_types_to_outperform',
-    title: 'Post Types To Outperform',
-    description: 'Map your growth goal to the exact post type and execution rules that deliver results.',
-    inputFields: [
-      {
-        key: 'goal',
-        label: 'Primary Goal',
-        type: 'select',
-        required: true,
-        options: [
-          'reach_discovery',
-          'retention',
-          'authority',
-          'saves',
-          'profile_visits',
-          'followers',
-          'dms_conversions',
-        ],
-      },
-      {
-        key: 'industry',
-        label: 'Industry (Optional)',
-        type: 'select',
-        required: false,
-        options: [
-          'Business Coaching',
-          'Fitness & Health',
-          'Creative Services',
-          'E-commerce',
-          'SaaS/Tech',
-          'Real Estate',
-          'Finance',
-          'Education',
-          'Other',
-        ],
-      },
-      {
-        key: 'weak_points',
-        label: 'Current Weak Points (Optional)',
-        type: 'text',
-        required: false,
-        placeholder: 'Comma-separated list',
-      },
-    ],
-    outputSections: [
-      { key: 'recommended_post_type', title: 'Recommended Post Type', type: 'text', copyable: true },
-      { key: 'post_type_one_liner', title: 'Why This Works', type: 'text', copyable: true },
-      { key: 'rules_to_execute', title: 'Rules to Execute', type: 'list', copyable: true },
-      { key: 'dos', title: 'Do', type: 'list', copyable: true },
-      { key: 'donts', title: "Don't", type: 'list', copyable: true },
-      { key: 'hook_examples', title: 'Hook Examples', type: 'list', copyable: true },
-      { key: 'caption_examples', title: 'Caption Examples', type: 'list', copyable: true },
-      { key: 'cta_suggestions', title: 'CTA Suggestions', type: 'list', copyable: true },
-      { key: 'spicy_experiment', title: 'Spicy Experiment', type: 'text', copyable: true },
-    ],
-  },
   why_post_failed: {
     toolId: 'why_post_failed',
     title: 'Why This Post Failed',

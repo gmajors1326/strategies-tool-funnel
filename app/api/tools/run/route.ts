@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
 
     // Validate toolId
     const validToolIds: ToolId[] = [
-      'post_types_to_outperform',
       'why_post_failed',
       'hook_pressure_test',
       'retention_leak_finder',

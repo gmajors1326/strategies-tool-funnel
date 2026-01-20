@@ -1,35 +1,6 @@
 import { ToolId } from './schemas'
 
 export const toolPrompts: Record<ToolId, string> = {
-  post_types_to_outperform: `You are analyzing a user's growth goal and recommending the optimal post type with execution rules.
-
-INPUTS:
-- goal: Their primary growth objective
-- industry: (optional) Their industry/niche
-- weak_points: (optional) Current content weaknesses
-
-OUTPUT REQUIREMENTS:
-- recommended_post_type: Name of the post type (e.g., "Pattern-Breaker Posts", "Calm Insight Reels")
-- post_type_one_liner: One sentence explaining why this post type fits their goal
-- rules_to_execute: 3-7 actionable rules for executing this post type
-- dos: 3-5 things to do
-- donts: 3-5 things to avoid
-- hook_examples: Exactly 5 hook examples (each <= 12 words)
-- caption_examples: Exactly 3 caption examples (1-3 short lines each)
-- cta_suggestions: Exactly 3 soft CTA suggestions (single-action, never pushy)
-- spicy_experiment: (optional) One experimental variation to test
-
-GOAL MAPPING:
-- reach_discovery → Pattern-Breaker Posts
-- retention → Calm Insight Reels
-- authority → Nobody-Tells-You-This Posts
-- saves → Framework / Mental Model Posts
-- profile_visits → Before/After Thinking Shifts
-- followers → Identity Alignment Posts
-- dms_conversions → Soft Direction Posts
-
-Keep hooks short, captions concise, CTAs soft. No hype, no emojis unless earned.`,
-
   why_post_failed: `You are diagnosing why a post underperformed and providing a single, focused fix.
 
 INPUTS:

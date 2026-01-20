@@ -6,19 +6,6 @@ const baseOutputSchema = z.object({
   evidence: z.array(z.string()).min(1),
 })
 
-// Post Types To Outperform
-export const postTypesToOutperformSchema = baseOutputSchema.extend({
-  recommended_post_type: z.string(),
-  post_type_one_liner: z.string(),
-  rules_to_execute: z.array(z.string()).min(3).max(7),
-  dos: z.array(z.string()).min(3).max(5),
-  donts: z.array(z.string()).min(3).max(5),
-  hook_examples: z.array(z.string()).length(5),
-  caption_examples: z.array(z.string()).length(3),
-  cta_suggestions: z.array(z.string()).length(3),
-  spicy_experiment: z.string().optional(),
-})
-
 // Why Post Failed
 export const whyPostFailedSchema = baseOutputSchema.extend({
   primary_failure: z.string(),
@@ -87,7 +74,6 @@ export const algorithmTrainingModeSchema = baseOutputSchema.extend({
 })
 
 // Union type for all tool schemas
-export type PostTypesToOutperformOutput = z.infer<typeof postTypesToOutperformSchema>
 export type WhyPostFailedOutput = z.infer<typeof whyPostFailedSchema>
 export type HookPressureTestOutput = z.infer<typeof hookPressureTestSchema>
 export type RetentionLeakFinderOutput = z.infer<typeof retentionLeakFinderSchema>
@@ -95,7 +81,6 @@ export type AlgorithmTrainingModeOutput = z.infer<typeof algorithmTrainingModeSc
 
 // Schema registry
 export const toolSchemas = {
-  post_types_to_outperform: postTypesToOutperformSchema,
   why_post_failed: whyPostFailedSchema,
   hook_pressure_test: hookPressureTestSchema,
   retention_leak_finder: retentionLeakFinderSchema,
