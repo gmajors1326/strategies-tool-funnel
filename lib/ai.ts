@@ -17,7 +17,7 @@ export type AiStyle = 'strategist' | 'closer'
 export interface AiEnhancementRequest {
   toolKey: string
   inputs: Record<string, any>
-  deterministicOutput: Record<string, any>
+  deterministicOutput?: Record<string, any> // Optional - kept for backward compatibility but not used
   userText?: string // Optional user-provided text (bio, caption, DM) with strict length limits
   style: AiStyle
   knowledgeChunks: string[]
@@ -115,10 +115,7 @@ ${JSON.stringify(request.inputs, null, 2)}
 
 ${userText ? `User-provided text:\n${userText}\n` : ''}
 
-Deterministic Output (base result):
-${JSON.stringify(request.deterministicOutput, null, 2)}
-
-Enhance this output with strategic reasoning, clarity, and personalization. Return a JSON object matching the output schema. Include a brief "explanation" field (2-3 sentences) explaining your reasoning.`
+Generate a complete, strategic response based on the user inputs. You are generating the full output - not enhancing an existing result. Return a JSON object matching the output schema exactly. Include a brief "explanation" field (2-3 sentences) explaining your reasoning and approach.`
 
   try {
     const completion = await openaiClient.chat.completions.create({

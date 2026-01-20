@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
-import { runDMIntelligence } from '@/lib/tools/dm-intelligence'
 import { executeTool } from '@/lib/tool-execution'
+import { logger } from '@/lib/logger'
+import { captureException } from '@/lib/sentry'
 import { z } from 'zod'
 
 const MAX_CONVERSATION_SNIPPET_LENGTH = 1200
@@ -22,18 +23,33 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const inputs = dmIntelligenceSchema.parse(body)
 
-    // Check session (optional - allow anonymous users)
-    await getSession()
+    // Check session (required for AI tools)
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
 
-    // Run deterministic logic first
-    const deterministicOutput = runDMIntelligence(inputs)
+    logger.debug('DM Intelligence request', {
+      scenario: inputs.scenario,
+      intent: inputs.intent,
+      tone: inputs.tone,
+    })
 
-    // Execute tool with optional AI enhancement
+    // Execute tool with AI (required)
     const result = await executeTool({
       toolKey: 'dm_intelligence_engine',
-      inputs,
-      deterministicOutput: deterministicOutput as any,
-      deterministicFn: runDMIntelligence,
+      inputs: {
+        platform: 'instagram',
+        relationship_stage: inputs.scenario.replace('_', ''),
+        goal: inputs.intent.replace('_', ' '),
+        last_incoming_message: inputs.conversationSnippet,
+        last_outgoing_message_optional: null,
+        tone: inputs.tone,
+        compliance_sensitivity: inputs.boundary === 'no_pitch' ? 'high' : inputs.boundary === 'direct_pitch_ok' ? 'low' : 'medium',
+      },
       userText: inputs.conversationSnippet,
       style: inputs.style || 'closer',
       save: inputs.save !== false, // Default to saving
@@ -43,7 +59,6 @@ export async function POST(request: NextRequest) {
       success: true,
       outputs: result.outputs,
       saved: result.saved,
-      enhanced: result.enhanced,
       aiUsageRemaining: result.aiUsageRemaining,
     })
   } catch (error) {
@@ -54,9 +69,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error('DM Intelligence Engine error:', error)
+    logger.error('DM Intelligence Engine error', error as Error, {
+      toolKey: 'dm_intelligence_engine',
+    })
+
+    if (error instanceof Error) {
+      captureException(error, {
+        toolKey: 'dm_intelligence_engine',
+      })
+    }
+
     return NextResponse.json(
-      { error: 'Failed to run DM Intelligence Engine' },
+      { error: error instanceof Error ? error.message : 'Failed to run DM Intelligence Engine' },
       { status: 500 }
     )
   }

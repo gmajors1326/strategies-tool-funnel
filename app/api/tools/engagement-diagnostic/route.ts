@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { runEngagementDiagnostic } from '@/lib/tools/engagement-diagnostic'
 import { executeTool } from '@/lib/tool-execution'
+import { logger } from '@/lib/logger'
+import { captureException } from '@/lib/sentry'
 import { z } from 'zod'
 
 const diagnosticSchema = z.object({
@@ -14,42 +15,72 @@ const diagnosticSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now()
+  const pathname = request.nextUrl.pathname
+
   try {
     const body = await request.json()
     const inputs = diagnosticSchema.parse(body)
 
-    // Run deterministic logic first
-    const deterministicOutput = runEngagementDiagnostic(inputs)
+    logger.debug('Engagement diagnostic request', {
+      followerRange: inputs.followerRange,
+      primaryGoal: inputs.primaryGoal,
+    })
 
-    // Execute tool with optional AI enhancement
+    // Execute tool with AI (required)
     const result = await executeTool({
       toolKey: 'engagement-diagnostic',
       inputs,
-      deterministicOutput,
-      deterministicFn: runEngagementDiagnostic,
       userText: inputs.userText,
       style: 'strategist', // Engagement diagnostic uses strategist style
       save: inputs.save,
+    })
+
+    const duration = Date.now() - startTime
+    logger.apiRequest('POST', pathname, 200, duration, {
+      toolKey: 'engagement-diagnostic',
     })
 
     return NextResponse.json({
       success: true,
       outputs: result.outputs,
       saved: result.saved,
-      enhanced: result.enhanced,
       aiUsageRemaining: result.aiUsageRemaining,
     })
   } catch (error) {
+    const duration = Date.now() - startTime
+
     if (error instanceof z.ZodError) {
+      logger.apiRequest('POST', pathname, 400, duration, {
+        toolKey: 'engagement-diagnostic',
+        validationErrors: error.errors,
+      })
       return NextResponse.json(
         { error: 'Invalid input', details: error.errors },
         { status: 400 }
       )
     }
 
-    console.error('Engagement diagnostic error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    logger.error('Engagement diagnostic error', error as Error, {
+      toolKey: 'engagement-diagnostic',
+      duration,
+    })
+
+    if (error instanceof Error) {
+      captureException(error, {
+        toolKey: 'engagement-diagnostic',
+        path: pathname,
+      })
+    }
+
+    logger.apiRequest('POST', pathname, 500, duration, {
+      toolKey: 'engagement-diagnostic',
+      error: errorMessage,
+    })
+
     return NextResponse.json(
-      { error: 'Failed to run diagnostic' },
+      { error: errorMessage || 'Failed to run diagnostic' },
       { status: 500 }
     )
   }

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { runHookRepurposer, type HookRepurposerInputs } from '@/lib/tools/hook-repurposer'
 import { executeTool } from '@/lib/tool-execution'
 import { getSession } from '@/lib/auth'
 import { getUserEntitlements } from '@/lib/entitlements'
+import { logger } from '@/lib/logger'
+import { captureException } from '@/lib/sentry'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
@@ -35,7 +36,7 @@ function getUsageCookieValue(cookie?: string) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const inputs = hookSchema.parse(body) as HookRepurposerInputs & { save?: boolean }
+    const inputs = hookSchema.parse(body)
 
     const session = await getSession()
     const entitlements = session ? await getUserEntitlements(session.userId) : null
@@ -56,15 +57,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Run deterministic logic first
-    const deterministicOutput = runHookRepurposer(inputs)
-
-    // Execute tool with optional AI enhancement
+    // Execute tool with AI (required)
     const result = await executeTool({
       toolKey: 'hook-repurposer',
-      inputs,
-      deterministicOutput,
-      deterministicFn: runHookRepurposer,
+      inputs: {
+        original_hook: inputs.hookInput,
+        topic_optional: inputs.videoContext,
+        max_words: 12,
+        tone: inputs.tone?.toLowerCase() || 'neutral',
+      },
+      userText: inputs.videoContext,
       style: 'strategist', // Hook repurposer uses strategist style
       save: inputs.save,
     })
@@ -73,7 +75,6 @@ export async function POST(request: NextRequest) {
       success: true,
       outputs: result.outputs,
       saved: result.saved,
-      enhanced: result.enhanced,
       aiUsageRemaining: result.aiUsageRemaining,
       remainingToday: shouldLimit ? Math.max(0, DAILY_LIMIT - (dailyCount + 1)) : null,
     })
@@ -97,9 +98,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.error('Hook repurposer error:', error)
+    logger.error('Hook repurposer error', error as Error, {
+      toolKey: 'hook-repurposer',
+    })
+
+    if (error instanceof Error) {
+      captureException(error, {
+        toolKey: 'hook-repurposer',
+      })
+    }
+
     return NextResponse.json(
-      { error: 'Failed to repurpose hook' },
+      { error: error instanceof Error ? error.message : 'Failed to repurpose hook' },
       { status: 500 }
     )
   }

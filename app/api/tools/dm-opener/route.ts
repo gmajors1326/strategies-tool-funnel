@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateDMOpener } from '@/lib/tools/dm-opener'
 import { executeTool } from '@/lib/tool-execution'
 import { logger } from '@/lib/logger'
 import { captureException } from '@/lib/sentry'
@@ -27,15 +26,10 @@ export async function POST(request: NextRequest) {
       intent: inputs.intent,
     })
 
-    // Run deterministic logic first
-    const deterministicOutput = generateDMOpener(inputs)
-
-    // Execute tool with optional AI enhancement
+    // Execute tool with AI (required)
     const result = await executeTool({
       toolKey: 'dm-opener',
       inputs,
-      deterministicOutput,
-      deterministicFn: generateDMOpener,
       userText: inputs.userText,
       style: 'closer', // DM tools use closer style
       save: inputs.save,
@@ -44,14 +38,12 @@ export async function POST(request: NextRequest) {
     const duration = Date.now() - startTime
     logger.apiRequest('POST', pathname, 200, duration, {
       toolKey: 'dm-opener',
-      enhanced: result.enhanced,
     })
 
     return NextResponse.json({
       success: true,
       outputs: result.outputs,
       saved: result.saved,
-      enhanced: result.enhanced,
       aiUsageRemaining: result.aiUsageRemaining,
     })
   } catch (error) {
