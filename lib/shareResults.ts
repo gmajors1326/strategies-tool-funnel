@@ -1,7 +1,7 @@
-export function generateShareLink(outputs: Record<string, any>, toolId: string): string {
+export function generateShareLink(outputs: Record<string, any>, _toolId: string): string {
   try {
     // Encode outputs as base64 in URL
-    const encoded = btoa(JSON.stringify({ toolId, outputs, timestamp: Date.now() }))
+    const encoded = btoa(JSON.stringify({ outputs, timestamp: Date.now() }))
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
     return `${baseUrl}/share/${encoded}`
   } catch (err) {
@@ -10,11 +10,10 @@ export function generateShareLink(outputs: Record<string, any>, toolId: string):
   }
 }
 
-export function decodeShareLink(encoded: string): { toolId: string; outputs: Record<string, any> } | null {
+export function decodeShareLink(encoded: string): { outputs: Record<string, any> } | null {
   try {
     const decoded = JSON.parse(atob(encoded))
     return {
-      toolId: decoded.toolId,
       outputs: decoded.outputs,
     }
   } catch (err) {
