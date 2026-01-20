@@ -1,4 +1,5 @@
 import { prisma } from '@/src/lib/prisma'
+import type { Prisma } from '@prisma/client'
 import { getNextResetAt, getWindowStart } from '@/src/lib/usage/reset'
 
 export const ensureUsageWindow = async (userId: string) => {
@@ -57,7 +58,7 @@ export const ensureUsageWindow = async (userId: string) => {
 }
 
 export const incrementUsageTx = async (params: {
-  tx: typeof prisma
+  tx: Prisma.TransactionClient
   userId: string
   windowEnd: Date
   toolId: string

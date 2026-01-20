@@ -8,7 +8,7 @@ async function run() {
   await logAudit({ orgId: org.id, userId, action: 'org_created', targetId: org.id })
   await setActiveOrg(userId, org.id)
 
-  const invite = await createInvite({ orgId: org.id, email: 'member@acme.com', role: 'member', invitedBy: userId })
+  const invite = await createInvite({ orgId: org.id, email: 'member@acme.com', role: 'member' })
   await logAudit({ orgId: org.id, userId, action: 'invite_created', targetId: invite.id })
 
   await acceptInvite({ token: invite.token, userId })

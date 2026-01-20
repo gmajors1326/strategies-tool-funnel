@@ -11,7 +11,7 @@ const fetchStatement = async (month: string) => {
   return res.json()
 }
 
-export default async function StatementPage({ params, searchParams }: { params: { slug: string }; searchParams: { month?: string } }) {
+export default async function StatementPage({ searchParams }: { searchParams: { month?: string } }) {
   const month = searchParams.month || new Date().toISOString().slice(0, 7)
   const data = await fetchStatement(month)
 

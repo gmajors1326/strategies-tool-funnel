@@ -4,7 +4,6 @@ export const createInvite = async (params: {
   orgId: string
   email: string
   role: string
-  invitedBy: string
 }) => {
   const token = crypto.randomUUID()
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -36,7 +35,7 @@ export const acceptInvite = async (params: { token: string; userId: string }) =>
       role: invite.role,
       status: 'active',
       invitedEmail: invite.email,
-      invitedBy: invite.invitedBy || null,
+      invitedBy: null,
     },
   })
 

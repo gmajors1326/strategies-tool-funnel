@@ -33,19 +33,3 @@ export default async function OrgBillingPage({ params }: { params: { slug: strin
     </div>
   )
 }
-export const dynamic = 'force-dynamic'
-
-export default function OrgBillingPage() {
-  return (
-    <div className="min-h-screen bg-[hsl(var(--bg))] text-[hsl(var(--text))]">
-      <div className="mx-auto max-w-4xl px-6 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold">Org Billing</h1>
-        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
-          <p>Plan: Business</p>
-          <p>Seats billed per active member.</p>
-          <p className="text-xs text-[hsl(var(--muted))]">Invoices available in Stripe.</p>
-        </div>
-      </div>
-    </div>
-  )
-}

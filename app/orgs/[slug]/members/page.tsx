@@ -12,13 +12,12 @@ export default function OrgMembersPage() {
   const [role, setRole] = useState('member')
   const [status, setStatus] = useState('')
 
-  const load = async () => {
-    const res = await fetch(`/api/orgs/${slug}`)
-    const data = await res.json()
-    setOrg(data.org)
-  }
-
   useEffect(() => {
+    const load = async () => {
+      const res = await fetch(`/api/orgs/${slug}`)
+      const data = await res.json()
+      setOrg(data.org)
+    }
     load()
   }, [slug])
 
@@ -40,7 +39,9 @@ export default function OrgMembersPage() {
     })
     const data = await res.json()
     setStatus(res.ok ? 'Role updated' : data.error || 'Error')
-    load()
+    const reloadRes = await fetch(`/api/orgs/${slug}`)
+    const reloadData = await reloadRes.json()
+    setOrg(reloadData.org)
   }
 
   if (!org) return <div className="p-6">Loading...</div>

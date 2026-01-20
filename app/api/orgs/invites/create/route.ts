@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const invite = await createInvite({ orgId, email, role, invitedBy: userId })
+  const invite = await createInvite({ orgId, email, role })
   await logAudit({ orgId, userId, action: 'invite_created', targetId: invite.id, meta: { email, role } })
   return NextResponse.json({ invite })
 }

@@ -33,28 +33,3 @@ export async function GET() {
     resetsAtISO: usage.resetsAt.toISOString(),
   })
 }
-import { NextResponse } from 'next/server'
-import { ensureUsageWindow } from '@/src/lib/usage/dailyUsage'
-import { getTokenBalance } from '@/src/lib/tokens/ledger'
-import { dailyAiTokenCapByPlan, dailyRunCapByPlan } from '@/src/lib/usage/caps'
-import { getOrCreateEntitlement } from '@/src/lib/usage/entitlements'
-
-export const dynamic = 'force-dynamic'
-
-export async function GET() {
-  const userId = 'user_dev_1'
-  const entitlement = await getOrCreateEntitlement(userId)
-  const planId = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
-  const usage = await ensureUsageWindow(userId)
-  const tokenBalance = await getTokenBalance(userId)
-
-  return NextResponse.json({
-    dailyRunsUsed: usage.runsUsed,
-    dailyRunCap: dailyRunCapByPlan[planId],
-    aiTokensUsed: usage.aiTokensUsed,
-    aiTokenCap: dailyAiTokenCapByPlan[planId],
-    tokensRemaining: tokenBalance,
-    purchasedTokensRemaining: tokenBalance,
-    resetsAtISO: usage.resetsAt.toISOString(),
-  })
-}
