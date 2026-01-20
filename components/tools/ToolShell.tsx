@@ -28,6 +28,12 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
     setInputs(prev => ({ ...prev, [key]: value }))
   }
 
+  const handleClearAll = () => {
+    setInputs({})
+    setOutputs(null)
+    setError(null)
+  }
+
   const handleRun = async () => {
     // Validate required fields
     const missingFields = config.inputFields
@@ -223,16 +229,27 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
                   )}
                 </div>
               ))}
-              <Button
-                onClick={handleRun}
-                disabled={loading}
-                className="w-full mt-3 sm:mt-4 text-xs sm:text-sm"
-                aria-label="Run tool"
-              >
-                {loading ? 'Running...' : 'Run Analysis'}
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4">
+                <Button
+                  onClick={handleRun}
+                  disabled={loading}
+                  className="flex-1 text-xs sm:text-sm"
+                  aria-label="Run tool"
+                >
+                  {loading ? 'Running...' : 'Run Analysis'}
+                </Button>
+                <Button
+                  onClick={handleClearAll}
+                  disabled={loading}
+                  variant="outline"
+                  className="flex-1 text-xs sm:text-sm"
+                  aria-label="Clear all inputs and results"
+                >
+                  Clear All
+                </Button>
+              </div>
               {error && (
-                <AppPanel className="border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10 p-2 sm:p-3">
+                <AppPanel className="border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10 p-2 sm:p-3 mt-3 sm:mt-4">
                   <p className="text-xs sm:text-sm text-[hsl(var(--destructive))] break-words">{error}</p>
                 </AppPanel>
               )}
