@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Copy, Check } from 'lucide-react'
+import { Copy, Check, Share2 } from 'lucide-react'
 import { copyToClipboard } from '@/lib/clipboard'
+import { copyShareLink } from '@/lib/shareResults'
 import { AppPanel } from '@/components/ui/AppPanel'
 
 interface OutputSectionProps {
@@ -14,8 +15,9 @@ interface OutputSectionProps {
   sectionKey: string
 }
 
-export function OutputSection({ title, content, type, copyable }: OutputSectionProps) {
+export function OutputSection({ title, content, type, copyable, sectionKey }: OutputSectionProps) {
   const [copied, setCopied] = useState(false)
+  const [shared, setShared] = useState(false)
 
   const handleCopy = async () => {
     let textToCopy = ''
@@ -34,6 +36,19 @@ export function OutputSection({ title, content, type, copyable }: OutputSectionP
     if (success) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleShare = async () => {
+    const payload = {
+      sectionKey,
+      title,
+      content,
+    }
+    const success = await copyShareLink(payload as unknown as Record<string, any>)
+    if (success) {
+      setShared(true)
+      setTimeout(() => setShared(false), 2000)
     }
   }
 
@@ -151,21 +166,36 @@ export function OutputSection({ title, content, type, copyable }: OutputSectionP
     <div className="space-y-1.5 sm:space-y-2 print-card">
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-xs sm:text-sm font-semibold text-[hsl(var(--text))]">{title}</h4>
-        {copyable && (
+        <div className="flex items-center gap-1.5">
+          {copyable && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopy}
+              className="h-6 sm:h-7 px-1.5 sm:px-2 flex-shrink-0 no-print"
+              aria-label={`Copy ${title}`}
+            >
+              {copied ? (
+                <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              ) : (
+                <Copy className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              )}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleCopy}
-            className="h-6 sm:h-7 px-1.5 sm:px-2 flex-shrink-0"
-            aria-label={`Copy ${title}`}
+            onClick={handleShare}
+            className="h-6 sm:h-7 px-1.5 sm:px-2 flex-shrink-0 no-print"
+            aria-label={`Share ${title}`}
           >
-            {copied ? (
+            {shared ? (
               <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             ) : (
-              <Copy className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <Share2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             )}
           </Button>
-        )}
+        </div>
       </div>
       <AppPanel className="p-2 sm:p-4">
         {renderContent()}
