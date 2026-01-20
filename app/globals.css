@@ -127,3 +127,43 @@
     text-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
   }
 }
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .bg-\[#7d9b76\] {
+    background: white !important;
+  }
+  
+  .text-\[#d8ba8c\] {
+    color: black !important;
+  }
+  
+  .text-white {
+    color: black !important;
+  }
+  
+  .border {
+    border-color: #ccc !important;
+  }
+  
+  .shadow-ink-40,
+  .text-shadow-ink-40 {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  
+  /* Ensure results are visible */
+  .space-y-3,
+  .space-y-4 {
+    page-break-inside: avoid;
+  }
+}

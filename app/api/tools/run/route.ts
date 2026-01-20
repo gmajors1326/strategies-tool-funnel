@@ -252,10 +252,25 @@ export async function POST(request: NextRequest) {
     })
 
     if (!result.success) {
+      const errorMessage = result.error || 'Failed to run tool'
+      
+      // Check for rate limiting
+      if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Rate limit exceeded. Please wait a few minutes and try again.',
+            rateLimited: true,
+            output: result.output, // Include fallback output if available
+          },
+          { status: 429 }
+        )
+      }
+      
       return NextResponse.json(
         {
           success: false,
-          error: result.error || 'Failed to run tool',
+          error: errorMessage,
           output: result.output, // Include fallback output if available
         },
         { status: 500 }

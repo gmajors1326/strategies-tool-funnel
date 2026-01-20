@@ -1,35 +1,55 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { AppCard } from '@/components/ui/AppCard'
 import { ToolShell } from '@/components/tools/ToolShell'
 import { ToolSearch } from '@/components/tools/ToolSearch'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { getToolConfig, getAllToolIds } from '@/lib/ai/toolRegistry'
+import { toolCategories } from '@/config/toolCategories'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const searchInputRef = useRef<HTMLInputElement>(null)
   
   // Get all tool configs
   const allToolIds = getAllToolIds()
   const allToolConfigs = allToolIds.map(id => getToolConfig(id))
   
-  // Filter tools based on search query
+  // Filter tools based on search query and category
   const filteredToolConfigs = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return allToolConfigs
+    let filtered = allToolConfigs
+    
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      const category = toolCategories.find(cat => cat.id === selectedCategory)
+      if (category) {
+        filtered = filtered.filter(config => category.toolIds.includes(config.toolId))
+      }
     }
     
-    const query = searchQuery.toLowerCase().trim()
-    return allToolConfigs.filter(config => {
-      const titleMatch = config.title.toLowerCase().includes(query)
-      const descMatch = config.description.toLowerCase().includes(query)
-      return titleMatch || descMatch
-    })
-  }, [searchQuery, allToolConfigs])
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      filtered = filtered.filter(config => {
+        const titleMatch = config.title.toLowerCase().includes(query)
+        const descMatch = config.description.toLowerCase().includes(query)
+        return titleMatch || descMatch
+      })
+    }
+    
+    return filtered
+  }, [searchQuery, selectedCategory, allToolConfigs])
+  
+  const handleFocusSearch = () => {
+    searchInputRef.current?.focus()
+  }
 
   return (
     <div className="min-h-screen bg-[#7d9b76] text-foreground">
@@ -61,25 +81,57 @@ export default function HomePage() {
       {/* Tools Section */}
       <section id="tool" className="container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-7xl mx-auto">
-          <ToolSearch searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+          <div className="no-print">
+            <ToolSearch 
+              searchQuery={searchQuery} 
+              onSearchChange={setSearchQuery}
+              inputRef={searchInputRef}
+            />
+          </div>
+          
+          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-8 no-print">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 no-print">
+              <TabsTrigger value="all">All Tools</TabsTrigger>
+              {toolCategories.map(category => (
+                <TabsTrigger key={category.id} value={category.id}>
+                  {category.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
           
           {filteredToolConfigs.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 no-print">
               <p className="text-lg text-[hsl(var(--muted))]">
-                No tools found matching &quot;{searchQuery}&quot;
+                {searchQuery 
+                  ? `No tools found matching "${searchQuery}"`
+                  : `No tools in "${toolCategories.find(c => c.id === selectedCategory)?.name || 'this category'}"`}
               </p>
-              <Button
-                variant="outline"
-                onClick={() => setSearchQuery('')}
-                className="mt-4"
-              >
-                Clear Search
-              </Button>
+              <div className="flex gap-2 justify-center mt-4">
+                {searchQuery && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    Clear Search
+                  </Button>
+                )}
+                {selectedCategory !== 'all' && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedCategory('all')}
+                  >
+                    Show All Tools
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="space-y-12">
               {filteredToolConfigs.map(config => (
-                <ToolShell key={config.toolId} config={config} />
+                <ErrorBoundary key={config.toolId}>
+                  <ToolShell config={config} />
+                </ErrorBoundary>
               ))}
             </div>
           )}
