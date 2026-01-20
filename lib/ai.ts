@@ -2,8 +2,7 @@ import OpenAI from 'openai'
 import { prisma } from './db'
 import { DIGITAL_PRODUCT_MASTER_PROMPT, isProductRelatedTool } from './ai/digitalProductMasterPrompt'
 
-// Support both AI_API_KEY and OPENAI_API_KEY (AI_API_KEY takes precedence)
-const OPENAI_API_KEY = (process.env.AI_API_KEY || process.env.OPENAI_API_KEY)?.trim()
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY?.trim()
 const OPENAI_MODEL = process.env.OPENAI_MODEL?.trim() || 'gpt-4-turbo-preview'
 
 let openaiClient: OpenAI | null = null
@@ -51,7 +50,7 @@ export async function enhanceWithAi(
   request: AiEnhancementRequest
 ): Promise<AiEnhancementResponse> {
   if (!openaiClient) {
-    throw new Error('AI service not configured. Set AI_API_KEY or OPENAI_API_KEY environment variable.')
+    throw new Error('AI service not configured. Set OPENAI_API_KEY environment variable.')
   }
 
   // Enforce user text length limit

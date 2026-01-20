@@ -14,19 +14,11 @@ In the root of your project (`strategy-tools-funnel/`), create a file named `.en
 
 ### Step 2: Add your OpenAI API Key
 
-Add ONE of these lines to your `.env.local` file:
+Add this line to your `.env.local` file:
 
 ```env
 OPENAI_API_KEY="sk-your-actual-api-key-here"
 ```
-
-OR
-
-```env
-AI_API_KEY="sk-your-actual-api-key-here"
-```
-
-**Note:** `AI_API_KEY` takes precedence if both are set.
 
 ### Step 3: Get your OpenAI API Key
 
@@ -54,14 +46,10 @@ npm run dev
 
 ### Step 2: Add Environment Variable
 
-Add ONE of these:
+Add this:
 
 - **Name:** `OPENAI_API_KEY`
 - **Value:** `sk-your-actual-api-key-here`
-
-OR
-
-- **Name:** `AI_API_KEY`
 - **Value:** `sk-your-actual-api-key-here`
 
 ### Step 3: Select Environments
@@ -100,11 +88,11 @@ AI_MAX_TOKENS="800"
 
 ## Troubleshooting
 
-### Error: "AI_API_KEY or OPENAI_API_KEY environment variable is required"
+### Error: "OPENAI_API_KEY environment variable is required"
 
 **Local:**
 - Make sure `.env.local` exists in the project root
-- Make sure the file contains `OPENAI_API_KEY="sk-..."` or `AI_API_KEY="sk-..."`
+- Make sure the file contains `OPENAI_API_KEY="sk-..."`
 - Restart your dev server after adding the key
 - Check for typos in the variable name
 

@@ -176,7 +176,7 @@ case 'my_new_tool':
 
 ```env
 # Required
-AI_API_KEY="sk-..." # or OPENAI_API_KEY
+OPENAI_API_KEY="sk-..."
 AI_MODEL="gpt-4-turbo-preview"
 
 # Optional

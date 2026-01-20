@@ -90,7 +90,7 @@
 ### Environment Variables
 
 Added to `ENV_TEMPLATE.txt`:
-- `AI_API_KEY` (or `OPENAI_API_KEY`)
+- `OPENAI_API_KEY`
 - `AI_PROVIDER` (default: openai)
 - `AI_MODEL` (default: gpt-4-turbo-preview)
 - `AI_TEMPERATURE` (default: 0.2)

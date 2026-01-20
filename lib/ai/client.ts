@@ -17,9 +17,9 @@ export function getAIClient(): OpenAI {
     return clientInstance
   }
 
-  const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY
+  const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) {
-    throw new Error('AI_API_KEY or OPENAI_API_KEY environment variable is required')
+    throw new Error('OPENAI_API_KEY environment variable is required')
   }
 
   const provider = (process.env.AI_PROVIDER || 'openai') as AIProvider
@@ -81,7 +81,7 @@ export async function callAI(
     }
     
     if (error.status === 401) {
-      throw new Error('Invalid OpenAI API key. Please check your OPENAI_API_KEY or AI_API_KEY environment variable.')
+      throw new Error('Invalid OpenAI API key. Please check your OPENAI_API_KEY environment variable.')
     }
     
     if (error.status === 402) {
