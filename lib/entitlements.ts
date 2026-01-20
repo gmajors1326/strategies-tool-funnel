@@ -68,7 +68,7 @@ export async function getUserEntitlements(userId: string): Promise<Entitlements>
 }
 
 export async function grantEntitlement(userId: string, plan: Plan): Promise<void> {
-  const entitlements = await prisma.planEntitlement.upsert({
+  await prisma.planEntitlement.upsert({
     where: { userId },
     create: {
       userId,
