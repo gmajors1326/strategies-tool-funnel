@@ -30,7 +30,7 @@ interface RecentRunsPanelProps {
   onLoadRun: (run: RecentRun) => void
 }
 
-export function RecentRunsPanel({ toolId, runs, onLoadRun }: RecentRunsPanelProps) {
+export function RecentRunsPanel({ runs, onLoadRun }: RecentRunsPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   if (runs.length === 0) {
