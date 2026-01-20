@@ -53,13 +53,22 @@ export function PostTypeDecisionEngine() {
     if (!selectedConfig) return
     
     saveToPlan({
-      goal: selectedConfig.label,
-      postType: selectedConfig.postType.name,
-      data: {
-        hooks: selectedConfig.postType.hooks,
-        captions: selectedConfig.postType.captions,
-        ctas: selectedConfig.postType.ctas,
-        rules: selectedConfig.postType.rules
+      toolId: 'post_types_to_outperform',
+      title: `Post Types: ${selectedConfig.label}`,
+      inputs: {
+        goal: selectedConfig.key,
+        postType: selectedConfig.postType.name,
+      },
+      outputs: {
+        recommended_post_type: selectedConfig.postType.name,
+        post_type_one_liner: selectedConfig.postType.oneLiner,
+        rules_to_execute: selectedConfig.postType.rules,
+        dos: selectedConfig.postType.dos,
+        donts: selectedConfig.postType.donts,
+        hook_examples: selectedConfig.postType.hooks,
+        caption_examples: selectedConfig.postType.captions,
+        cta_suggestions: selectedConfig.postType.ctas,
+        spicy_experiment: selectedConfig.postType.experiment,
       }
     })
 

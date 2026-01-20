@@ -61,6 +61,17 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 # Get from OpenAI Dashboard → API keys
 # https://platform.openai.com/api-keys
 OPENAI_API_KEY="sk-xxxxxxxxxxxxx"
+# Or use AI_API_KEY (takes precedence)
+# AI_API_KEY="sk-xxxxxxxxxxxxx"
 
-# Optional: Override default model
-# OPENAI_MODEL="gpt-4-turbo-preview"
+# Provider selection (default: openai)
+# AI_PROVIDER="openai"
+
+# Model selection (default: gpt-4-turbo-preview)
+# AI_MODEL="gpt-4-turbo-preview"
+
+# Temperature (default: 0.2 for deterministic feel)
+# AI_TEMPERATURE="0.2"
+
+# Max tokens per response (default: 800)
+# AI_MAX_TOKENS="800"

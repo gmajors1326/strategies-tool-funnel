@@ -1,4 +1,5 @@
-import { PostTypeDecisionEngine } from '@/components/tools/PostTypeDecisionEngine'
+import { ToolShell } from '@/components/tools/ToolShell'
+import { getToolConfig } from '@/lib/ai/toolRegistry'
 
 export const metadata = {
   title: 'Post Types To Outperform | The Strategy Tools',
@@ -6,9 +7,11 @@ export const metadata = {
 }
 
 export default function PostTypesToOutperformPage() {
+  const config = getToolConfig('post_types_to_outperform')
+
   return (
     <div className="min-h-screen bg-[#7d9b76] py-8">
-      <PostTypeDecisionEngine />
+      <ToolShell config={config} />
     </div>
   )
 }
