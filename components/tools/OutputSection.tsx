@@ -78,14 +78,65 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
       
       case 'object':
         if (typeof content === 'object') {
+          // Check if it's an array of objects (like rewrites with nested arrays)
+          if (Array.isArray(content)) {
+            return (
+              <div className="space-y-1.5 sm:space-y-2">
+                {content.map((item, idx) => (
+                  <div key={idx} className="text-xs sm:text-sm">
+                    {typeof item === 'object' ? (
+                      <div className="space-y-1">
+                        {Object.entries(item).map(([key, value]) => (
+                          <div key={key}>
+                            <span className="font-medium text-[hsl(var(--text))] capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
+                            <span className="text-[hsl(var(--text))] break-words">
+                              {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-[hsl(var(--text))] break-words">{String(item)}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )
+          }
+          
+          // Handle nested objects (like rewrites: { curiosity: [...], threat: [...] })
           return (
-            <div className="space-y-1.5 sm:space-y-2">
+            <div className="space-y-2 sm:space-y-3">
               {Object.entries(content).map(([key, value]) => (
-                <div key={key} className="text-xs sm:text-sm">
-                  <span className="font-medium text-[hsl(var(--text))] capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
-                  <span className="text-[hsl(var(--text))] break-words">
-                    {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
-                  </span>
+                <div key={key} className="space-y-1">
+                  <div className="font-semibold text-xs sm:text-sm text-[hsl(var(--text))] capitalize">
+                    {key.replace(/_/g, ' ')}
+                  </div>
+                  {Array.isArray(value) ? (
+                    <ul className="space-y-1 ml-3 sm:ml-4">
+                      {value.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-[hsl(var(--text))]">
+                          <span className="text-[hsl(var(--primary))] mt-0.5 flex-shrink-0">•</span>
+                          <span className="break-words">{String(item)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : typeof value === 'object' ? (
+                    <div className="ml-3 sm:ml-4 space-y-1">
+                      {Object.entries(value).map(([subKey, subValue]) => (
+                        <div key={subKey} className="text-xs sm:text-sm">
+                          <span className="font-medium text-[hsl(var(--muted))] capitalize">{subKey.replace(/_/g, ' ')}:</span>{' '}
+                          <span className="text-[hsl(var(--text))] break-words">
+                            {typeof subValue === 'boolean' ? (subValue ? 'Yes' : 'No') : String(subValue)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="ml-3 sm:ml-4 text-xs sm:text-sm text-[hsl(var(--text))] break-words">
+                      {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
