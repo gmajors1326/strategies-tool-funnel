@@ -60,9 +60,10 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 # ============================================
 # Get from OpenAI Dashboard → API keys
 # https://platform.openai.com/api-keys
+# REQUIRED: Set ONE of these (AI_API_KEY takes precedence if both are set)
 OPENAI_API_KEY="sk-xxxxxxxxxxxxx"
-# Or use AI_API_KEY (takes precedence)
-# AI_API_KEY="sk-xxxxxxxxxxxxx"
+# OR
+AI_API_KEY="sk-xxxxxxxxxxxxx"
 
 # Provider selection (default: openai)
 # AI_PROVIDER="openai"

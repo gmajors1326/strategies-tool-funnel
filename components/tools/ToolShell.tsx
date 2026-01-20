@@ -75,18 +75,37 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
         return
       }
 
-      if (data.success && data.output) {
-        setOutputs(data.output)
-        onResult?.(data)
-      } else {
-        setError(data.error || 'No output received')
-      }
-    } catch (err: any) {
-      console.error('[ToolShell] Error:', err)
-      setError(err.message || 'Failed to run tool')
-    } finally {
-      setLoading(false)
-    }
+            if (data.success && data.output) {
+              setOutputs(data.output)
+              onResult?.(data)
+            } else {
+              // Show more helpful error messages
+              let errorMessage = data.error || 'No output received'
+              
+              // Check for quota/billing errors
+              if (errorMessage.includes('quota') || errorMessage.includes('429')) {
+                errorMessage = 'OpenAI quota exceeded. Please check your billing at https://platform.openai.com/account/billing. You may need to add a payment method or increase your spending limit.'
+              } else if (errorMessage.includes('401') || errorMessage.includes('Invalid')) {
+                errorMessage = 'Invalid API key. Please check your OPENAI_API_KEY environment variable.'
+              } else if (errorMessage.includes('402') || errorMessage.includes('payment')) {
+                errorMessage = 'Payment required. Please add a payment method at https://platform.openai.com/account/billing'
+              }
+              
+              setError(errorMessage)
+            }
+          } catch (err: any) {
+            console.error('[ToolShell] Error:', err)
+            let errorMessage = err.message || 'Failed to run tool'
+            
+            // Check for quota/billing errors in catch block too
+            if (errorMessage.includes('quota') || errorMessage.includes('429')) {
+              errorMessage = 'OpenAI quota exceeded. Please check your billing at https://platform.openai.com/account/billing. You may need to add a payment method or increase your spending limit.'
+            }
+            
+            setError(errorMessage)
+          } finally {
+            setLoading(false)
+          }
   }
 
   const renderInputField = (field: typeof config.inputFields[0]) => {

@@ -71,6 +71,24 @@ export async function callAI(
     return content
   } catch (error: any) {
     console.error('[AI] Error calling AI:', error)
-    throw new Error(`AI call failed: ${error.message}`)
+    
+    // Handle specific OpenAI API errors
+    if (error.status === 429) {
+      if (error.message?.includes('quota')) {
+        throw new Error('OpenAI quota exceeded. Please check your billing and spending limits at https://platform.openai.com/account/billing. You may need to add a payment method or increase your spending limit.')
+      } else {
+        throw new Error('OpenAI rate limit exceeded. Please try again in a moment.')
+      }
+    }
+    
+    if (error.status === 401) {
+      throw new Error('Invalid OpenAI API key. Please check your OPENAI_API_KEY or AI_API_KEY environment variable.')
+    }
+    
+    if (error.status === 402) {
+      throw new Error('OpenAI payment required. Please add a payment method at https://platform.openai.com/account/billing')
+    }
+    
+    throw new Error(`AI call failed: ${error.message || 'Unknown error'}`)
   }
 }
