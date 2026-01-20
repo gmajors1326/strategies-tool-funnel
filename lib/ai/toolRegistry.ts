@@ -541,11 +541,7 @@ export const toolRegistry: Record<ToolId, ToolConfig> = {
         type: 'textarea',
         required: true,
         maxLength: 2000,
-        placeholder: `Example:
-Pattern-Breaker — Reach — low views
-Framework — Saves — lots of saves
-Calm Insight — Retention — drop at 3 seconds
-Before/After — Profile visits — decent taps, no follows`,
+        placeholder: 'Example:\nPattern-Breaker — Reach — low views\nFramework — Saves — lots of saves\nCalm Insight — Retention — drop at 3 seconds\nBefore/After — Profile visits — decent taps, no follows',
       },
       {
         key: 'recurring_issues_optional',
