@@ -26,6 +26,11 @@ export default async function AdminAnalyticsPage() {
         <p className="text-sm text-zinc-400">
           Global performance, tool usage, funnels, AI cost, and error surface.
         </p>
+        <div className="mt-2">
+          <a className="text-xs text-zinc-400 underline" href="/admin/webhooks">
+            Webhook Admin →
+          </a>
+        </div>
       </div>
 
       <AnalyticsDashboard />

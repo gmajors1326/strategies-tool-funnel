@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { grantEntitlement } from '@/lib/entitlements'
+import { prisma } from '@/lib/db'
 import { Plan } from '@prisma/client'
 import Stripe from 'stripe'
 
 export async function POST(request: NextRequest) {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-  if (!webhookSecret) {
-    return NextResponse.json(
-      { error: 'STRIPE_WEBHOOK_SECRET is not set' },
-      { status: 500 }
-    )
-  }
   const body = await request.text()
   const signature = request.headers.get('stripe-signature')
 
@@ -22,12 +16,39 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  let event: Stripe.Event
+  let event: Stripe.Event | null = null
+  let matchedSecretId: string | null = null
 
-  try {
-    event = getStripe().webhooks.constructEvent(body, signature, webhookSecret)
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err)
+  const tryConstruct = (secret: string): Stripe.Event | null => {
+    try {
+      return getStripe().webhooks.constructEvent(body, signature, secret)
+    } catch {
+      return null
+    }
+  }
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+  if (webhookSecret) {
+    event = tryConstruct(webhookSecret)
+  }
+
+  if (!event) {
+    const secrets = await prisma.webhookSecret.findMany({
+      where: { active: true },
+      select: { id: true, secret: true },
+    })
+
+    for (const secret of secrets) {
+      const parsed = tryConstruct(secret.secret)
+      if (parsed) {
+        event = parsed
+        matchedSecretId = secret.id
+        break
+      }
+    }
+  }
+
+  if (!event) {
     return NextResponse.json(
       { error: 'Invalid signature' },
       { status: 400 }
@@ -35,6 +56,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const eventCustomerId = (event.data?.object as { customer?: string } | undefined)?.customer
+
+    const existing = await prisma.webhookDelivery.findUnique({
+      where: { eventId: event.id },
+    })
+
+    if (existing) {
+      return NextResponse.json({ received: true, duplicate: true })
+    }
+
+    const delivery = await prisma.webhookDelivery.create({
+      data: {
+        eventId: event.id,
+        type: event.type,
+        customerId: eventCustomerId ?? null,
+        status: 'received',
+      },
+    })
+
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session
       const userId = session.client_reference_id || session.metadata?.userId
@@ -67,9 +107,35 @@ export async function POST(request: NextRequest) {
       await grantEntitlement(userId, plan)
     }
 
+    await prisma.webhookDelivery.update({
+      where: { id: delivery.id },
+      data: {
+        status: 'processed',
+        processedAt: new Date(),
+      },
+    })
+
+    if (matchedSecretId) {
+      await prisma.webhookSecret.update({
+        where: { id: matchedSecretId },
+        data: { lastUsedAt: new Date() },
+      })
+    }
+
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error('Webhook processing error:', error)
+    try {
+      await prisma.webhookDelivery.update({
+        where: { eventId: event.id },
+        data: {
+          status: 'failed',
+          errorMessage: error instanceof Error ? error.message : String(error),
+        },
+      })
+    } catch {
+      // Ignore secondary failures
+    }
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }

@@ -16,11 +16,23 @@ interface ToolRun {
   createdAt: string
 }
 
+interface NotificationItem {
+  id: string
+  type: string
+  title: string
+  message: string
+  readAt?: string | null
+  createdAt: string
+}
+
 export default function AccountPage() {
   const router = useRouter()
   const [toolRuns, setToolRuns] = useState<ToolRun[]>([])
   const [plan] = useState<string>('FREE')
   const [loading, setLoading] = useState(true)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
+  const [digestFrequency, setDigestFrequency] = useState<'none' | 'daily' | 'weekly'>('weekly')
+  const [savingPrefs, setSavingPrefs] = useState(false)
 
   const fetchToolRuns = useCallback(async () => {
     try {
@@ -38,9 +50,64 @@ export default function AccountPage() {
     }
   }, [router])
 
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await fetch('/api/notifications')
+      if (res.ok) {
+        const data = await res.json()
+        setNotifications(data.notifications || [])
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }, [])
+
+  const fetchPreferences = useCallback(async () => {
+    try {
+      const res = await fetch('/api/notifications/preferences')
+      if (res.ok) {
+        const data = await res.json()
+        setDigestFrequency(data.preference || 'weekly')
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }, [])
+
   useEffect(() => {
     fetchToolRuns()
-  }, [fetchToolRuns])
+    fetchNotifications()
+    fetchPreferences()
+  }, [fetchToolRuns, fetchNotifications, fetchPreferences])
+
+  const handleMarkRead = async (id: string) => {
+    try {
+      await fetch('/api/notifications/read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [id] }),
+      })
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const handleDigestChange = async (value: 'none' | 'daily' | 'weekly') => {
+    setDigestFrequency(value)
+    setSavingPrefs(true)
+    try {
+      await fetch('/api/notifications/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ digestFrequency: value }),
+      })
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setSavingPrefs(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -221,6 +288,58 @@ export default function AccountPage() {
                         )}
                       </AppCardContent>
                     </AppCard>
+                  ))}
+                </div>
+              )}
+            </AppCardContent>
+          </AppCard>
+
+          <AppCard className="mt-8">
+            <AppCardHeader>
+              <AppCardTitle>Notifications</AppCardTitle>
+              <AppCardDescription>
+                Event alerts and digest preferences.
+              </AppCardDescription>
+            </AppCardHeader>
+            <AppCardContent>
+              <div className="mb-4">
+                <p className="text-sm text-[hsl(var(--muted))] mb-2">Digest frequency</p>
+                <div className="flex flex-wrap gap-2">
+                  {(['none', 'daily', 'weekly'] as const).map((option) => (
+                    <Button
+                      key={option}
+                      size="sm"
+                      variant={digestFrequency === option ? 'default' : 'outline'}
+                      onClick={() => handleDigestChange(option)}
+                      disabled={savingPrefs}
+                    >
+                      {option}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {notifications.length === 0 ? (
+                <AppPanel variant="subtle" className="p-4">
+                  <p className="text-sm text-[hsl(var(--muted))]">No notifications yet.</p>
+                </AppPanel>
+              ) : (
+                <div className="space-y-3">
+                  {notifications.map((notification) => (
+                    <AppPanel key={notification.id} className="p-3 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-[hsl(var(--text))]">{notification.title}</p>
+                        <p className="text-xs text-[hsl(var(--muted))] mt-1">{notification.message}</p>
+                        <p className="text-xs text-[hsl(var(--muted))] mt-2">
+                          {new Date(notification.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      {!notification.readAt && (
+                        <Button size="sm" variant="outline" onClick={() => handleMarkRead(notification.id)}>
+                          Mark read
+                        </Button>
+                      )}
+                    </AppPanel>
                   ))}
                 </div>
               )}

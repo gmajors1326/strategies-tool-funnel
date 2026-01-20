@@ -8,6 +8,7 @@ export interface RecentRun {
 }
 
 const STORAGE_KEY = 'strategy_tools_recent_runs'
+const PINNED_KEY = 'strategy_tools_pinned_runs'
 const MAX_RUNS_PER_TOOL = 10
 const MAX_TOTAL_RUNS = 100
 
@@ -72,7 +73,39 @@ export function removeRecentRun(id: string): void {
     const existing = getRecentRuns()
     const updated = existing.filter(run => run.id !== id)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+    const pinned = getPinnedRunIds().filter(runId => runId !== id)
+    localStorage.setItem(PINNED_KEY, JSON.stringify(pinned))
   } catch (err) {
     console.error('Failed to remove recent run:', err)
+  }
+}
+
+export function getPinnedRunIds(): string[] {
+  try {
+    const stored = localStorage.getItem(PINNED_KEY)
+    if (!stored) return []
+    return JSON.parse(stored) as string[]
+  } catch (err) {
+    console.error('Failed to get pinned runs:', err)
+    return []
+  }
+}
+
+export function isPinnedRun(runId: string): boolean {
+  return getPinnedRunIds().includes(runId)
+}
+
+export function togglePinnedRun(runId: string): void {
+  try {
+    const pinned = getPinnedRunIds()
+    const index = pinned.indexOf(runId)
+    if (index > -1) {
+      pinned.splice(index, 1)
+    } else {
+      pinned.push(runId)
+    }
+    localStorage.setItem(PINNED_KEY, JSON.stringify(pinned))
+  } catch (err) {
+    console.error('Failed to toggle pinned run:', err)
   }
 }

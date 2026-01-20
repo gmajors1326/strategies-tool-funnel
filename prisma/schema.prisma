@@ -32,6 +32,8 @@ model User {
   entitlements  PlanEntitlement?
   otps          Otp[]
   aiUsageLogs   AiUsageLog[]
+  notifications Notification[]
+  notificationPreference NotificationPreference?
 
   @@index([email])
   @@index([plan])
@@ -157,4 +159,60 @@ model AiUsageLog {
   @@index([userId])
   @@index([toolKey])
   @@index([createdAt])
+}
+
+model WebhookDelivery {
+  id          String   @id @default(cuid())
+  eventId     String   @unique
+  type        String
+  customerId  String?
+  status      String
+  receivedAt  DateTime @default(now())
+  processedAt DateTime?
+  errorMessage String?
+
+  @@index([customerId])
+  @@index([receivedAt])
+  @@index([type])
+  @@index([status])
+}
+
+model WebhookSecret {
+  id         String   @id @default(cuid())
+  customerId String
+  secret     String
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  rotatedAt  DateTime?
+  lastUsedAt DateTime?
+
+  @@index([customerId])
+  @@index([active])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  metadata  Json?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([readAt])
+}
+
+model NotificationPreference {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  digestFrequency String  @default("weekly") // none | daily | weekly
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

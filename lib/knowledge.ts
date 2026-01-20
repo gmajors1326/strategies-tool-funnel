@@ -74,7 +74,7 @@ export async function retrieveKnowledge(
     })
 
     return items.map((item: { content: string }) => item.content)
-  })
+  }, 300)
 }
 
 export async function getPromptProfile(style: AiStyle): Promise<{
@@ -104,7 +104,7 @@ export async function getPromptProfile(style: AiStyle): Promise<{
       bannedPhrases: profile.bannedPhrases,
       toneNotes: profile.toneNotes,
     }
-  })
+  }, 300)
 }
 
 export async function getPromptRubric(toolKey: string): Promise<{
@@ -131,5 +131,5 @@ export async function getPromptRubric(toolKey: string): Promise<{
       reasoningRules: rubric.reasoningRules,
       safetyRules: rubric.safetyRules,
     }
-  })
+  }, 300)
 }

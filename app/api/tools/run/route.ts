@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runTool } from '@/lib/ai/runTool'
 import { ToolId } from '@/lib/ai/schemas'
+import { getSession } from '@/lib/auth'
+import { createNotification } from '@/lib/notifications'
 import { z } from 'zod'
 
 const runToolSchema = z.object({
@@ -253,6 +255,25 @@ export async function POST(request: NextRequest) {
 
     if (!result.success) {
       const errorMessage = result.error || 'Failed to run tool'
+
+      try {
+        const session = await getSession()
+        if (session) {
+          const lower = errorMessage.toLowerCase()
+          const type = lower.includes('limit') || lower.includes('quota')
+            ? 'usage_limit'
+            : 'tool_failed'
+          await createNotification({
+            userId: session.userId,
+            type,
+            title: type === 'usage_limit' ? 'Usage limit reached' : 'Tool run failed',
+            message: errorMessage,
+            metadata: { toolId },
+          })
+        }
+      } catch {
+        // Ignore notification errors
+      }
       
       // Check for rate limiting
       if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
@@ -291,6 +312,19 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('[tools/run] Error:', error)
+    try {
+      const session = await getSession()
+      if (session) {
+        await createNotification({
+          userId: session.userId,
+          type: 'tool_failed',
+          title: 'Tool run failed',
+          message: error instanceof Error ? error.message : 'Failed to run tool',
+        })
+      }
+    } catch {
+      // Ignore notification errors
+    }
     return NextResponse.json(
       { error: 'Failed to run tool' },
       { status: 500 }

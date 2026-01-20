@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { AppPanel } from '@/components/ui/AppPanel'
 import { Button } from '@/components/ui/button'
-import { ChevronDown, ChevronUp, Clock, X } from 'lucide-react'
-import { RecentRun } from '@/lib/recentRuns'
+import { ChevronDown, ChevronUp, Clock, Star, X } from 'lucide-react'
+import { RecentRun, getPinnedRunIds, isPinnedRun, togglePinnedRun } from '@/lib/recentRuns'
 import { formatDistanceToNow } from 'date-fns'
 
 // Fallback for formatDistanceToNow if date-fns fails
@@ -32,6 +32,7 @@ interface RecentRunsPanelProps {
 
 export function RecentRunsPanel({ runs, onLoadRun }: RecentRunsPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   if (runs.length === 0) {
     return null
@@ -48,6 +49,56 @@ export function RecentRunsPanel({ runs, onLoadRun }: RecentRunsPanelProps) {
     // Trigger re-render by calling parent's refresh if needed
     window.dispatchEvent(new Event('storage'))
   }
+
+  const handleTogglePinned = (e: React.MouseEvent, runId: string) => {
+    e.stopPropagation()
+    togglePinnedRun(runId)
+    window.dispatchEvent(new Event('storage'))
+  }
+
+  const toSearchText = (run: RecentRun): string => {
+    return [
+      run.title,
+      JSON.stringify(run.inputs),
+      JSON.stringify(run.outputs),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+  }
+
+  const scoreRun = (run: RecentRun, query: string): number => {
+    const tokens = query.split(/[^a-z0-9]+/i).filter(Boolean)
+    if (tokens.length === 0) return 1
+    const haystack = toSearchText(run)
+    let score = 0
+    tokens.forEach((token) => {
+      if (haystack.includes(token)) score += 1
+    })
+    return score
+  }
+
+  const filteredRuns = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return runs
+    }
+    const query = searchQuery.toLowerCase().trim()
+    return runs
+      .map((run) => ({ run, score: scoreRun(run, query) }))
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map((item) => item.run)
+  }, [runs, searchQuery])
+
+  const pinnedSet = useMemo(() => new Set(getPinnedRunIds()), [runs, searchQuery])
+  const sortedRuns = useMemo(() => {
+    return [...filteredRuns].sort((a, b) => {
+      const aPinned = pinnedSet.has(a.id)
+      const bPinned = pinnedSet.has(b.id)
+      if (aPinned !== bPinned) return aPinned ? -1 : 1
+      return b.timestamp - a.timestamp
+    })
+  }, [filteredRuns, pinnedSet])
 
   return (
     <AppPanel variant="subtle" className="mb-4">
@@ -71,7 +122,13 @@ export function RecentRunsPanel({ runs, onLoadRun }: RecentRunsPanelProps) {
       
       {isExpanded && (
         <div className="px-3 pb-3 space-y-2">
-          {runs.map((run) => (
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search runs (semantic)"
+            className="w-full rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-2 py-1 text-xs text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted))]"
+          />
+          {sortedRuns.map((run) => (
             <div
               key={run.id}
               className="flex items-start justify-between gap-2 p-2 bg-[hsl(var(--surface-3))] rounded border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] transition-colors"
@@ -87,17 +144,31 @@ export function RecentRunsPanel({ runs, onLoadRun }: RecentRunsPanelProps) {
                   {formatTimeAgo(run.timestamp)}
                 </div>
               </button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => handleRemoveRun(e, run.id)}
-                className="h-6 w-6 p-0 flex-shrink-0 hover:bg-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive-foreground))]"
-                aria-label="Remove run"
-              >
-                <X className="w-3 h-3" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => handleTogglePinned(e, run.id)}
+                  className="h-6 w-6 p-0 flex-shrink-0"
+                  aria-label={isPinnedRun(run.id) ? 'Unpin run' : 'Pin run'}
+                >
+                  <Star className={`w-3 h-3 ${isPinnedRun(run.id) ? 'fill-yellow-400 text-yellow-400' : 'text-[hsl(var(--muted))]'}`} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => handleRemoveRun(e, run.id)}
+                  className="h-6 w-6 p-0 flex-shrink-0 hover:bg-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive-foreground))]"
+                  aria-label="Remove run"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
             </div>
           ))}
+          {sortedRuns.length === 0 && (
+            <div className="text-xs text-[hsl(var(--muted))]">No runs match that search.</div>
+          )}
         </div>
       )}
     </AppPanel>

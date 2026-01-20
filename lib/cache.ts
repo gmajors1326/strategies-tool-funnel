@@ -6,14 +6,20 @@ interface CacheStore {
   del(key: string): Promise<void>
 }
 
+type CacheEnvelope = {
+  value: string
+  expiresAt: number
+  staleUntil: number
+}
+
 class MemoryCache implements CacheStore {
-  private store = new Map<string, { value: string; expiresAt: number }>()
+  private store = new Map<string, CacheEnvelope>()
 
   constructor() {
     setInterval(() => {
       const now = Date.now()
       for (const [key, entry] of this.store.entries()) {
-        if (entry.expiresAt <= now) {
+        if (entry.staleUntil <= now) {
           this.store.delete(key)
         }
       }
@@ -23,18 +29,22 @@ class MemoryCache implements CacheStore {
   async get(key: string): Promise<string | null> {
     const entry = this.store.get(key)
     if (!entry) return null
-    if (entry.expiresAt <= Date.now()) {
-      this.store.delete(key)
-      return null
-    }
-    return entry.value
+    return JSON.stringify(entry)
   }
 
   async set(key: string, value: string, ttlSeconds: number): Promise<void> {
-    this.store.set(key, {
-      value,
-      expiresAt: Date.now() + ttlSeconds * 1000,
-    })
+    try {
+      const envelope = JSON.parse(value) as CacheEnvelope
+      this.store.set(key, envelope)
+    } catch {
+      const now = Date.now()
+      const envelope: CacheEnvelope = {
+        value,
+        expiresAt: now + ttlSeconds * 1000,
+        staleUntil: now + ttlSeconds * 1000,
+      }
+      this.store.set(key, envelope)
+    }
   }
 
   async del(key: string): Promise<void> {
@@ -112,28 +122,84 @@ const createCacheStore = (): CacheStore => {
 }
 
 const cacheStore = createCacheStore()
+const inFlight = new Map<string, Promise<unknown>>()
+
+type CacheOptions = {
+  ttlSeconds: number
+  staleSeconds?: number
+}
 
 export async function withCache<T>(
   key: string,
   ttlSeconds: number,
-  fetcher: () => Promise<T>
+  fetcher: () => Promise<T>,
+  staleSeconds: number = ttlSeconds
 ): Promise<T> {
   const cached = await cacheStore.get(key)
   if (cached) {
     try {
-      return JSON.parse(cached) as T
+      const envelope = JSON.parse(cached) as CacheEnvelope
+      const now = Date.now()
+      const value = JSON.parse(envelope.value) as T
+
+      if (envelope.expiresAt > now) {
+        return value
+      }
+
+      if (envelope.staleUntil > now) {
+        if (!inFlight.has(key)) {
+          const refresh = fetcher()
+            .then(async (fresh) => {
+              const payload = JSON.stringify(fresh)
+              const newEnvelope: CacheEnvelope = {
+                value: payload,
+                expiresAt: Date.now() + ttlSeconds * 1000,
+                staleUntil: Date.now() + (ttlSeconds + staleSeconds) * 1000,
+              }
+              await cacheStore.set(key, JSON.stringify(newEnvelope), ttlSeconds + staleSeconds)
+              return fresh
+            })
+            .catch((error) => {
+              logger.error('Cache refresh failed', error as Error, { key })
+              return value
+            })
+            .finally(() => {
+              inFlight.delete(key)
+            })
+          inFlight.set(key, refresh)
+        }
+
+        return value
+      }
     } catch (error) {
       logger.warn('Cache parse failed, refetching', { key })
       await cacheStore.del(key)
     }
   }
 
-  const fresh = await fetcher()
-  try {
-    await cacheStore.set(key, JSON.stringify(fresh), ttlSeconds)
-  } catch (error) {
-    logger.error('Cache write failed', error as Error, { key })
+  if (inFlight.has(key)) {
+    return (await inFlight.get(key)) as T
   }
 
-  return fresh
+  const fetchPromise = fetcher()
+    .then(async (fresh) => {
+      const payload = JSON.stringify(fresh)
+      const envelope: CacheEnvelope = {
+        value: payload,
+        expiresAt: Date.now() + ttlSeconds * 1000,
+        staleUntil: Date.now() + (ttlSeconds + staleSeconds) * 1000,
+      }
+      await cacheStore.set(key, JSON.stringify(envelope), ttlSeconds + staleSeconds)
+      return fresh
+    })
+    .catch((error) => {
+      logger.error('Cache write failed', error as Error, { key })
+      throw error
+    })
+    .finally(() => {
+      inFlight.delete(key)
+    })
+
+  inFlight.set(key, fetchPromise)
+  return (await fetchPromise) as T
 }
