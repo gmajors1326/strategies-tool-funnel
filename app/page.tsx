@@ -66,13 +66,11 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </div>
+          <div className="md:col-span-2">
+            {/* DM Intelligence Engine - Full Tool */}
+            <DMIntelligenceEngineTool />
+          </div>
         </div>
-      </section>
-
-      {/* All Tools Section */}
-      <section className="container mx-auto px-4 py-20">
-        {/* DM Intelligence Engine - Full Tool */}
-        <DMIntelligenceEngineTool />
       </section>
 
       {/* FAQ Section */}
