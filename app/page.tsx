@@ -51,7 +51,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#7d9b76] text-foreground">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-8 pb-12 md:pt-16 md:pb-20">
+      <section className="container mx-auto px-4 pt-6 pb-12 md:pt-12 md:pb-20">
+        <div className="flex justify-end no-print">
+          <Button asChild size="sm" variant="outline" className="shadow-ink-40">
+            <Link href="/admin/login">Admin</Link>
+          </Button>
+        </div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
