@@ -90,6 +90,15 @@ export async function POST(request: NextRequest) {
         format_optional: inputs.format_optional || null,
         notes_optional: inputs.notes_optional || null,
       }
+    } else if (toolId === 'algorithm_training_mode') {
+      structuredInputs = {
+        training_goal: inputs.training_goal,
+        target_audience: inputs.target_audience,
+        core_topic: inputs.core_topic,
+        preferred_format: inputs.preferred_format,
+        days: inputs.days,
+        posting_capacity: inputs.posting_capacity,
+      }
     }
 
     // Run the tool

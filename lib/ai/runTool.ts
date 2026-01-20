@@ -75,11 +75,15 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
     case 'algorithm_training_mode':
       return {
         ...base,
-        training_status: 'partially_trained',
-        signals_sent: [{ signal: 'Need more data', strength: 'weak', explanation: 'Insufficient signal' }],
-        missing_signals: ['Consistent posting', 'Clear content pattern'],
-        next_post_recommendations: ['Post consistently', 'Test different content types'],
-        content_pattern_analysis: 'Need more data to analyze pattern',
+        training_thesis: 'Insufficient signal. Provide training_goal, target_audience, and core_topic to design a training sequence.',
+        sequence: [],
+        guardrails: [
+          'Provide all required inputs to get guardrails',
+          'Training goal, audience, and topic are required',
+          'Cannot design sequence without complete information',
+          'Fill in all fields and try again',
+        ],
+        one_spicy_experiment: 'Provide inputs to get experiment suggestion',
       }
     case 'post_type_recommender':
       return {

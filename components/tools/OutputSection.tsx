@@ -77,8 +77,32 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
         )
       
       case 'object':
+        // Handle arrays of objects (like sequence: [{ day: 1, post_type: "...", ... }])
+        if (Array.isArray(content) && content.length > 0 && typeof content[0] === 'object') {
+          return (
+            <div className="space-y-3 sm:space-y-4">
+              {content.map((item, idx) => (
+                <div key={idx} className="border border-[hsl(var(--border))] rounded-lg p-3 sm:p-4 bg-[hsl(var(--surface-2))]">
+                  {typeof item === 'object' && item !== null && (
+                    <div className="space-y-1.5 sm:space-y-2">
+                      {Object.entries(item as Record<string, any>).map(([key, value]) => (
+                        <div key={key} className="text-xs sm:text-sm">
+                          <span className="font-semibold text-[hsl(var(--text))] capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
+                          <span className="text-[hsl(var(--text))] break-words">
+                            {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        }
+        
+        // Handle nested objects (like rewrites: { curiosity: [...], threat: [...] })
         if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
-          // Handle nested objects (like rewrites: { curiosity: [...], threat: [...] })
           return (
             <div className="space-y-2 sm:space-y-3">
               {Object.entries(content as Record<string, any>).map(([key, value]) => (

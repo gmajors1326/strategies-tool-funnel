@@ -64,15 +64,16 @@ export const retentionLeakFinderSchema = baseOutputSchema.extend({
 
 // Algorithm Training Mode
 export const algorithmTrainingModeSchema = baseOutputSchema.extend({
-  training_status: z.enum(['well_trained', 'partially_trained', 'untrained']),
-  signals_sent: z.array(z.object({
-    signal: z.string(),
-    strength: z.enum(['strong', 'medium', 'weak']),
-    explanation: z.string(),
-  })).min(1).max(6),
-  missing_signals: z.array(z.string()).min(0).max(4),
-  next_post_recommendations: z.array(z.string()).min(2).max(4),
-  content_pattern_analysis: z.string(),
+  training_thesis: z.string(),
+  sequence: z.array(z.object({
+    day: z.number(),
+    post_type: z.string(),
+    purpose: z.string(),
+    success_metric: z.string(),
+    hook_template: z.string(),
+  })).min(1),
+  guardrails: z.array(z.string()).min(4),
+  one_spicy_experiment: z.string(),
 })
 
 // Post Type Recommender

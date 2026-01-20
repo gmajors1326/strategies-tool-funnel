@@ -12,6 +12,7 @@ export default function HomePage() {
   const postTypeRecommenderConfig = getToolConfig('post_type_recommender')
   const hookPressureTestConfig = getToolConfig('hook_pressure_test')
   const retentionLeakFinderConfig = getToolConfig('retention_leak_finder')
+  const algorithmTrainingModeConfig = getToolConfig('algorithm_training_mode')
   const whyPostFailedConfig = getToolConfig('why_post_failed')
 
   return (
@@ -47,6 +48,7 @@ export default function HomePage() {
           <ToolShell config={postTypeRecommenderConfig} />
           <ToolShell config={hookPressureTestConfig} />
           <ToolShell config={retentionLeakFinderConfig} />
+          <ToolShell config={algorithmTrainingModeConfig} />
           <ToolShell config={whyPostFailedConfig} />
         </div>
       </section>
