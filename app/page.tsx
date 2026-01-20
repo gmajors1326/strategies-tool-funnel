@@ -47,9 +47,6 @@ export default function HomePage() {
     return filtered
   }, [searchQuery, selectedCategory, allToolConfigs])
   
-  const handleFocusSearch = () => {
-    searchInputRef.current?.focus()
-  }
 
   return (
     <div className="min-h-screen bg-[#7d9b76] text-foreground">
