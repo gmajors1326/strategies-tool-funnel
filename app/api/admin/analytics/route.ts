@@ -22,16 +22,20 @@ function parseFilters(req: NextRequest): AnalyticsFilters {
 }
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdmin()
-  if (!canViewAnalytics(admin.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  try {
+    const admin = await requireAdmin()
+    if (!canViewAnalytics(admin.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const filters = parseFilters(req)
+
+    // TODO: Replace mock builder with real DB queries:
+    // const data = await buildAnalyticsFromDb(filters)
+    const data = buildMockAnalytics(filters)
+
+    return NextResponse.json(data)
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  const filters = parseFilters(req)
-
-  // TODO: Replace mock builder with real DB queries:
-  // const data = await buildAnalyticsFromDb(filters)
-  const data = buildMockAnalytics(filters)
-
-  return NextResponse.json(data)
 }

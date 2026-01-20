@@ -6,19 +6,34 @@ export type AdminSession = {
   role: AdminRole
 }
 
-export async function requireAdmin(): Promise<AdminSession> {
-  // TODO: Replace with your real auth/session lookup.
-  // Example expectations:
-  // - Validate cookie/session
-  // - Ensure role is one of admin/support/analyst
-  // - Throw if not authorized
+import { cookies } from 'next/headers'
 
-  const devAllow = process.env.NODE_ENV !== 'production'
-  if (devAllow) {
-    return { userId: 'dev-admin', email: 'dev@local', role: 'admin' }
+const ADMIN_COOKIE_NAME = 'admin_session'
+
+function decodeSessionCookie(value: string): AdminSession | null {
+  try {
+    const json = Buffer.from(value, 'base64url').toString('utf-8')
+    const parsed = JSON.parse(json) as AdminSession
+    if (!parsed?.userId || !parsed?.email || !parsed?.role) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+export async function requireAdmin(): Promise<AdminSession> {
+  const cookieStore = cookies()
+  const sessionCookie = cookieStore.get(ADMIN_COOKIE_NAME)
+  if (!sessionCookie?.value) {
+    throw new Error('Unauthorized')
   }
 
-  throw new Error('Unauthorized')
+  const session = decodeSessionCookie(sessionCookie.value)
+  if (!session) {
+    throw new Error('Unauthorized')
+  }
+
+  return session
 }
 
 export function canViewAnalytics(role: AdminRole) {

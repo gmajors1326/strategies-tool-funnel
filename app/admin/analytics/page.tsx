@@ -2,11 +2,19 @@ import { requireAdmin, canViewAnalytics } from '@/lib/adminAuth'
 import AnalyticsDashboard from './ui/AnalyticsDashboard'
 
 export default async function AdminAnalyticsPage() {
-  const admin = await requireAdmin()
-  if (!canViewAnalytics(admin.role)) {
+  try {
+    const admin = await requireAdmin()
+    if (!canViewAnalytics(admin.role)) {
+      return (
+        <div className="p-6 text-sm text-red-300">
+          Forbidden — your role can’t view analytics.
+        </div>
+      )
+    }
+  } catch {
     return (
       <div className="p-6 text-sm text-red-300">
-        Forbidden — your role can’t view analytics.
+        Unauthorized. Please sign in at <a href="/admin/login" className="underline">/admin/login</a>.
       </div>
     )
   }
