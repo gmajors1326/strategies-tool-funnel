@@ -67,9 +67,9 @@
 
 ### Tools Implemented
 
-1. **Post Types To Outperform** (`post_types_to_outperform`)
-   - Route: `/tools/post-types-to-outperform`
-   - Uses new AI engine (updated from old deterministic version)
+1. **Why Post Failed** (`why_post_failed`)
+   - Route: `/tools/why-post-failed`
+   - Uses new AI engine
 
 2. **Why Post Failed** (`why_post_failed`)
    - Route: `/tools/why-post-failed`
