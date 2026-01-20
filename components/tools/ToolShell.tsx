@@ -510,7 +510,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
                 </AppPanel>
               ) : (
                 <>
-                  <div className="space-y-3 sm:space-y-4 print-cards-grid">
+                  <div id="results-export" className="space-y-3 sm:space-y-4 print-cards-grid">
                     {config.outputSections.map(section => {
                       const content = outputs[section.key]
                       if (content === undefined || content === null) return null
@@ -537,7 +537,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
                       inputs={inputs}
                       outputs={outputs}
                     />
-                    <ExportButtons outputs={outputs} toolTitle={config.title} />
+                    <ExportButtons outputs={outputs} toolTitle={config.title} exportTargetId="results-export" />
                   </div>
                 </>
               )}

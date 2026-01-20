@@ -6,9 +6,10 @@ import { FileDown, FileText, FileJson, Printer } from 'lucide-react'
 interface ExportButtonsProps {
   outputs: Record<string, any>
   toolTitle: string
+  exportTargetId?: string
 }
 
-export function ExportButtons({ outputs, toolTitle }: ExportButtonsProps) {
+export function ExportButtons({ outputs, toolTitle, exportTargetId = 'results-export' }: ExportButtonsProps) {
   const triggerPrint = (mode: 'default' | 'cards') => {
     if (typeof window === 'undefined') return
 
@@ -79,8 +80,43 @@ export function ExportButtons({ outputs, toolTitle }: ExportButtonsProps) {
     URL.revokeObjectURL(url)
   }
 
-  const handleExportPdf = () => {
-    triggerPrint('default')
+  const handleExportPdf = async () => {
+    if (typeof window === 'undefined') return
+    const element = document.getElementById(exportTargetId)
+    if (!element) return
+
+    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf'),
+    ])
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+    })
+
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF('p', 'pt', 'a4')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const imgWidth = pageWidth
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+    let heightLeft = imgHeight
+    let position = 0
+
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+    heightLeft -= pageHeight
+
+    while (heightLeft > 0) {
+      position -= pageHeight
+      pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+    }
+
+    pdf.save(`${toolTitle.replace(/\s+/g, '_')}_results_${Date.now()}.pdf`)
   }
 
   const handlePrintCards = () => {
