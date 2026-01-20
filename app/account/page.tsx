@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AppCard, AppCardContent, AppCardDescription, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
+import { AppPanel } from '@/components/ui/AppPanel'
 import Link from 'next/link'
 import { Lock, Sparkles } from 'lucide-react'
 
@@ -45,7 +46,7 @@ export default function AccountPage() {
     return (
       <div className="relative min-h-screen bg-hero-cactus text-foreground flex items-center justify-center">
         <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
-        <div className="relative text-muted-foreground">Loading...</div>
+        <div className="relative text-[hsl(var(--muted))]">Loading...</div>
       </div>
     )
   }
@@ -58,41 +59,41 @@ export default function AccountPage() {
           <h1 className="text-4xl font-bold mb-8 text-white text-shadow-ink-40">Account</h1>
 
           {/* Plan Status */}
-          <Card className="bg-card/95 border-border/60 backdrop-blur-sm mb-8 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-card-foreground">Your Plan</CardTitle>
-              <CardDescription className="text-card-foreground/70">
+          <AppCard className="mb-8">
+            <AppCardHeader>
+              <AppCardTitle>Your Plan</AppCardTitle>
+              <AppCardDescription>
                 Current plan: {plan === 'FREE' ? 'Free' : plan.replace('_', ' ')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </AppCardDescription>
+            </AppCardHeader>
+            <AppCardContent>
               {plan === 'FREE' && (
                 <div>
-                  <p className="text-card-foreground/70 mb-4">Upgrade to unlock premium tools and unlimited saves.</p>
+                  <p className="text-[hsl(var(--muted))] mb-4">Upgrade to unlock premium tools and unlimited saves.</p>
                   <Button asChild>
                     <Link href="/#offers">View Plans</Link>
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </AppCardContent>
+          </AppCard>
 
           {/* Saved Results */}
-          <Card className="bg-card/95 border-border/60 backdrop-blur-sm shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-card-foreground">Saved Results</CardTitle>
-              <CardDescription className="text-card-foreground/70">
+          <AppCard>
+            <AppCardHeader>
+              <AppCardTitle>Saved Results</AppCardTitle>
+              <AppCardDescription>
                 {toolRuns.length === 0 
                   ? 'No saved results yet. Run a tool and save your results to see them here.'
                   : `${toolRuns.length} saved result${toolRuns.length !== 1 ? 's' : ''}`
                 }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </AppCardDescription>
+            </AppCardHeader>
+            <AppCardContent>
               {toolRuns.length === 0 ? (
                 <div className="text-center py-8">
-                  <Sparkles className="h-12 w-12 text-card-foreground/40 mx-auto mb-4" />
-                  <p className="text-card-foreground/60 mb-4">No saved results yet</p>
+                  <Sparkles className="h-12 w-12 text-[hsl(var(--muted))] mx-auto mb-4" />
+                  <p className="text-[hsl(var(--muted))] mb-4">No saved results yet</p>
                   <Button asChild variant="outline">
                     <Link href="/">Try Free Tools</Link>
                   </Button>
@@ -100,56 +101,56 @@ export default function AccountPage() {
               ) : (
                 <div className="space-y-4">
                   {toolRuns.map((run) => (
-                    <Card key={run.id} className="bg-card/90 border-border/60">
-                      <CardContent className="pt-6">
+                    <AppCard key={run.id}>
+                      <AppCardContent className="pt-6">
                         <div className="flex items-start justify-between mb-4">
                           <div>
-                            <h3 className="text-lg font-semibold text-card-foreground capitalize">
+                            <h3 className="text-lg font-semibold text-[hsl(var(--text))] capitalize">
                               {run.toolKey === 'dm_intelligence_engine' 
                                 ? 'DM Intelligence Engine' 
                                 : run.toolKey.replace(/-/g, ' ')}
                             </h3>
-                            <p className="text-sm text-card-foreground/60">
+                            <p className="text-sm text-[hsl(var(--muted))]">
                               {new Date(run.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                           {plan === 'FREE' && (
-                            <Lock className="h-5 w-5 text-card-foreground/40" />
+                            <Lock className="h-5 w-5 text-[hsl(var(--muted))]" />
                           )}
                         </div>
                         {run.outputsJson && (
-                          <div className="mt-4 p-4 bg-background/40 rounded border border-border/60">
+                          <AppPanel className="mt-4">
                             {run.toolKey === 'engagement-diagnostic' && (
                               <div>
-                                <p className="text-sm text-card-foreground/60 mb-2">Engagement Tier:</p>
-                                <p className="text-lg font-semibold text-primary mb-4">
+                                <p className="text-sm text-[hsl(var(--muted))] mb-2">Engagement Tier:</p>
+                                <p className="text-lg font-semibold text-[hsl(var(--primary))] mb-4">
                                   {run.outputsJson.engagementTier}
                                 </p>
-                                <p className="text-sm text-card-foreground/60 mb-2">Insight:</p>
-                                <p className="text-card-foreground/80 mb-4">{run.outputsJson.insight}</p>
-                                <p className="text-sm text-card-foreground/60 mb-2">Action:</p>
-                                <p className="text-card-foreground/80">{run.outputsJson.action}</p>
+                                <p className="text-sm text-[hsl(var(--muted))] mb-2">Insight:</p>
+                                <p className="text-[hsl(var(--text))] mb-4">{run.outputsJson.insight}</p>
+                                <p className="text-sm text-[hsl(var(--muted))] mb-2">Action:</p>
+                                <p className="text-[hsl(var(--text))]">{run.outputsJson.action}</p>
                               </div>
                             )}
                             {run.toolKey === 'dm-opener' && (
                               <div>
-                                <p className="text-sm text-card-foreground/60 mb-2">DM Opener:</p>
-                                <p className="text-card-foreground/80 p-3 bg-card rounded border border-border/60">
+                                <p className="text-sm text-[hsl(var(--muted))] mb-2">DM Opener:</p>
+                                <AppPanel variant="subtle" className="p-3">
                                   {run.outputsJson.opener}
-                                </p>
+                                </AppPanel>
                               </div>
                             )}
                             {run.toolKey === 'hook-repurposer' && (
                               <div>
-                                <p className="text-sm text-card-foreground/60 mb-2">Hook angles:</p>
+                                <p className="text-sm text-[hsl(var(--muted))] mb-2">Hook angles:</p>
                                 <div className="space-y-3">
                                   {(run.outputsJson.hooks || []).slice(0, 3).map((hook: any, index: number) => (
-                                    <div key={`${hook.angle}-${index}`} className="rounded-md border border-border/60 bg-background/50 p-3">
-                                      <p className="text-xs uppercase tracking-[0.2em] text-card-foreground/60">
+                                    <AppPanel key={`${hook.angle}-${index}`} variant="subtle">
+                                      <p className="text-xs uppercase tracking-[0.2em] text-[hsl(var(--muted))]">
                                         {hook.angle}
                                       </p>
-                                      <p className="mt-2 text-card-foreground/80">{hook.text}</p>
-                                    </div>
+                                      <p className="mt-2 text-[hsl(var(--text))]">{hook.text}</p>
+                                    </AppPanel>
                                   ))}
                                 </div>
                               </div>
@@ -158,73 +159,73 @@ export default function AccountPage() {
                               <div className="space-y-4">
                                 <div className="flex gap-4 text-xs mb-4">
                                   <div>
-                                    <span className="text-card-foreground/60">Scenario: </span>
-                                    <span className="text-card-foreground font-medium capitalize">
+                                    <span className="text-[hsl(var(--muted))]">Scenario: </span>
+                                    <span className="text-[hsl(var(--text))] font-medium capitalize">
                                       {run.inputsJson?.scenario?.replace('_', ' ')}
                                     </span>
                                   </div>
                                   <div>
-                                    <span className="text-card-foreground/60">Intent: </span>
-                                    <span className="text-card-foreground font-medium capitalize">
+                                    <span className="text-[hsl(var(--muted))]">Intent: </span>
+                                    <span className="text-[hsl(var(--text))] font-medium capitalize">
                                       {run.inputsJson?.intent?.replace('_', ' ')}
                                     </span>
                                   </div>
                                   <div>
-                                    <span className="text-card-foreground/60">Tone: </span>
-                                    <span className="text-card-foreground font-medium capitalize">
+                                    <span className="text-[hsl(var(--muted))]">Tone: </span>
+                                    <span className="text-[hsl(var(--text))] font-medium capitalize">
                                       {run.inputsJson?.tone}
                                     </span>
                                   </div>
                                 </div>
                                 <div>
-                                  <p className="text-sm text-card-foreground/60 mb-2">Recommended Reply:</p>
-                                  <p className="text-card-foreground/80 p-3 bg-card rounded border border-border/60 whitespace-pre-wrap">
+                                  <p className="text-sm text-[hsl(var(--muted))] mb-2">Recommended Reply:</p>
+                                  <AppPanel variant="subtle" className="p-3 whitespace-pre-wrap">
                                     {run.outputsJson?.recommendedReply}
-                                  </p>
+                                  </AppPanel>
                                 </div>
                                 {run.outputsJson?.alternateReply && (
                                   <div>
-                                    <p className="text-sm text-card-foreground/60 mb-2">Alternate Reply:</p>
-                                    <p className="text-card-foreground/80 p-3 bg-card rounded border border-border/60 whitespace-pre-wrap">
+                                    <p className="text-sm text-[hsl(var(--muted))] mb-2">Alternate Reply:</p>
+                                    <AppPanel variant="subtle" className="p-3 whitespace-pre-wrap">
                                       {run.outputsJson.alternateReply}
-                                    </p>
+                                    </AppPanel>
                                   </div>
                                 )}
                                 {run.outputsJson?.nextStep && (
                                   <div>
-                                    <p className="text-sm text-card-foreground/60 mb-2">Next Step:</p>
-                                    <p className="text-card-foreground/80">{run.outputsJson.nextStep}</p>
+                                    <p className="text-sm text-[hsl(var(--muted))] mb-2">Next Step:</p>
+                                    <p className="text-[hsl(var(--text))]">{run.outputsJson.nextStep}</p>
                                   </div>
                                 )}
                                 {run.outputsJson?.riskNote && (
-                                  <div className="p-3 bg-yellow-500/10 rounded border border-yellow-500/30">
-                                    <p className="text-sm text-yellow-600 font-medium mb-1">Risk Note:</p>
-                                    <p className="text-sm text-yellow-600">{run.outputsJson.riskNote}</p>
-                                  </div>
+                                  <AppPanel className="border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10">
+                                    <p className="text-sm text-[hsl(var(--destructive))] font-medium mb-1">Risk Note:</p>
+                                    <p className="text-sm text-[hsl(var(--destructive))]">{run.outputsJson.riskNote}</p>
+                                  </AppPanel>
                                 )}
                                 <div className="flex gap-4 text-xs">
                                   <div>
-                                    <span className="text-card-foreground/60">Warmth: </span>
-                                    <span className="text-card-foreground font-medium">{run.outputsJson?.detectedWarmth}</span>
+                                    <span className="text-[hsl(var(--muted))]">Warmth: </span>
+                                    <span className="text-[hsl(var(--text))] font-medium">{run.outputsJson?.detectedWarmth}</span>
                                   </div>
                                   <div>
-                                    <span className="text-card-foreground/60">Pitch Readiness: </span>
-                                    <span className="text-card-foreground font-medium capitalize">
+                                    <span className="text-[hsl(var(--muted))]">Pitch Readiness: </span>
+                                    <span className="text-[hsl(var(--text))] font-medium capitalize">
                                       {run.outputsJson?.pitchReadiness?.replace('_', ' ')}
                                     </span>
                                   </div>
                                 </div>
                               </div>
                             )}
-                          </div>
+                          </AppPanel>
                         )}
-                      </CardContent>
-                    </Card>
+                      </AppCardContent>
+                    </AppCard>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </AppCardContent>
+          </AppCard>
 
           <div className="mt-8 text-center">
             <Button asChild variant="outline">

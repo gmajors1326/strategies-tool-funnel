@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AppCard, AppCardContent, AppCardDescription, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
+import { AppPanel } from '@/components/ui/AppPanel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -71,20 +72,20 @@ export default function VerifyPage() {
   return (
     <div className="relative min-h-screen bg-hero-cactus text-foreground flex items-center justify-center p-4">
       <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
-      <Card className="relative w-full max-w-md bg-card/95 border-border/60 backdrop-blur-sm shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-card-foreground">Email Verification</CardTitle>
-          <CardDescription className="text-card-foreground/70">
+      <AppCard className="relative w-full max-w-md">
+        <AppCardHeader>
+          <AppCardTitle>Email Verification</AppCardTitle>
+          <AppCardDescription>
             {step === 'start' 
               ? 'Enter your details to receive a verification code'
               : 'Enter the 6-digit code sent to your email'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </AppCardDescription>
+        </AppCardHeader>
+        <AppCardContent>
           {step === 'start' ? (
             <form onSubmit={handleStart} className="space-y-4">
               <div>
-                <Label htmlFor="name" className="text-card-foreground/70">Name (optional)</Label>
+                <Label htmlFor="name" className="text-[hsl(var(--muted))]">Name (optional)</Label>
                 <Input
                   id="name"
                   type="text"
@@ -95,7 +96,7 @@ export default function VerifyPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="email" className="text-card-foreground/70">Email</Label>
+                <Label htmlFor="email" className="text-[hsl(var(--muted))]">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -106,7 +107,11 @@ export default function VerifyPage() {
                   placeholder="your@email.com"
                 />
               </div>
-              {error && <p className="text-sm text-red-400">{error}</p>}
+              {error && (
+                <AppPanel className="border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10">
+                  <p className="text-sm text-[hsl(var(--destructive))]">{error}</p>
+                </AppPanel>
+              )}
               <Button type="submit" disabled={loading} className="w-full">
                 {loading ? 'Sending...' : 'Send Verification Code'}
               </Button>
@@ -114,7 +119,7 @@ export default function VerifyPage() {
           ) : (
             <form onSubmit={handleVerify} className="space-y-4">
               <div>
-                <Label htmlFor="code" className="text-card-foreground/70">Verification Code</Label>
+                <Label htmlFor="code" className="text-[hsl(var(--muted))]">Verification Code</Label>
                 <Input
                   id="code"
                   type="text"
@@ -125,9 +130,13 @@ export default function VerifyPage() {
                   className="mt-1 text-center text-2xl tracking-widest"
                   placeholder="000000"
                 />
-                <p className="text-xs text-card-foreground/60 mt-2">Check your email for the 6-digit code</p>
+                <p className="text-xs text-[hsl(var(--muted))] mt-2">Check your email for the 6-digit code</p>
               </div>
-              {error && <p className="text-sm text-red-400">{error}</p>}
+              {error && (
+                <AppPanel className="border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10">
+                  <p className="text-sm text-[hsl(var(--destructive))]">{error}</p>
+                </AppPanel>
+              )}
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => setStep('start')} className="flex-1">
                   Back
@@ -138,8 +147,8 @@ export default function VerifyPage() {
               </div>
             </form>
           )}
-        </CardContent>
-      </Card>
+        </AppCardContent>
+      </AppCard>
     </div>
   )
 }
