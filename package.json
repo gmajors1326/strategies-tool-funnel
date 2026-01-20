@@ -37,6 +37,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.1.5",
+    "@sentry/nextjs": "^7.120.4",
     "@stripe/stripe-js": "^2.4.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",

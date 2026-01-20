@@ -11,6 +11,9 @@ Premium funnel landing page with embedded interactive tools for strategic engage
 - **Email**: Resend (default) or Gmail SMTP (fallback)
 - **AI**: OpenAI GPT-4 Turbo (on-demand, server-side)
 - **Animations**: Framer Motion
+- **Monitoring**: Sentry (error tracking), Structured logging
+- **Rate Limiting**: Redis (Upstash) or in-memory store
+- **Security**: Security headers, CSRF protection, Origin validation
 
 ## Prerequisites
 
@@ -69,6 +72,17 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 OPENAI_API_KEY="sk-xxxxxxxxxxxxx"
 # Optional: Override default model
 # OPENAI_MODEL="gpt-4-turbo-preview"
+
+# Monitoring & Error Tracking (Optional)
+NEXT_PUBLIC_SENTRY_DSN="https://xxxxx@xxxxx.ingest.sentry.io/xxxxx"
+NEXT_PUBLIC_SENTRY_ENVIRONMENT="production"
+
+# Rate Limiting (Optional for Production)
+REDIS_URL="https://xxxxx.upstash.io"
+REDIS_TOKEN="xxxxx"
+
+# Security (Optional)
+INTERNAL_API_KEY="generate-random-32-chars-minimum-here"
 ```
 
 ### 3. Database Setup
@@ -305,9 +319,23 @@ npm test
 ## Security
 
 - OTP codes are hashed in database
-- Rate limiting on OTP requests
+- Rate limiting on OTP requests and API endpoints
 - httpOnly cookies for sessions
 - Stripe webhook signature verification
+- Security headers (CSP, HSTS, X-Frame-Options, etc.)
+- Origin validation (CSRF protection)
+- API authentication middleware helpers
+- IP-based rate limiting for anonymous users
+
+## Monitoring & Observability
+
+- **Structured Logging**: Consistent logging format with context
+- **Error Tracking**: Sentry integration for error monitoring
+- **Health Check**: `/api/health` endpoint for infrastructure monitoring
+- **Rate Limiting**: Configurable rate limits per endpoint type
+- **Performance Tracking**: Request duration logging
+
+See [MONITORING_SECURITY.md](./docs/MONITORING_SECURITY.md) for detailed documentation.
 
 ## License
 

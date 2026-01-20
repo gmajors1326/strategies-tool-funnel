@@ -76,3 +76,25 @@ AI_API_KEY="sk-xxxxxxxxxxxxx"
 
 # Max tokens per response (default: 800)
 # AI_MAX_TOKENS="800"
+
+# ============================================
+# MONITORING & ERROR TRACKING (Optional)
+# ============================================
+# Sentry DSN for error tracking
+# Get from: https://sentry.io → Settings → Projects → Client Keys (DSN)
+# NEXT_PUBLIC_SENTRY_DSN="https://xxxxx@xxxxx.ingest.sentry.io/xxxxx"
+# NEXT_PUBLIC_SENTRY_ENVIRONMENT="production" # production | staging | development
+
+# ============================================
+# RATE LIMITING (Optional for Production)
+# ============================================
+# Redis URL for rate limiting (recommended for production)
+# Use Upstash Redis (free tier available): https://upstash.com
+# REDIS_URL="https://xxxxx.upstash.io"
+# REDIS_TOKEN="xxxxx"
+
+# ============================================
+# SECURITY (Optional)
+# ============================================
+# Internal API key for service-to-service communication
+# INTERNAL_API_KEY="generate-random-32-chars-minimum-here"
