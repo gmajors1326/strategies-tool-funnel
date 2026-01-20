@@ -1,0 +1,80 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getSession } from '@/lib/auth'
+import { getUserEntitlements } from '@/lib/entitlements'
+import { runDMIntelligence, type DMIntelligenceInputs } from '@/lib/tools/dm-intelligence'
+import { executeTool } from '@/lib/tool-execution'
+import { z } from 'zod'
+
+const MAX_CONVERSATION_SNIPPET_LENGTH = 1200
+
+const dmIntelligenceSchema = z.object({
+  scenario: z.enum(['commenter', 'story_reply', 'inbound_dm', 'warm_lead', 'coldish_lead']),
+  intent: z.enum(['continue_convo', 'qualify', 'soft_invite', 'book_call']),
+  tone: z.enum(['calm', 'friendly', 'playful', 'professional', 'direct']),
+  conversationSnippet: z.string().min(10).max(MAX_CONVERSATION_SNIPPET_LENGTH),
+  offerType: z.enum(['service', 'course', 'digital_product', 'none']).optional(),
+  boundary: z.enum(['no_pitch', 'soft_pitch_ok', 'direct_pitch_ok']).optional(),
+  style: z.enum(['strategist', 'closer']).optional(),
+  save: z.boolean().optional(),
+})
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const inputs = dmIntelligenceSchema.parse(body)
+
+    // Check session and entitlements
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please verify your email.' },
+        { status: 401 }
+      )
+    }
+
+    const entitlements = await getUserEntitlements(session.userId)
+
+    // Check if user has DM Engine or All Access
+    if (!entitlements.dmEngine && !entitlements.allAccess) {
+      return NextResponse.json(
+        { error: 'DM Intelligence Engine requires DM Engine plan or All Access.' },
+        { status: 403 }
+      )
+    }
+
+    // Run deterministic logic first
+    const deterministicOutput = runDMIntelligence(inputs)
+
+    // Execute tool with optional AI enhancement
+    const result = await executeTool({
+      toolKey: 'dm_intelligence_engine',
+      inputs,
+      deterministicOutput: deterministicOutput as any,
+      deterministicFn: runDMIntelligence,
+      userText: inputs.conversationSnippet,
+      style: inputs.style || 'closer',
+      save: inputs.save !== false, // Default to saving for paid users
+    })
+
+    return NextResponse.json({
+      success: true,
+      outputs: result.outputs,
+      saved: result.saved,
+      enhanced: result.enhanced,
+      aiUsageRemaining: result.aiUsageRemaining,
+    })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: error.errors },
+        { status: 400 }
+      )
+    }
+
+    console.error('DM Intelligence Engine error:', error)
+    return NextResponse.json(
+      { error: 'Failed to run DM Intelligence Engine' },
+      { status: 500 }
+    )
+  }
+}

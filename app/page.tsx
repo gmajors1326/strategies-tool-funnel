@@ -54,7 +54,7 @@ export default function HomePage() {
       {/* Paid Tools Preview */}
       <section className="container mx-auto px-4 py-20">
         <h2 className="text-4xl font-bold text-center mb-12 text-white text-shadow-ink-40">Premium Tools</h2>
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
           <PremiumToolCard
             title="Strategic Engagement Planner"
             icon={TrendingUp}
@@ -86,6 +86,9 @@ export default function HomePage() {
             requiredPlan="the_strategy"
           />
         </div>
+
+        {/* DM Intelligence Engine - Full Tool */}
+        <DMIntelligenceEngineTool />
       </section>
 
       {/* Offers Section */}
@@ -643,6 +646,317 @@ function HookRepurposerTool() {
             </Button>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function DMIntelligenceEngineTool() {
+  const [hasAccess, setHasAccess] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [inputs, setInputs] = useState({
+    scenario: '',
+    intent: '',
+    tone: '',
+    conversationSnippet: '',
+    offerType: 'none',
+    boundary: 'no_pitch',
+    style: 'closer',
+  })
+  const [results, setResults] = useState<any>(null)
+  const [running, setRunning] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const res = await fetch('/api/tool-runs')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.entitlements) {
+            const { dmEngine, allAccess } = data.entitlements
+            setHasAccess(dmEngine || allAccess)
+          }
+        }
+      } catch (error) {
+        console.error('[dm-intelligence] Error checking access:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    checkAccess()
+  }, [])
+
+  const handleRun = async () => {
+    if (!inputs.scenario || !inputs.intent || !inputs.tone || !inputs.conversationSnippet.trim()) {
+      setError('Please fill in all required fields')
+      return
+    }
+
+    if (inputs.conversationSnippet.length > 1200) {
+      setError('Conversation snippet must be 1200 characters or less')
+      return
+    }
+
+    setRunning(true)
+    setError('')
+    try {
+      const res = await fetch('/api/tools/dm-intelligence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...inputs, save: true }),
+      })
+      const data = await res.json()
+      if (res.status === 403) {
+        setError('DM Intelligence Engine requires DM Engine plan or All Access.')
+        return
+      }
+      if (res.status === 401) {
+        setError('Please verify your email to use this tool.')
+        return
+      }
+      if (!res.ok) {
+        setError(data.error || 'Failed to run DM Intelligence Engine')
+        return
+      }
+      if (data.success) {
+        setResults(data.outputs)
+      }
+    } catch (error: any) {
+      console.error(error)
+      setError(error?.message || 'Failed to run DM Intelligence Engine')
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  const handleCheckout = async () => {
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId: 'dm_engine' }),
+      })
+      const data = await res.json()
+      if (res.status === 401) {
+        window.location.href = '/verify'
+        return
+      }
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      console.error('[checkout] Error:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm max-w-6xl mx-auto">
+        <CardContent className="p-6">
+          <div className="text-center text-card-foreground">Loading...</div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm max-w-6xl mx-auto">
+      <CardHeader>
+        <div className="flex items-center justify-between mb-2">
+          <Zap className="h-6 w-6 text-primary" />
+          {!hasAccess && <Lock className="h-5 w-5 text-card-foreground/50" />}
+        </div>
+        <CardTitle className="text-card-foreground">DM Intelligence Engine™</CardTitle>
+        <CardDescription className="text-card-foreground/70">
+          Get AI-powered DM replies with strategic reasoning, risk assessment, and next-step guidance.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!hasAccess ? (
+          <div className="space-y-4">
+            <div className="p-4 bg-background/50 rounded-lg border border-border/60 blur-sm pointer-events-none">
+              <p className="text-sm text-card-foreground/50">Locked preview...</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-card-foreground/70 mb-4">
+                Unlock DM Intelligence Engine™ with DM Engine plan or All Access
+              </p>
+              <Button onClick={handleCheckout} className="bg-cactus-primary text-white hover:opacity-90">
+                Unlock DM Engine
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Inputs Panel */}
+            <div className="space-y-4">
+              <div>
+                <Label className="text-xs text-card-foreground/70">Scenario *</Label>
+                <Select
+                  value={inputs.scenario}
+                  onChange={(e) => setInputs({ ...inputs, scenario: e.target.value })}
+                  className="mt-0.5 h-8 text-xs"
+                >
+                  <option value="">Select...</option>
+                  <option value="commenter">Commenter</option>
+                  <option value="story_reply">Story Reply</option>
+                  <option value="inbound_dm">Inbound DM</option>
+                  <option value="warm_lead">Warm Lead</option>
+                  <option value="coldish_lead">Coldish Lead</option>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-card-foreground/70">Intent *</Label>
+                <Select
+                  value={inputs.intent}
+                  onChange={(e) => setInputs({ ...inputs, intent: e.target.value })}
+                  className="mt-0.5 h-8 text-xs"
+                >
+                  <option value="">Select...</option>
+                  <option value="continue_convo">Continue Conversation</option>
+                  <option value="qualify">Qualify</option>
+                  <option value="soft_invite">Soft Invite</option>
+                  <option value="book_call">Book Call</option>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-card-foreground/70">Tone *</Label>
+                <Select
+                  value={inputs.tone}
+                  onChange={(e) => setInputs({ ...inputs, tone: e.target.value })}
+                  className="mt-0.5 h-8 text-xs"
+                >
+                  <option value="">Select...</option>
+                  <option value="calm">Calm</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="playful">Playful</option>
+                  <option value="professional">Professional</option>
+                  <option value="direct">Direct</option>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-card-foreground/70">Conversation Snippet *</Label>
+                <textarea
+                  value={inputs.conversationSnippet}
+                  onChange={(e) => setInputs({ ...inputs, conversationSnippet: e.target.value })}
+                  className="mt-0.5 w-full h-24 p-2 text-xs bg-input border border-border rounded-md text-card-foreground"
+                  placeholder="Paste last 1-3 messages or context (max 1200 chars)"
+                  maxLength={1200}
+                />
+                <p className="text-xs text-card-foreground/50 mt-1">
+                  {inputs.conversationSnippet.length}/1200 characters
+                </p>
+              </div>
+              <div>
+                <Label className="text-xs text-card-foreground/70">Offer Type</Label>
+                <Select
+                  value={inputs.offerType}
+                  onChange={(e) => setInputs({ ...inputs, offerType: e.target.value })}
+                  className="mt-0.5 h-8 text-xs"
+                >
+                  <option value="none">None</option>
+                  <option value="service">Service</option>
+                  <option value="course">Course</option>
+                  <option value="digital_product">Digital Product</option>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-card-foreground/70">Boundary</Label>
+                <Select
+                  value={inputs.boundary}
+                  onChange={(e) => setInputs({ ...inputs, boundary: e.target.value })}
+                  className="mt-0.5 h-8 text-xs"
+                >
+                  <option value="no_pitch">No Pitch</option>
+                  <option value="soft_pitch_ok">Soft Pitch OK</option>
+                  <option value="direct_pitch_ok">Direct Pitch OK</option>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-card-foreground/70 mb-2 block">Response Style</Label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setInputs({ ...inputs, style: 'strategist' })}
+                    className={`flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors ${
+                      inputs.style === 'strategist'
+                        ? 'bg-cactus-primary text-white border-cactus-primary'
+                        : 'bg-input border-border text-card-foreground hover:bg-accent/50'
+                    }`}
+                  >
+                    Strategist
+                  </button>
+                  <button
+                    onClick={() => setInputs({ ...inputs, style: 'closer' })}
+                    className={`flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors ${
+                      inputs.style === 'closer'
+                        ? 'bg-cactus-primary text-white border-cactus-primary'
+                        : 'bg-input border-border text-card-foreground hover:bg-accent/50'
+                    }`}
+                  >
+                    Closer
+                  </button>
+                </div>
+                <p className="text-xs text-card-foreground/50 mt-1">
+                  {inputs.style === 'strategist' ? 'Calm, diagnostic, restraint' : 'Direct, conversion-forward, ethical'}
+                </p>
+              </div>
+              {error && <p className="text-xs text-red-600">{error}</p>}
+              <Button
+                onClick={handleRun}
+                disabled={running}
+                className="w-full bg-cactus-primary text-white hover:opacity-90"
+                size="sm"
+              >
+                {running ? 'Analyzing...' : 'Generate DM Reply'}
+              </Button>
+            </div>
+
+            {/* Outputs Panel */}
+            <div className="space-y-4">
+              {results ? (
+                <>
+                  <div className="p-4 bg-background/70 rounded-lg border border-border/60">
+                    <h4 className="text-xs font-semibold text-white mb-2">Recommended Reply</h4>
+                    <p className="text-sm text-white whitespace-pre-wrap">{results.recommendedReply}</p>
+                  </div>
+                  <div className="p-4 bg-background/70 rounded-lg border border-border/60">
+                    <h4 className="text-xs font-semibold text-white mb-2">Alternate Reply</h4>
+                    <p className="text-sm text-white whitespace-pre-wrap">{results.alternateReply}</p>
+                  </div>
+                  <div className="p-4 bg-background/70 rounded-lg border border-border/60">
+                    <h4 className="text-xs font-semibold text-white mb-2">Next Step</h4>
+                    <p className="text-sm text-white">{results.nextStep}</p>
+                  </div>
+                  {results.riskNote && (
+                    <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+                      <h4 className="text-xs font-semibold text-yellow-600 mb-2">Risk Note</h4>
+                      <p className="text-sm text-yellow-600">{results.riskNote}</p>
+                    </div>
+                  )}
+                  <div className="p-4 bg-background/70 rounded-lg border border-border/60">
+                    <h4 className="text-xs font-semibold text-white mb-2">Reasoning</h4>
+                    <p className="text-sm text-white whitespace-pre-wrap">{results.reasoning}</p>
+                  </div>
+                  <div className="flex gap-4 text-xs">
+                    <div>
+                      <span className="text-card-foreground/70">Warmth: </span>
+                      <span className="text-white font-medium">{results.detectedWarmth}</span>
+                    </div>
+                    <div>
+                      <span className="text-card-foreground/70">Pitch Readiness: </span>
+                      <span className="text-white font-medium">{results.pitchReadiness}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="p-8 text-center text-card-foreground/50 border border-border/60 rounded-lg">
+                  <p className="text-sm">Fill in the form and click "Generate DM Reply" to get AI-powered recommendations.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

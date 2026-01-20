@@ -164,7 +164,7 @@ function getCategoryForTool(toolKey: string): string {
   if (toolKey.includes('diagnostic') || toolKey.includes('engagement')) {
     return 'diagnostic'
   }
-  if (toolKey.includes('dm') || toolKey.includes('opener')) {
+  if (toolKey.includes('dm') || toolKey.includes('opener') || toolKey.includes('intelligence')) {
     return 'dm'
   }
   if (toolKey.includes('hook')) {

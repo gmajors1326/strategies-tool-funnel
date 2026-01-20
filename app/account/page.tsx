@@ -105,7 +105,9 @@ export default function AccountPage() {
                         <div className="flex items-start justify-between mb-4">
                           <div>
                             <h3 className="text-lg font-semibold text-card-foreground capitalize">
-                              {run.toolKey.replace('-', ' ')}
+                              {run.toolKey === 'dm_intelligence_engine' 
+                                ? 'DM Intelligence Engine' 
+                                : run.toolKey.replace(/-/g, ' ')}
                             </h3>
                             <p className="text-sm text-card-foreground/60">
                               {new Date(run.createdAt).toLocaleDateString()}
@@ -149,6 +151,68 @@ export default function AccountPage() {
                                       <p className="mt-2 text-card-foreground/80">{hook.text}</p>
                                     </div>
                                   ))}
+                                </div>
+                              </div>
+                            )}
+                            {run.toolKey === 'dm_intelligence_engine' && (
+                              <div className="space-y-4">
+                                <div className="flex gap-4 text-xs mb-4">
+                                  <div>
+                                    <span className="text-card-foreground/60">Scenario: </span>
+                                    <span className="text-card-foreground font-medium capitalize">
+                                      {run.inputsJson?.scenario?.replace('_', ' ')}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-card-foreground/60">Intent: </span>
+                                    <span className="text-card-foreground font-medium capitalize">
+                                      {run.inputsJson?.intent?.replace('_', ' ')}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-card-foreground/60">Tone: </span>
+                                    <span className="text-card-foreground font-medium capitalize">
+                                      {run.inputsJson?.tone}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-card-foreground/60 mb-2">Recommended Reply:</p>
+                                  <p className="text-card-foreground/80 p-3 bg-card rounded border border-border/60 whitespace-pre-wrap">
+                                    {run.outputsJson?.recommendedReply}
+                                  </p>
+                                </div>
+                                {run.outputsJson?.alternateReply && (
+                                  <div>
+                                    <p className="text-sm text-card-foreground/60 mb-2">Alternate Reply:</p>
+                                    <p className="text-card-foreground/80 p-3 bg-card rounded border border-border/60 whitespace-pre-wrap">
+                                      {run.outputsJson.alternateReply}
+                                    </p>
+                                  </div>
+                                )}
+                                {run.outputsJson?.nextStep && (
+                                  <div>
+                                    <p className="text-sm text-card-foreground/60 mb-2">Next Step:</p>
+                                    <p className="text-card-foreground/80">{run.outputsJson.nextStep}</p>
+                                  </div>
+                                )}
+                                {run.outputsJson?.riskNote && (
+                                  <div className="p-3 bg-yellow-500/10 rounded border border-yellow-500/30">
+                                    <p className="text-sm text-yellow-600 font-medium mb-1">Risk Note:</p>
+                                    <p className="text-sm text-yellow-600">{run.outputsJson.riskNote}</p>
+                                  </div>
+                                )}
+                                <div className="flex gap-4 text-xs">
+                                  <div>
+                                    <span className="text-card-foreground/60">Warmth: </span>
+                                    <span className="text-card-foreground font-medium">{run.outputsJson?.detectedWarmth}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-card-foreground/60">Pitch Readiness: </span>
+                                    <span className="text-card-foreground font-medium capitalize">
+                                      {run.outputsJson?.pitchReadiness?.replace('_', ' ')}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             )}

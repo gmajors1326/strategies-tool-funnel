@@ -221,6 +221,422 @@ async function main() {
       planRequired: 'free',
       style: 'both',
     },
+    // DM Intelligence Engine - Scenario-specific frameworks
+    {
+      key: 'dm-scenario-commenter',
+      category: 'dm',
+      tags: ['scenario:commenter', 'opener', 'warmth:cold'],
+      content: `Commenter scenario: They commented on your post. This is cold outreach. Your reply should:
+- Reference something specific from their comment
+- Show you read and understood it
+- Lead with value or curiosity, not an ask
+- Keep it 2-3 sentences max
+- Match their energy/tone from the comment`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    {
+      key: 'dm-scenario-story-reply',
+      category: 'dm',
+      tags: ['scenario:story_reply', 'opener', 'warmth:warm'],
+      content: `Story reply scenario: They replied to your story. This is warmer than a comment. Your reply should:
+- Acknowledge their reply specifically
+- Build on the conversation thread
+- Show genuine interest in their response
+- Can be slightly more personal than commenter scenario
+- Still lead with value before any ask`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    {
+      key: 'dm-scenario-inbound-dm',
+      category: 'dm',
+      tags: ['scenario:inbound_dm', 'opener', 'warmth:warm'],
+      content: `Inbound DM scenario: They DM'd you first. This is warm. Your reply should:
+- Acknowledge their initiative (they reached out)
+- Respond to their specific question or comment
+- Be helpful and genuine
+- Can move faster than cold outreach
+- Still build rapport before pitching`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-scenario-warm-lead',
+      category: 'dm',
+      tags: ['scenario:warm_lead', 'opener', 'warmth:hot'],
+      content: `Warm lead scenario: They've shown clear interest. This is hot. Your reply should:
+- Acknowledge their interest explicitly
+- Move forward with confidence
+- Can be more direct (but still respectful)
+- Can introduce next steps or soft invite
+- Match their enthusiasm level`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    {
+      key: 'dm-scenario-coldish-lead',
+      category: 'dm',
+      tags: ['scenario:coldish_lead', 'opener', 'warmth:cold'],
+      content: `Coldish lead scenario: Some connection but not much. This is cold. Your reply should:
+- Reference the connection point (mutual, saw their post, etc.)
+- Lead with value or curiosity
+- Build rapport slowly
+- No pitch, no ask in first message
+- Focus on starting a conversation`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'strategist',
+    },
+    // Intent-specific frameworks
+    {
+      key: 'dm-intent-continue-convo',
+      category: 'dm',
+      tags: ['intent:continue_convo', 'follow-up'],
+      content: `Continue conversation intent: Keep the dialogue going. Your reply should:
+- Reference something from their last message
+- Ask an open-ended question
+- Add value or insight
+- Show genuine interest
+- Avoid yes/no questions
+- Keep momentum without being pushy`,
+      priority: 9,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-intent-qualify',
+      category: 'dm',
+      tags: ['intent:qualify', 'qualification'],
+      content: `Qualify intent: Determine if they're a good fit. Your reply should:
+- Ask strategic questions that reveal fit
+- Not sound like an interrogation
+- Make them feel heard, not screened
+- Use "I'm curious..." or "Help me understand..."
+- Avoid "Are you..." yes/no questions
+- Focus on their situation, not your offer yet`,
+      priority: 9,
+      planRequired: 'dm_engine',
+      style: 'strategist',
+    },
+    {
+      key: 'dm-intent-soft-invite',
+      category: 'dm',
+      tags: ['intent:soft_invite', 'invitation'],
+      content: `Soft invite intent: Invite them to next step without pressure. Your reply should:
+- Frame it as an option, not a requirement
+- Use "I'd love to..." or "If you're interested..."
+- Make it easy to say yes or no
+- Provide context for why the invite makes sense
+- Avoid "You should..." or "You need to..."
+- Respect their autonomy`,
+      priority: 9,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    {
+      key: 'dm-intent-book-call',
+      category: 'dm',
+      tags: ['intent:book_call', 'booking'],
+      content: `Book call intent: Schedule a conversation. Your reply should:
+- Be direct but respectful
+- Offer specific options (times, format)
+- Make it easy to say yes
+- Provide value context for the call
+- Use clear call-to-action
+- Include next step (calendar link, etc.)`,
+      priority: 9,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    // Tone-specific guidance
+    {
+      key: 'dm-tone-calm',
+      category: 'voice',
+      tags: ['tone:calm', 'voice'],
+      content: `Calm tone: Steady, measured, confident. Use:
+- Longer sentences with pauses
+- Softer language ("I'd suggest" vs "You should")
+- No urgency or pressure
+- Thoughtful word choices
+- Professional but approachable`,
+      priority: 8,
+      planRequired: 'dm_engine',
+      style: 'strategist',
+    },
+    {
+      key: 'dm-tone-friendly',
+      category: 'voice',
+      tags: ['tone:friendly', 'voice'],
+      content: `Friendly tone: Warm, approachable, conversational. Use:
+- Casual but professional language
+- Emojis sparingly (1-2 max)
+- Personal touches ("I'd love to help")
+- Questions that show interest
+- Positive, upbeat energy`,
+      priority: 8,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-tone-playful',
+      category: 'voice',
+      tags: ['tone:playful', 'voice'],
+      content: `Playful tone: Light, fun, engaging. Use:
+- Humor when appropriate
+- Light emojis
+- Casual language
+- Not too serious
+- Still respectful and professional
+- Match their energy`,
+      priority: 8,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    {
+      key: 'dm-tone-professional',
+      category: 'voice',
+      tags: ['tone:professional', 'voice'],
+      content: `Professional tone: Polished, business-like, credible. Use:
+- Complete sentences
+- Proper grammar
+- No emojis
+- Clear structure
+- Respectful language
+- Value-focused`,
+      priority: 8,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-tone-direct',
+      category: 'voice',
+      tags: ['tone:direct', 'voice'],
+      content: `Direct tone: Straightforward, no fluff, action-forward. Use:
+- Short sentences
+- Clear statements
+- No hedging ("I think" → "I believe")
+- Get to the point quickly
+- Still respectful
+- Confident language`,
+      priority: 8,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    // Guardrails and anti-patterns
+    {
+      key: 'dm-guardrail-premature-pitch',
+      category: 'guardrails',
+      tags: ['guardrails', 'pitch', 'risk'],
+      content: `Premature pitch guardrail: Never pitch before building rapport. Signs you're pitching too early:
+- They haven't asked about your offer
+- Conversation is still surface-level
+- They haven't shared a problem you solve
+- You're leading with your offer, not their needs
+- They haven't shown buying signals
+
+If pitchReadiness=not_ready, focus on building trust first.`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'strategist',
+    },
+    {
+      key: 'dm-guardrail-exit-lines',
+      category: 'dm',
+      tags: ['exit', 'goodwill', 'boundary'],
+      content: `Exit lines that preserve goodwill:
+- "No pressure at all, just thought it might be helpful"
+- "Totally understand if it's not the right time"
+- "Feel free to reach out if anything changes"
+- "Appreciate you taking the time to chat"
+- Never ghost or leave them hanging
+- Always end on a positive note`,
+      priority: 8,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-guardrail-no-automation',
+      category: 'guardrails',
+      tags: ['guardrails', 'automation', 'safety'],
+      content: `Never suggest automation or bots:
+- Don't mention auto-replies
+- Don't suggest scheduling tools for DMs
+- Don't recommend mass messaging
+- Keep it human and personal
+- Each message should feel handcrafted`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-guardrail-boundary-respect',
+      category: 'guardrails',
+      tags: ['boundary', 'no_pitch', 'respect'],
+      content: `Respect boundary settings:
+- no_pitch: Never mention your offer, even if they ask
+- soft_pitch_ok: Can mention if they show interest, but keep it soft
+- direct_pitch_ok: Can be more direct, but still ethical
+- Always prioritize relationship over conversion
+- If boundary=no_pitch and they ask, redirect to building rapport`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    // Next step guidance
+    {
+      key: 'dm-next-step-continue',
+      category: 'dm',
+      tags: ['next_step', 'continue_convo'],
+      content: `Next step for continue_convo:
+- Wait for their response (don't follow up too quickly)
+- If they respond, build on what they said
+- If no response after 3-5 days, send a value-add follow-up
+- Keep the conversation going naturally
+- Don't force it if they're not engaging`,
+      priority: 7,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-next-step-qualify',
+      category: 'dm',
+      tags: ['next_step', 'qualify'],
+      content: `Next step for qualify:
+- Wait for their answers to your qualification questions
+- If they answer, assess fit
+- If fit is good, move to soft_invite
+- If fit is unclear, ask one more clarifying question
+- If no fit, gracefully exit with goodwill`,
+      priority: 7,
+      planRequired: 'dm_engine',
+      style: 'strategist',
+    },
+    {
+      key: 'dm-next-step-soft-invite',
+      category: 'dm',
+      tags: ['next_step', 'soft_invite'],
+      content: `Next step for soft_invite:
+- Wait for their response to the invite
+- If yes, provide next steps (calendar link, details, etc.)
+- If maybe, address their concern and offer alternative
+- If no, respect it and leave door open
+- Don't push if they decline`,
+      priority: 7,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    {
+      key: 'dm-next-step-book-call',
+      category: 'dm',
+      tags: ['next_step', 'book_call'],
+      content: `Next step for book_call:
+- Provide calendar link or scheduling options
+- Confirm time and format (video, phone, etc.)
+- Send reminder 24 hours before
+- Prepare for the call (review conversation history)
+- Show up prepared and on time`,
+      priority: 7,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    // Warmth-based strategies
+    {
+      key: 'dm-warmth-cold-strategy',
+      category: 'dm',
+      tags: ['warmth:cold', 'strategy'],
+      content: `Cold warmth strategy: They're not warm yet. Focus on:
+- Building rapport first
+- Adding value before asking
+- Showing genuine interest
+- No pitch, no ask
+- Slow and steady approach
+- Patience is key`,
+      priority: 9,
+      planRequired: 'dm_engine',
+      style: 'strategist',
+    },
+    {
+      key: 'dm-warmth-warm-strategy',
+      category: 'dm',
+      tags: ['warmth:warm', 'strategy'],
+      content: `Warm warmth strategy: They're showing interest. You can:
+- Move a bit faster
+- Ask qualification questions
+- Test the waters with soft questions
+- Still build rapport
+- Can introduce next steps gently
+- Don't rush to pitch`,
+      priority: 9,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-warmth-hot-strategy',
+      category: 'dm',
+      tags: ['warmth:hot', 'strategy'],
+      content: `Hot warmth strategy: They're very interested. You can:
+- Move forward with confidence
+- Be more direct
+- Introduce your offer if appropriate
+- Book call or next step
+- Still be respectful
+- Match their enthusiasm`,
+      priority: 9,
+      planRequired: 'dm_engine',
+      style: 'closer',
+    },
+    // What to avoid
+    {
+      key: 'dm-avoid-generic',
+      category: 'guardrails',
+      tags: ['avoid', 'generic'],
+      content: `Avoid generic messages:
+- "Hey, saw your post"
+- "Just checking in"
+- "Wanted to reach out"
+- "Hope you're doing well"
+- Be specific and personal
+- Reference something concrete`,
+      priority: 9,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-avoid-pressure',
+      category: 'guardrails',
+      tags: ['avoid', 'pressure'],
+      content: `Avoid pressure tactics:
+- "Limited time offer"
+- "Only 3 spots left"
+- "Act now"
+- "Don't miss out"
+- False urgency
+- Manipulation
+- Keep it ethical and human`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
+    {
+      key: 'dm-avoid-spam',
+      category: 'guardrails',
+      tags: ['avoid', 'spam'],
+      content: `Avoid spam patterns:
+- Multiple messages without response
+- Same message to multiple people
+- Copy-paste templates
+- No personalization
+- Mass outreach
+- Keep it personal and handcrafted`,
+      priority: 10,
+      planRequired: 'dm_engine',
+      style: 'both',
+    },
   ]
 
   for (const item of knowledgeItems) {
@@ -320,6 +736,46 @@ Tool generates multiple angles from one hook.`,
 - Keep hooks authentic to the creator's voice
 - No manipulation tactics
 - Respect platform guidelines`,
+    },
+  })
+
+  await prisma.promptRubric.upsert({
+    where: { toolKey: 'dm_intelligence_engine' },
+    update: {},
+    create: {
+      toolKey: 'dm_intelligence_engine',
+      inputHints: `User provides:
+- scenario: commenter | story_reply | inbound_dm | warm_lead | coldish_lead
+- intent: continue_convo | qualify | soft_invite | book_call
+- tone: calm | friendly | playful | professional | direct
+- conversationSnippet: last 1-3 messages or context (max 1200 chars)
+- offerType (optional): service | course | digital_product | none
+- boundary (optional): no_pitch | soft_pitch_ok | direct_pitch_ok
+- style: strategist | closer
+
+Deterministic layer provides: detectedWarmth (cold|warm|hot), pitchReadiness (not_ready|maybe|ready), riskNote (if applicable).`,
+      outputSchemaJson: {
+        recommendedReply: 'string (the primary DM reply message)',
+        alternateReply: 'string (softer or more direct alternative)',
+        nextStep: 'string (single sentence: what to do after sending)',
+        riskNote: 'string | null (warning if pitch is premature)',
+        reasoning: 'string (2-4 sentences explaining the approach, must include one "what to avoid" line)',
+        detectedWarmth: 'cold | warm | hot',
+        pitchReadiness: 'not_ready | maybe | ready',
+      },
+      reasoningRules: `- recommendedReply must match the tone requested
+- alternateReply should be softer if style=closer, more direct if style=strategist
+- nextStep must be actionable and specific
+- reasoning must include one "what to avoid" sentence (especially in strategist style)
+- If pitchReadiness=not_ready and boundary allows pitch, set riskNote with calm warning
+- Match the scenario context (commenter vs warm_lead requires different approaches)
+- Respect the boundary setting (no_pitch means no offer mention, even if ready)`,
+      safetyRules: `- No automation claims (don't suggest bots or auto-replies)
+- No scraping or account access claims
+- No manipulative pressure tactics
+- No impersonation or fake urgency
+- Keep it human and authentic
+- Respect boundaries explicitly set by user`,
     },
   })
 
