@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { runHookRepurposer } from '@/lib/tools/hook-repurposer'
 import { executeTool } from '@/lib/tool-execution'
 import { getSession } from '@/lib/auth'
+import { getUserEntitlements } from '@/lib/entitlements'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
