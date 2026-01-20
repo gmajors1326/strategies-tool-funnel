@@ -148,6 +148,68 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
         success_metric: 'Provide inputs to get success metric',
         decision_rule: 'Provide inputs to get decision rule',
       }
+    case 'signal_vs_noise_analyzer':
+      return {
+        ...base,
+        metric_weights: [],
+        north_star_metric: 'Insufficient signal',
+        ignore_list: ['Provide account stage and primary goal'],
+        weekly_review_questions: ['Provide inputs to get review questions'],
+      }
+    case 'ai_hook_rewriter':
+      return {
+        ...base,
+        hooks: [],
+        best_3: [0, 1, 2],
+        opening_frame_suggestions: ['Provide topic and post type to get suggestions'],
+      }
+    case 'weekly_strategy_review':
+      return {
+        ...base,
+        one_pattern: 'Insufficient signal',
+        one_change_next_week: 'Provide week summary to get recommendations',
+        keep_doing: ['Provide week summary'],
+        stop_doing: ['Provide week summary'],
+        next_week_plan: [],
+      }
+    case 'dm_intelligence_engine':
+      return {
+        ...base,
+        recommended_reply: 'Provide last incoming message and context to get reply',
+        reasoning_summary: 'Insufficient signal',
+        risk_assessment: {
+          level: 'low',
+          flags: [],
+          avoid_saying: [],
+        },
+        next_step: {
+          objective: 'Provide context',
+          question_to_ask: 'Provide context',
+          fallback_if_no_reply: 'Provide context',
+        },
+      }
+    case 'hook_repurposer':
+      return {
+        ...base,
+        best_angle: 'curiosity',
+        hooks: [],
+        angle_labels: [],
+        pattern_break_openers: ['Provide original hook to get repurposed hooks'],
+      }
+    case 'engagement_diagnostic_lite':
+      return {
+        ...base,
+        tier: 'stalled',
+        primary_bottleneck: 'insufficient_signal',
+        one_actionable_insight: 'Provide followers and average reel views',
+        one_next_action: 'Provide inputs to get next action',
+      }
+    case 'dm_opener_generator_lite':
+      return {
+        ...base,
+        opener: 'Provide context and purpose to get opener',
+        follow_up_if_seen_no_reply: 'Provide context to get follow-up',
+      }
     default:
       return base
   }

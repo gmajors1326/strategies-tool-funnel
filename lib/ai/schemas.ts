@@ -160,6 +160,84 @@ export const controlledExperimentPlannerSchema = baseOutputSchema.extend({
   decision_rule: z.string(),
 })
 
+// Signal vs Noise Analyzer
+export const signalVsNoiseAnalyzerSchema = baseOutputSchema.extend({
+  metric_weights: z.array(z.object({
+    metric: z.string(),
+    weight: z.number(),
+    why: z.string(),
+  })),
+  north_star_metric: z.string(),
+  ignore_list: z.array(z.string()).min(3).max(5),
+  weekly_review_questions: z.array(z.string()).length(5),
+})
+
+// AI Hook Rewriter (Bounded)
+export const aiHookRewriterSchema = baseOutputSchema.extend({
+  hooks: z.array(z.string()).length(12),
+  best_3: z.array(z.number()).length(3),
+  opening_frame_suggestions: z.array(z.string()).min(1),
+})
+
+// Weekly Strategy Review
+export const weeklyStrategyReviewSchema = baseOutputSchema.extend({
+  one_pattern: z.string(),
+  one_change_next_week: z.string(),
+  keep_doing: z.array(z.string()).length(3),
+  stop_doing: z.array(z.string()).length(2),
+  next_week_plan: z.array(z.object({
+    slot: z.number(),
+    post_type: z.string(),
+    intent: z.string(),
+    hook_prompt: z.string(),
+  })).length(5),
+})
+
+// DM Intelligence Engine
+export const dmIntelligenceEngineSchema = baseOutputSchema.extend({
+  recommended_reply: z.string(),
+  reasoning_summary: z.string(),
+  risk_assessment: z.object({
+    level: z.enum(['low', 'medium', 'high']),
+    flags: z.array(z.string()),
+    avoid_saying: z.array(z.string()),
+  }),
+  next_step: z.object({
+    objective: z.string(),
+    question_to_ask: z.string(),
+    fallback_if_no_reply: z.string(),
+  }),
+})
+
+// Hook Repurposer
+export const hookRepurposerSchema = baseOutputSchema.extend({
+  best_angle: z.enum(['curiosity', 'threat', 'relief', 'status', 'contrarian']),
+  hooks: z.array(z.string()).length(10),
+  angle_labels: z.array(z.string()).length(10),
+  pattern_break_openers: z.array(z.string()).min(1),
+})
+
+// Engagement Diagnostic (Lite)
+export const engagementDiagnosticLiteSchema = baseOutputSchema.extend({
+  tier: z.enum(['stalled', 'warming_up', 'healthy', 'spiking']),
+  primary_bottleneck: z.enum([
+    'hook',
+    'retention',
+    'offer_clarity',
+    'topic_fit',
+    'cta_alignment',
+    'insufficient_signal',
+  ]),
+  one_actionable_insight: z.string(),
+  one_next_action: z.string(),
+})
+
+// DM Opener Generator (Lite)
+export const dmOpenerGeneratorLiteSchema = baseOutputSchema.extend({
+  opener: z.string(),
+  follow_up_if_seen_no_reply: z.string(),
+})
+
 // Union type for all tool schemas
 export type WhyPostFailedOutput = z.infer<typeof whyPostFailedSchema>
 export type HookPressureTestOutput = z.infer<typeof hookPressureTestSchema>
@@ -171,6 +249,13 @@ export type FollowerQualityFilterOutput = z.infer<typeof followerQualityFilterSc
 export type ContentSystemBuilderOutput = z.infer<typeof contentSystemBuilderSchema>
 export type WhatToStopPostingOutput = z.infer<typeof whatToStopPostingSchema>
 export type ControlledExperimentPlannerOutput = z.infer<typeof controlledExperimentPlannerSchema>
+export type SignalVsNoiseAnalyzerOutput = z.infer<typeof signalVsNoiseAnalyzerSchema>
+export type AIHookRewriterOutput = z.infer<typeof aiHookRewriterSchema>
+export type WeeklyStrategyReviewOutput = z.infer<typeof weeklyStrategyReviewSchema>
+export type DMIntelligenceEngineOutput = z.infer<typeof dmIntelligenceEngineSchema>
+export type HookRepurposerOutput = z.infer<typeof hookRepurposerSchema>
+export type EngagementDiagnosticLiteOutput = z.infer<typeof engagementDiagnosticLiteSchema>
+export type DMOpenerGeneratorLiteOutput = z.infer<typeof dmOpenerGeneratorLiteSchema>
 
 // Schema registry
 export const toolSchemas = {
@@ -184,6 +269,13 @@ export const toolSchemas = {
   content_system_builder: contentSystemBuilderSchema,
   what_to_stop_posting: whatToStopPostingSchema,
   controlled_experiment_planner: controlledExperimentPlannerSchema,
+  signal_vs_noise_analyzer: signalVsNoiseAnalyzerSchema,
+  ai_hook_rewriter: aiHookRewriterSchema,
+  weekly_strategy_review: weeklyStrategyReviewSchema,
+  dm_intelligence_engine: dmIntelligenceEngineSchema,
+  hook_repurposer: hookRepurposerSchema,
+  engagement_diagnostic_lite: engagementDiagnosticLiteSchema,
+  dm_opener_generator_lite: dmOpenerGeneratorLiteSchema,
 } as const
 
 export type ToolId = keyof typeof toolSchemas

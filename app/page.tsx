@@ -19,6 +19,13 @@ export default function HomePage() {
   const whatToStopPostingConfig = getToolConfig('what_to_stop_posting')
   const controlledExperimentPlannerConfig = getToolConfig('controlled_experiment_planner')
   const whyPostFailedConfig = getToolConfig('why_post_failed')
+  const signalVsNoiseAnalyzerConfig = getToolConfig('signal_vs_noise_analyzer')
+  const aiHookRewriterConfig = getToolConfig('ai_hook_rewriter')
+  const weeklyStrategyReviewConfig = getToolConfig('weekly_strategy_review')
+  const dmIntelligenceEngineConfig = getToolConfig('dm_intelligence_engine')
+  const hookRepurposerConfig = getToolConfig('hook_repurposer')
+  const engagementDiagnosticLiteConfig = getToolConfig('engagement_diagnostic_lite')
+  const dmOpenerGeneratorLiteConfig = getToolConfig('dm_opener_generator_lite')
 
   return (
     <div className="min-h-screen bg-[#7d9b76] text-foreground">
@@ -60,6 +67,13 @@ export default function HomePage() {
           <ToolShell config={whatToStopPostingConfig} />
           <ToolShell config={controlledExperimentPlannerConfig} />
           <ToolShell config={whyPostFailedConfig} />
+          <ToolShell config={signalVsNoiseAnalyzerConfig} />
+          <ToolShell config={aiHookRewriterConfig} />
+          <ToolShell config={weeklyStrategyReviewConfig} />
+          <ToolShell config={dmIntelligenceEngineConfig} />
+          <ToolShell config={hookRepurposerConfig} />
+          <ToolShell config={engagementDiagnosticLiteConfig} />
+          <ToolShell config={dmOpenerGeneratorLiteConfig} />
         </div>
       </section>
 
