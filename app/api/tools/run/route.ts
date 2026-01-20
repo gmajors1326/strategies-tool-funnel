@@ -13,6 +13,7 @@ import {
   orgAiTokenCapByPlan,
   orgRunCapByPlan,
 } from '@/src/lib/usage/caps'
+import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@/src/lib/billing/planConfig'
 import { getTokenBalance } from '@/src/lib/tokens/ledger'
 import { getOrCreateEntitlement } from '@/src/lib/usage/entitlements'
 import type { RunRequest, RunResponse } from '@/src/lib/tools/runTypes'
@@ -37,13 +38,24 @@ export async function POST(request: NextRequest) {
   const userId = 'user_dev_1'
   const entitlement = await getOrCreateEntitlement(userId)
   const personalPlan = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
+  const personalPlanKey = getPlanKeyFromEntitlement(personalPlan)
   const tool = TOOL_META.find((item) => item.id === data.toolId)
 
   const activeOrg = await getActiveOrg(userId)
   const membership = activeOrg ? await getMembership(userId, activeOrg.id) : null
   const orgPlan = activeOrg?.plan as 'business' | 'enterprise' | undefined
-  const planTokenCap = orgPlan ? orgAiTokenCapByPlan[orgPlan] : dailyAiTokenCapByPlan[personalPlan]
-  const planRunCap = orgPlan ? orgRunCapByPlan[orgPlan] : dailyRunCapByPlan[personalPlan]
+  const orgPlanKey = getPlanKeyFromOrgPlan(orgPlan)
+  const personalCaps = getPlanCaps(personalPlanKey)
+  const planRunCap = orgPlanKey
+    ? getPlanCaps(orgPlanKey).runsPerDay
+    : orgPlan === 'enterprise'
+      ? orgRunCapByPlan.enterprise
+      : personalCaps.runsPerDay
+  const planTokenCap = orgPlanKey
+    ? getPlanCaps(orgPlanKey).tokensPerDay
+    : orgPlan === 'enterprise'
+      ? orgAiTokenCapByPlan.enterprise
+      : personalCaps.tokensPerDay
 
   const recordRun = async (params: {
     status: string

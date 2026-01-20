@@ -11,6 +11,7 @@ import {
 import { ensureUsageWindow } from '@/src/lib/usage/dailyUsage'
 import { getTokenBalance } from '@/src/lib/tokens/ledger'
 import { getActiveOrg, getMembership } from '@/src/lib/orgs/orgs'
+import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@/src/lib/billing/planConfig'
 
 type UserPlanState = {
   user: { id: string; email: string; planId: 'free' | 'pro_monthly' | 'team' | 'lifetime' }
@@ -31,8 +32,19 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
   const activeOrg = await getActiveOrg(user.id)
   const membership = activeOrg ? await getMembership(user.id, activeOrg.id) : null
   const orgPlan = activeOrg?.plan as 'business' | 'enterprise' | undefined
-  const planTokenCap = orgPlan ? orgAiTokenCapByPlan[orgPlan] : dailyAiTokenCapByPlan[user.planId]
-  const planRunCap = orgPlan ? orgRunCapByPlan[orgPlan] : dailyRunCapByPlan[user.planId]
+  const personalPlanKey = getPlanKeyFromEntitlement(user.planId)
+  const orgPlanKey = getPlanKeyFromOrgPlan(orgPlan)
+  const personalCaps = getPlanCaps(personalPlanKey)
+  const planRunCap = orgPlanKey
+    ? getPlanCaps(orgPlanKey).runsPerDay
+    : orgPlan === 'enterprise'
+      ? orgRunCapByPlan.enterprise
+      : personalCaps.runsPerDay
+  const planTokenCap = orgPlanKey
+    ? getPlanCaps(orgPlanKey).tokensPerDay
+    : orgPlan === 'enterprise'
+      ? orgAiTokenCapByPlan.enterprise
+      : personalCaps.tokensPerDay
   const usageWindow = await ensureUsageWindow(user.id)
   const tokenBalance = await getTokenBalance(user.id)
 
