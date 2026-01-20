@@ -510,24 +510,26 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
                 </AppPanel>
               ) : (
                 <>
-                  {config.outputSections.map(section => {
-                    const content = outputs[section.key]
-                    if (content === undefined || content === null) return null
-                    
-                    return (
-                      <OutputSection
-                        key={section.key}
-                        title={section.title}
-                        content={content}
-                        type={section.type}
-                        copyable={section.copyable}
-                        sectionKey={section.key}
-                      />
-                    )
-                  })}
-                  
+                  <div className="space-y-3 sm:space-y-4 print-cards-grid">
+                    {config.outputSections.map(section => {
+                      const content = outputs[section.key]
+                      if (content === undefined || content === null) return null
+
+                      return (
+                        <OutputSection
+                          key={section.key}
+                          title={section.title}
+                          content={content}
+                          type={section.type}
+                          copyable={section.copyable}
+                          sectionKey={section.key}
+                        />
+                      )
+                    })}
+                  </div>
+
                   <Separator className="bg-[hsl(var(--border))] no-print" />
-                  
+
                   <div className="flex flex-wrap gap-2 no-print">
                     <SaveToPlanButton
                       toolId={config.toolId}

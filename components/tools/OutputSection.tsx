@@ -148,7 +148,7 @@ export function OutputSection({ title, content, type, copyable }: OutputSectionP
   }
 
   return (
-    <div className="space-y-1.5 sm:space-y-2">
+    <div className="space-y-1.5 sm:space-y-2 print-card">
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-xs sm:text-sm font-semibold text-[hsl(var(--text))]">{title}</h4>
         {copyable && (
