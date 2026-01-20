@@ -533,7 +533,7 @@ export const toolRegistry: Record<ToolId, ToolConfig> = {
   what_to_stop_posting: {
     toolId: 'what_to_stop_posting',
     title: 'What to Stop Posting',
-    description: 'Identify dead-weight content patterns and replace them with higher-signal alternatives.',
+    description: 'Spot what's dragging your performance down — and what to post instead.',
     inputFields: [
       {
         key: 'recent_posts_summary',
@@ -541,22 +541,26 @@ export const toolRegistry: Record<ToolId, ToolConfig> = {
         type: 'textarea',
         required: true,
         maxLength: 2000,
-        placeholder: 'JSON format: [{"post_type": "Pattern-Breaker", "goal": "reach", "result_notes": "low views"}] or describe your recent posts',
+        placeholder: `Example:
+Pattern-Breaker — Reach — low views
+Framework — Saves — lots of saves
+Calm Insight — Retention — drop at 3 seconds
+Before/After — Profile visits — decent taps, no follows`,
       },
       {
         key: 'recurring_issues_optional',
         label: 'Recurring Issues (Optional)',
         type: 'select',
         required: false,
-        options: ['low_reach', 'low_retention', 'no_saves', 'no_dms'],
-        placeholder: 'Select issue...',
+        options: ['Low reach', 'Low retention', 'No saves', 'No DMs'],
+        placeholder: 'Choose the main issue (optional)',
       },
       {
         key: 'niche_optional',
         label: 'Niche (Optional)',
         type: 'text',
         required: false,
-        placeholder: 'e.g., fitness coaching, SaaS, e-commerce',
+        placeholder: 'Example: fitness coaching, SaaS, e-commerce',
         maxLength: 100,
       },
     ],

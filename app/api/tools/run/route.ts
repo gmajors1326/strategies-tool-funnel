@@ -105,22 +105,21 @@ export async function POST(request: NextRequest) {
         posting_capacity: inputs.posting_capacity,
       }
     } else if (toolId === 'what_to_stop_posting') {
-      // Parse recent_posts_summary if it's a JSON string
-      let postsSummary = null
-      if (inputs.recent_posts_summary) {
-        try {
-          postsSummary = typeof inputs.recent_posts_summary === 'string'
-            ? JSON.parse(inputs.recent_posts_summary)
-            : inputs.recent_posts_summary
-        } catch {
-          // If not JSON, keep as string for AI to parse
-          postsSummary = inputs.recent_posts_summary
+      // Handle plain-language input - convert option labels back to snake_case for API
+      let recurringIssue = inputs.recurring_issues_optional || null
+      if (recurringIssue) {
+        const issueMap: Record<string, string> = {
+          'Low reach': 'low_reach',
+          'Low retention': 'low_retention',
+          'No saves': 'no_saves',
+          'No DMs': 'no_dms',
         }
+        recurringIssue = issueMap[recurringIssue] || recurringIssue
       }
       
       structuredInputs = {
-        recent_posts_summary: postsSummary || [],
-        recurring_issues_optional: inputs.recurring_issues_optional || null,
+        recent_posts_summary: inputs.recent_posts_summary || '',
+        recurring_issues_optional: recurringIssue,
         niche_optional: inputs.niche_optional || null,
       }
     } else if (toolId === 'controlled_experiment_planner') {

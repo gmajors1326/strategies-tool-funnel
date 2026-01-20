@@ -221,8 +221,23 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
                     {field.label}
                     {field.required && <span className="text-[hsl(var(--destructive))] ml-1">*</span>}
                   </Label>
+                  {field.key === 'recent_posts_summary' && config.toolId === 'what_to_stop_posting' && (
+                    <p className="text-xs text-[hsl(var(--muted))] mb-1">
+                      Add your last 5–10 posts with type, goal, and what happened. Short notes are fine.
+                    </p>
+                  )}
                   {renderInputField(field)}
-                  {field.maxLength && (
+                  {field.key === 'recent_posts_summary' && config.toolId === 'what_to_stop_posting' && field.maxLength && (
+                    <p className="text-xs text-[hsl(var(--muted))]">
+                      Keep it short. Bullet-style is perfect.
+                    </p>
+                  )}
+                  {field.key === 'niche_optional' && config.toolId === 'what_to_stop_posting' && (
+                    <p className="text-xs text-[hsl(var(--muted))]">
+                      This helps tailor recommendations.
+                    </p>
+                  )}
+                  {field.maxLength && field.key !== 'recent_posts_summary' && config.toolId !== 'what_to_stop_posting' && (
                     <p className="text-xs text-[hsl(var(--muted))]">
                       Max {field.maxLength} characters
                     </p>
@@ -260,7 +275,11 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
               <h3 className="text-xs sm:text-sm font-semibold text-[hsl(var(--text))]">Results</h3>
               {!outputs ? (
                 <AppPanel variant="subtle" className="p-4 sm:p-6">
-                  <p className="text-xs sm:text-sm text-center text-[hsl(var(--muted))]">Fill in the inputs and click &quot;Run Analysis&quot; to get results.</p>
+                  <p className="text-xs sm:text-sm text-center text-[hsl(var(--muted))]">
+                    {config.toolId === 'what_to_stop_posting' 
+                      ? 'Add a few recent posts, then click "Run Analysis."'
+                      : 'Fill in the inputs and click "Run Analysis" to get results.'}
+                  </p>
                 </AppPanel>
               ) : (
                 <>
