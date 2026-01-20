@@ -6,7 +6,6 @@ import { logger } from '@/lib/logger'
 import { getSession } from '@/lib/auth'
 
 export async function middleware(request: NextRequest) {
-  const startTime = Date.now()
   const pathname = request.nextUrl.pathname
 
   // Create response
@@ -92,7 +91,6 @@ export async function middleware(request: NextRequest) {
 
   // Log API requests
   if (pathname.startsWith('/api/')) {
-    const duration = Date.now() - startTime
     // We'll log the response status in a response interceptor or in the route handler
     // For now, just log the request
     logger.debug(`API request: ${request.method} ${pathname}`, {

@@ -28,13 +28,14 @@ export function initSentry() {
     debug: SENTRY_ENVIRONMENT === 'development',
 
     // Filter out sensitive data
-    beforeSend(event, hint) {
+    beforeSend(event, _hint) {
       // Filter out sensitive headers
       if (event.request?.headers) {
         const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key']
+        const headers = event.request.headers
         sensitiveHeaders.forEach((header) => {
-          if (event.request.headers[header]) {
-            event.request.headers[header] = '[Filtered]'
+          if (headers && headers[header]) {
+            headers[header] = '[Filtered]'
           }
         })
       }
