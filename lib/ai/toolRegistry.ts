@@ -1,5 +1,4 @@
 import { ToolId } from './schemas'
-import { getToolPrompt } from './prompts'
 
 export interface ToolConfig {
   toolId: ToolId
