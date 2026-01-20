@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/src/components/ui/Button'
 
@@ -12,14 +12,15 @@ export default function OrgMembersPage() {
   const [role, setRole] = useState('member')
   const [status, setStatus] = useState('')
 
-  useEffect(() => {
-    const load = async () => {
-      const res = await fetch(`/api/orgs/${slug}`)
-      const data = await res.json()
-      setOrg(data.org)
-    }
-    load()
+  const reload = useCallback(async () => {
+    const res = await fetch(`/api/orgs/${slug}`)
+    const data = await res.json()
+    setOrg(data.org)
   }, [slug])
+
+  useEffect(() => {
+    reload()
+  }, [reload])
 
   const invite = async () => {
     const res = await fetch('/api/orgs/invites/create', {
@@ -29,6 +30,9 @@ export default function OrgMembersPage() {
     })
     const data = await res.json()
     setStatus(res.ok ? 'Invite created' : data.error || 'Error')
+    if (res.ok) {
+      reload()
+    }
   }
 
   const updateRole = async (memberId: string, newRole: string) => {
@@ -39,9 +43,35 @@ export default function OrgMembersPage() {
     })
     const data = await res.json()
     setStatus(res.ok ? 'Role updated' : data.error || 'Error')
-    const reloadRes = await fetch(`/api/orgs/${slug}`)
-    const reloadData = await reloadRes.json()
-    setOrg(reloadData.org)
+    if (res.ok) {
+      reload()
+    }
+  }
+
+  const disableMember = async (memberId: string) => {
+    const res = await fetch('/api/orgs/members/disable', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId: org.id, memberId }),
+    })
+    const data = await res.json()
+    setStatus(res.ok ? 'Member disabled' : data.error || 'Error')
+    if (res.ok) {
+      reload()
+    }
+  }
+
+  const removeMember = async (memberId: string) => {
+    const res = await fetch('/api/orgs/members/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId: org.id, memberId }),
+    })
+    const data = await res.json()
+    setStatus(res.ok ? 'Member removed' : data.error || 'Error')
+    if (res.ok) {
+      reload()
+    }
   }
 
   if (!org) return <div className="p-6">Loading...</div>
@@ -71,10 +101,12 @@ export default function OrgMembersPage() {
             <div key={m.id} className="flex items-center justify-between">
               <span>{m.userId}</span>
               <div className="flex gap-2">
-                <span>{m.role}</span>
+                <span>{m.role}{m.status !== 'active' ? ` (${m.status})` : ''}</span>
                 <Button variant="outline" onClick={() => updateRole(m.id, 'viewer')}>Viewer</Button>
                 <Button variant="outline" onClick={() => updateRole(m.id, 'member')}>Member</Button>
                 <Button variant="outline" onClick={() => updateRole(m.id, 'admin')}>Admin</Button>
+                <Button variant="outline" onClick={() => disableMember(m.id)}>Disable</Button>
+                <Button variant="outline" onClick={() => removeMember(m.id)}>Remove</Button>
               </div>
             </div>
           ))}

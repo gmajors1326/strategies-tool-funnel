@@ -7,12 +7,7 @@ import { addRun } from '@/src/lib/tools/runStore'
 import { getBonusRunsRemainingForTool, consumeOneBonusRun } from '@/src/lib/tool/bonusRuns'
 import { getTrialState, markTrialUsed } from '@/src/lib/tool/trialLedger'
 import { ensureUsageWindow, incrementUsageTx } from '@/src/lib/usage/dailyUsage'
-import {
-  dailyAiTokenCapByPlan,
-  dailyRunCapByPlan,
-  orgAiTokenCapByPlan,
-  orgRunCapByPlan,
-} from '@/src/lib/usage/caps'
+import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
 import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@/src/lib/billing/planConfig'
 import { getTokenBalance } from '@/src/lib/tokens/ledger'
 import { getOrCreateEntitlement } from '@/src/lib/usage/entitlements'

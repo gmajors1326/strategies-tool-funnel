@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server'
 import { ensureUsageWindow } from '@/src/lib/usage/dailyUsage'
 import { getTokenBalance } from '@/src/lib/tokens/ledger'
-import {
-  dailyAiTokenCapByPlan,
-  dailyRunCapByPlan,
-  orgAiTokenCapByPlan,
-  orgRunCapByPlan,
-} from '@/src/lib/usage/caps'
+import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
 import { getOrCreateEntitlement } from '@/src/lib/usage/entitlements'
 import { getActiveOrg } from '@/src/lib/orgs/orgs'
 import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@/src/lib/billing/planConfig'

@@ -13,9 +13,21 @@ const fetchOrg = async (slug: string) => {
   return res.json()
 }
 
+const fetchAudit = async (slug: string) => {
+  const headerList = headers()
+  const host = headerList.get('host') ?? 'localhost:3000'
+  const proto = headerList.get('x-forwarded-proto') ?? 'http'
+  const res = await fetch(`${proto}://${host}/api/orgs/${slug}/audit`, { cache: 'no-store' })
+  if (res.status === 403) return { logs: [], allowed: false }
+  if (!res.ok) return { logs: [], allowed: false }
+  const data = await res.json()
+  return { logs: data.logs || [], allowed: true }
+}
+
 export default async function OrgPage({ params }: { params: { slug: string } }) {
   const data = await fetchOrg(params.slug)
   const org = data?.org
+  const audit = await fetchAudit(params.slug)
 
   if (!org) {
     return (
@@ -47,6 +59,22 @@ export default async function OrgPage({ params }: { params: { slug: string } }) 
               <span>{m.role}</span>
             </div>
           ))}
+        </div>
+        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
+          <p className="text-xs uppercase text-[hsl(var(--muted))]">Audit log</p>
+          {!audit.allowed && (
+            <p className="text-xs text-[hsl(var(--muted))]">Audit logs available to owners and admins.</p>
+          )}
+          {audit.allowed && audit.logs.length === 0 && (
+            <p className="text-xs text-[hsl(var(--muted))]">No activity yet.</p>
+          )}
+          {audit.allowed &&
+            audit.logs.map((log: any) => (
+              <div key={log.id} className="flex justify-between text-xs text-[hsl(var(--muted))]">
+                <span>{log.action}</span>
+                <span>{new Date(log.createdAt).toLocaleString()}</span>
+              </div>
+            ))}
         </div>
       </div>
     </div>

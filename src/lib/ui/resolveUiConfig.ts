@@ -2,12 +2,7 @@ import type { UiConfig } from '@/src/lib/ui/types'
 import { TOOL_META } from '@/src/lib/tools/toolMeta'
 import { getBonusRunsSummary } from '@/src/lib/tool/bonusRuns'
 import { getTrialState } from '@/src/lib/tool/trialLedger'
-import {
-  dailyAiTokenCapByPlan,
-  dailyRunCapByPlan,
-  orgAiTokenCapByPlan,
-  orgRunCapByPlan,
-} from '@/src/lib/usage/caps'
+import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
 import { ensureUsageWindow } from '@/src/lib/usage/dailyUsage'
 import { getTokenBalance } from '@/src/lib/tokens/ledger'
 import { getActiveOrg, getMembership } from '@/src/lib/orgs/orgs'
