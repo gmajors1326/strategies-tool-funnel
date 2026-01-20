@@ -52,15 +52,33 @@ export async function POST(request: NextRequest) {
         notes_optional: inputs.notes_optional || null,
       }
     } else if (toolId === 'retention_leak_finder') {
-      // Parse retention_points_optional if it's a JSON string
+      // Parse retention_points_optional - can be user-friendly format or JSON
       let retentionPoints = null
       if (inputs.retention_points_optional) {
+        const inputStr = String(inputs.retention_points_optional).trim()
+        
+        // Try parsing as JSON first
         try {
-          retentionPoints = typeof inputs.retention_points_optional === 'string'
-            ? JSON.parse(inputs.retention_points_optional)
-            : inputs.retention_points_optional
+          retentionPoints = JSON.parse(inputStr)
         } catch {
-          retentionPoints = null
+          // If not JSON, parse user-friendly format like "1s → 80%, 3s → 60%"
+          // Extract patterns like "1s → 80%" or "3s → 60%"
+          const matches = inputStr.match(/(\d+)s\s*→\s*(\d+)%/g)
+          if (matches && matches.length > 0) {
+            retentionPoints = matches.map(match => {
+              const parts = match.match(/(\d+)s\s*→\s*(\d+)%/)
+              if (parts) {
+                return {
+                  second: parseInt(parts[1]),
+                  retention_pct: parseInt(parts[2])
+                }
+              }
+              return null
+            }).filter(Boolean)
+          } else {
+            // Keep as string if can't parse
+            retentionPoints = inputStr
+          }
         }
       }
       

@@ -183,9 +183,7 @@ USER INPUT (JSON):
 {
   "video_length_sec": number,
   "avg_watch_time_sec": number,
-  "retention_points_optional": [
-    { "second": number, "retention_pct": number }
-  ] | null,
+  "retention_points_optional": string | null (user-friendly format like "1s → 80%, 3s → 60%" or JSON array),
   "known_drop_second_optional": number | null,
   "format_optional": "<talking_head | text_overlay | broll | silent | null>",
   "notes_optional": string | null

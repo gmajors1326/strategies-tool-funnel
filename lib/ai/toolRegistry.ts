@@ -232,7 +232,7 @@ export const toolRegistry: Record<ToolId, ToolConfig> = {
         type: 'textarea',
         required: false,
         maxLength: 500,
-        placeholder: 'JSON format: [{"second": 3, "retention_pct": 75}, {"second": 10, "retention_pct": 50}]',
+        placeholder: 'A few timestamps showing where viewers drop off. Example: 1s → 80%, 3s → 60%. Helps pinpoint exactly where attention leaks.',
       },
       {
         key: 'known_drop_second_optional',
