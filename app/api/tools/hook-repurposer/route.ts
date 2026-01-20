@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { runHookRepurposer } from '@/lib/tools/hook-repurposer'
+import { runHookRepurposer, type HookRepurposerInputs } from '@/lib/tools/hook-repurposer'
 import { executeTool } from '@/lib/tool-execution'
 import { getSession } from '@/lib/auth'
 import { getUserEntitlements } from '@/lib/entitlements'
@@ -35,7 +35,7 @@ function getUsageCookieValue(cookie?: string) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const inputs = hookSchema.parse(body) as { save?: boolean }
+    const inputs = hookSchema.parse(body) as HookRepurposerInputs & { save?: boolean }
 
     const session = await getSession()
     const entitlements = session ? await getUserEntitlements(session.userId) : null
