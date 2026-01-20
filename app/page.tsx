@@ -100,12 +100,6 @@ export default function HomePage() {
                 The Strategy is designed for 15-30 minutes of focused engagement per day. The tools help you maximize impact in that time.
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="dm-only" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-card-foreground text-[15px]">Can I buy DM Engine without The Strategy?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground text-[15px]">
-                Yes. DM Engine is a standalone product focused specifically on DM flows and follow-ups. The Strategy is for overall engagement strategy.
-              </AccordionContent>
-            </AccordionItem>
             <AccordionItem value="services-vs-products" className="bg-card/80 border-border/60 rounded-lg px-6">
               <AccordionTrigger className="text-card-foreground text-[15px]">What if I&apos;m selling services vs digital products?</AccordionTrigger>
               <AccordionContent className="text-card-foreground text-[15px]">
