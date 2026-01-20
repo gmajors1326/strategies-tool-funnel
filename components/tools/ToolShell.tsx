@@ -12,6 +12,7 @@ import { OutputSection } from './OutputSection'
 import { SaveToPlanButton } from './SaveToPlanButton'
 import { ToolConfig, OutputSection as OutputSectionConfig } from '@/lib/ai/toolRegistry'
 import { runTool, RunToolResult } from '@/lib/ai/runTool'
+import { recordToolUse } from '@/lib/unlock'
 
 interface ToolShellProps {
   config: ToolConfig
@@ -83,6 +84,8 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
 
             if (data.success && data.output) {
               setOutputs(data.output)
+              // Record tool usage for unlock system
+              recordToolUse(config.toolId)
               onResult?.(data)
             } else {
               // Show more helpful error messages

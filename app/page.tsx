@@ -3,22 +3,18 @@
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { AppCard } from '@/components/ui/AppCard'
-import { ToolShell } from '@/components/tools/ToolShell'
-import { getToolConfig } from '@/lib/ai/toolRegistry'
+import { ToolCategorySection } from '@/components/tools/ToolCategorySection'
+import { toolCategories } from '@/config/toolCategories'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 export default function HomePage() {
-  const postTypeRecommenderConfig = getToolConfig('post_type_recommender')
-  const hookPressureTestConfig = getToolConfig('hook_pressure_test')
-  const retentionLeakFinderConfig = getToolConfig('retention_leak_finder')
-  const algorithmTrainingModeConfig = getToolConfig('algorithm_training_mode')
-  const ctaMatchCheckerConfig = getToolConfig('cta_match_checker')
-  const followerQualityFilterConfig = getToolConfig('follower_quality_filter')
-  const contentSystemBuilderConfig = getToolConfig('content_system_builder')
-  const whatToStopPostingConfig = getToolConfig('what_to_stop_posting')
-  const controlledExperimentPlannerConfig = getToolConfig('controlled_experiment_planner')
-  const whyPostFailedConfig = getToolConfig('why_post_failed')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#7d9b76] text-foreground">
@@ -50,16 +46,9 @@ export default function HomePage() {
       {/* Tools Section */}
       <section id="tool" className="container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-7xl mx-auto space-y-12">
-          <ToolShell config={postTypeRecommenderConfig} />
-          <ToolShell config={hookPressureTestConfig} />
-          <ToolShell config={retentionLeakFinderConfig} />
-          <ToolShell config={algorithmTrainingModeConfig} />
-          <ToolShell config={ctaMatchCheckerConfig} />
-          <ToolShell config={followerQualityFilterConfig} />
-          <ToolShell config={contentSystemBuilderConfig} />
-          <ToolShell config={whatToStopPostingConfig} />
-          <ToolShell config={controlledExperimentPlannerConfig} />
-          <ToolShell config={whyPostFailedConfig} />
+          {mounted && toolCategories.map(category => (
+            <ToolCategorySection key={category.id} category={category} />
+          ))}
         </div>
       </section>
 
