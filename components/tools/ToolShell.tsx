@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, ReactNode, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AppCard, AppCardContent, AppCardDescription, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
