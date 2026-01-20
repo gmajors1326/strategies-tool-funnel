@@ -152,7 +152,8 @@ function generateRiskNote(
     return null
   }
 
-  if (pitchReadiness === 'not_ready' && boundary !== 'no_pitch') {
+  // At this point, boundary is 'soft_pitch_ok' | 'direct_pitch_ok' (not 'no_pitch')
+  if (pitchReadiness === 'not_ready') {
     const offerContext = offerType && offerType !== 'none' ? ` your ${offerType}` : ' your offer'
     return `Pitching too early risks losing trust. Focus on building rapport first. Once they show clear interest, then introduce${offerContext}.`
   }
