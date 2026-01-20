@@ -19,7 +19,7 @@ interface ToolRun {
 export default function AccountPage() {
   const router = useRouter()
   const [toolRuns, setToolRuns] = useState<ToolRun[]>([])
-  const [plan, setPlan] = useState<string>('FREE')
+  const [plan] = useState<string>('FREE')
   const [loading, setLoading] = useState(true)
 
   const fetchToolRuns = useCallback(async () => {
