@@ -98,6 +98,21 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
         soft_cta_suggestions: ['Save this post', 'Follow for more', 'DM me'],
         spicy_experiment: 'Test this post type with a different hook style.',
       }
+    case 'cta_match_checker':
+      return {
+        ...base,
+        match_verdict: 'Insufficient signal',
+        why_short: 'Provide post_goal and current_cta_text to evaluate CTA match.',
+        best_single_action: 'save',
+        rewritten_ctas: [
+          'Provide post goal and CTA to get rewrites',
+          'Define clear goal and current CTA text',
+          'Include audience temperature if known',
+          'Specify post type for better alignment',
+          'Fill in all required fields and try again',
+        ],
+        placement_instruction: 'Provide inputs to get placement instruction',
+      }
     case 'follower_quality_filter':
       return {
         ...base,

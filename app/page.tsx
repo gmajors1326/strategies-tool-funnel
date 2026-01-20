@@ -13,6 +13,7 @@ export default function HomePage() {
   const hookPressureTestConfig = getToolConfig('hook_pressure_test')
   const retentionLeakFinderConfig = getToolConfig('retention_leak_finder')
   const algorithmTrainingModeConfig = getToolConfig('algorithm_training_mode')
+  const ctaMatchCheckerConfig = getToolConfig('cta_match_checker')
   const followerQualityFilterConfig = getToolConfig('follower_quality_filter')
   const contentSystemBuilderConfig = getToolConfig('content_system_builder')
   const whatToStopPostingConfig = getToolConfig('what_to_stop_posting')
@@ -53,6 +54,7 @@ export default function HomePage() {
           <ToolShell config={hookPressureTestConfig} />
           <ToolShell config={retentionLeakFinderConfig} />
           <ToolShell config={algorithmTrainingModeConfig} />
+          <ToolShell config={ctaMatchCheckerConfig} />
           <ToolShell config={followerQualityFilterConfig} />
           <ToolShell config={contentSystemBuilderConfig} />
           <ToolShell config={whatToStopPostingConfig} />

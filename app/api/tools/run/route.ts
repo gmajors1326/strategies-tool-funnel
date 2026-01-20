@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
       'retention_leak_finder',
       'algorithm_training_mode',
       'post_type_recommender',
+      'cta_match_checker',
       'follower_quality_filter',
       'content_system_builder',
       'what_to_stop_posting',

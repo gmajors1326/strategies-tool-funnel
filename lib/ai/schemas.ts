@@ -98,6 +98,15 @@ export const postTypeRecommenderSchema = baseOutputSchema.extend({
   spicy_experiment: z.string(),
 })
 
+// CTA Match Checker
+export const ctaMatchCheckerSchema = baseOutputSchema.extend({
+  match_verdict: z.enum(['match', 'weak', 'mismatch', 'Insufficient signal']),
+  why_short: z.string(),
+  best_single_action: z.enum(['save', 'follow', 'dm', 'click', 'comment']),
+  rewritten_ctas: z.array(z.string()).length(5),
+  placement_instruction: z.string(),
+})
+
 // Follower Quality Filter
 export const followerQualityFilterSchema = baseOutputSchema.extend({
   positioning_sentence: z.string(),
@@ -157,6 +166,7 @@ export type HookPressureTestOutput = z.infer<typeof hookPressureTestSchema>
 export type RetentionLeakFinderOutput = z.infer<typeof retentionLeakFinderSchema>
 export type AlgorithmTrainingModeOutput = z.infer<typeof algorithmTrainingModeSchema>
 export type PostTypeRecommenderOutput = z.infer<typeof postTypeRecommenderSchema>
+export type CtaMatchCheckerOutput = z.infer<typeof ctaMatchCheckerSchema>
 export type FollowerQualityFilterOutput = z.infer<typeof followerQualityFilterSchema>
 export type ContentSystemBuilderOutput = z.infer<typeof contentSystemBuilderSchema>
 export type WhatToStopPostingOutput = z.infer<typeof whatToStopPostingSchema>
@@ -169,6 +179,7 @@ export const toolSchemas = {
   retention_leak_finder: retentionLeakFinderSchema,
   algorithm_training_mode: algorithmTrainingModeSchema,
   post_type_recommender: postTypeRecommenderSchema,
+  cta_match_checker: ctaMatchCheckerSchema,
   follower_quality_filter: followerQualityFilterSchema,
   content_system_builder: contentSystemBuilderSchema,
   what_to_stop_posting: whatToStopPostingSchema,
