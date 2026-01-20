@@ -1,5 +1,4 @@
 import { getSession } from './auth'
-import { getUserEntitlements } from './entitlements'
 import { enhanceWithAi, logAiUsage, isAiEnabled, type AiStyle } from './ai'
 import { retrieveKnowledge, getPromptProfile, getPromptRubric } from './knowledge'
 import { prisma } from './db'
