@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, ReactNode } from 'react'
+import { useState, useEffect, ReactNode } from 'react'
 import { AppCard, AppCardContent, AppCardDescription, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -12,6 +12,8 @@ import { OutputSection } from './OutputSection'
 import { SaveToPlanButton } from './SaveToPlanButton'
 import { ToolConfig, OutputSection as OutputSectionConfig } from '@/lib/ai/toolRegistry'
 import { runTool, RunToolResult } from '@/lib/ai/runTool'
+import { saveRecentRun, getRecentRunsByTool } from '@/lib/recentRuns'
+import { RecentRunsPanel } from './RecentRunsPanel'
 
 interface ToolShellProps {
   config: ToolConfig
@@ -23,6 +25,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
   const [outputs, setOutputs] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [recentRuns, setRecentRuns] = useState(getRecentRunsByTool(config.toolId))
 
   const handleInputChange = (key: string, value: any) => {
     setInputs(prev => ({ ...prev, [key]: value }))
@@ -33,6 +36,21 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
     setOutputs(null)
     setError(null)
   }
+
+  const handleLoadRun = (run: any) => {
+    setInputs(run.inputs)
+    setOutputs(run.outputs)
+    setError(null)
+  }
+
+  // Listen for storage changes to refresh recent runs
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setRecentRuns(getRecentRunsByTool(config.toolId))
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [config.toolId])
 
   const handleRun = async () => {
     // Validate required fields
@@ -83,6 +101,18 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
 
             if (data.success && data.output) {
               setOutputs(data.output)
+              
+              // Save to recent runs
+              saveRecentRun({
+                toolId: config.toolId,
+                inputs: preparedInputs,
+                outputs: data.output,
+                title: `${config.title} - ${new Date().toLocaleDateString()}`,
+              })
+              
+              // Refresh recent runs list
+              setRecentRuns(getRecentRunsByTool(config.toolId))
+              
               onResult?.(data)
             } else {
               // Show more helpful error messages
@@ -215,6 +245,11 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
             {/* Left Column - Inputs */}
             <div className="space-y-3 sm:space-y-4">
               <h3 className="text-xs sm:text-sm font-semibold text-[hsl(var(--text))]">Inputs</h3>
+              <RecentRunsPanel
+                toolId={config.toolId}
+                runs={recentRuns}
+                onLoadRun={handleLoadRun}
+              />
               {config.inputFields.map(field => (
                 <div key={field.key} className="space-y-1 sm:space-y-1.5">
                   <Label htmlFor={field.key} className="text-xs sm:text-sm text-[hsl(var(--text))]">

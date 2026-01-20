@@ -1,34 +1,35 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { AppCard } from '@/components/ui/AppCard'
 import { ToolShell } from '@/components/tools/ToolShell'
-import { getToolConfig } from '@/lib/ai/toolRegistry'
+import { ToolSearch } from '@/components/tools/ToolSearch'
+import { getToolConfig, getAllToolIds } from '@/lib/ai/toolRegistry'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
 export default function HomePage() {
-  const postTypeRecommenderConfig = getToolConfig('post_type_recommender')
-  const hookPressureTestConfig = getToolConfig('hook_pressure_test')
-  const retentionLeakFinderConfig = getToolConfig('retention_leak_finder')
-  const algorithmTrainingModeConfig = getToolConfig('algorithm_training_mode')
-  const ctaMatchCheckerConfig = getToolConfig('cta_match_checker')
-  const followerQualityFilterConfig = getToolConfig('follower_quality_filter')
-  const contentSystemBuilderConfig = getToolConfig('content_system_builder')
-  const whatToStopPostingConfig = getToolConfig('what_to_stop_posting')
-  const controlledExperimentPlannerConfig = getToolConfig('controlled_experiment_planner')
-  const whyPostFailedConfig = getToolConfig('why_post_failed')
-  const signalVsNoiseAnalyzerConfig = getToolConfig('signal_vs_noise_analyzer')
-  const aiHookRewriterConfig = getToolConfig('ai_hook_rewriter')
-  const weeklyStrategyReviewConfig = getToolConfig('weekly_strategy_review')
-  const dmIntelligenceEngineConfig = getToolConfig('dm_intelligence_engine')
-  const hookRepurposerConfig = getToolConfig('hook_repurposer')
-  const engagementDiagnosticLiteConfig = getToolConfig('engagement_diagnostic_lite')
-  const dmOpenerGeneratorLiteConfig = getToolConfig('dm_opener_generator_lite')
-  const offerClarityFixerLiteConfig = getToolConfig('offer_clarity_fixer_lite')
-  const landingPageMessageMapLiteConfig = getToolConfig('landing_page_message_map_lite')
-  const contentAngleMinerBeginnerConfig = getToolConfig('content_angle_miner_beginner')
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Get all tool configs
+  const allToolIds = getAllToolIds()
+  const allToolConfigs = allToolIds.map(id => getToolConfig(id))
+  
+  // Filter tools based on search query
+  const filteredToolConfigs = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return allToolConfigs
+    }
+    
+    const query = searchQuery.toLowerCase().trim()
+    return allToolConfigs.filter(config => {
+      const titleMatch = config.title.toLowerCase().includes(query)
+      const descMatch = config.description.toLowerCase().includes(query)
+      return titleMatch || descMatch
+    })
+  }, [searchQuery, allToolConfigs])
 
   return (
     <div className="min-h-screen bg-[#7d9b76] text-foreground">
@@ -59,27 +60,29 @@ export default function HomePage() {
 
       {/* Tools Section */}
       <section id="tool" className="container mx-auto px-4 py-8 md:py-12">
-        <div className="max-w-7xl mx-auto space-y-12">
-          <ToolShell config={postTypeRecommenderConfig} />
-          <ToolShell config={hookPressureTestConfig} />
-          <ToolShell config={retentionLeakFinderConfig} />
-          <ToolShell config={algorithmTrainingModeConfig} />
-          <ToolShell config={ctaMatchCheckerConfig} />
-          <ToolShell config={followerQualityFilterConfig} />
-          <ToolShell config={contentSystemBuilderConfig} />
-          <ToolShell config={whatToStopPostingConfig} />
-          <ToolShell config={controlledExperimentPlannerConfig} />
-          <ToolShell config={whyPostFailedConfig} />
-          <ToolShell config={signalVsNoiseAnalyzerConfig} />
-          <ToolShell config={aiHookRewriterConfig} />
-          <ToolShell config={weeklyStrategyReviewConfig} />
-          <ToolShell config={dmIntelligenceEngineConfig} />
-          <ToolShell config={hookRepurposerConfig} />
-          <ToolShell config={engagementDiagnosticLiteConfig} />
-          <ToolShell config={dmOpenerGeneratorLiteConfig} />
-          <ToolShell config={offerClarityFixerLiteConfig} />
-          <ToolShell config={landingPageMessageMapLiteConfig} />
-          <ToolShell config={contentAngleMinerBeginnerConfig} />
+        <div className="max-w-7xl mx-auto">
+          <ToolSearch searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+          
+          {filteredToolConfigs.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-[hsl(var(--muted))]">
+                No tools found matching &quot;{searchQuery}&quot;
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => setSearchQuery('')}
+                className="mt-4"
+              >
+                Clear Search
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-12">
+              {filteredToolConfigs.map(config => (
+                <ToolShell key={config.toolId} config={config} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
