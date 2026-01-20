@@ -140,7 +140,6 @@ Enhance this output with strategic reasoning, clarity, and personalization. Retu
     const parsed = JSON.parse(responseContent)
     const tokensIn = completion.usage?.prompt_tokens
     const tokensOut = completion.usage?.completion_tokens
-    const totalTokens = completion.usage?.total_tokens
 
     // Rough cost estimate (GPT-4 Turbo pricing as of 2024)
     // Input: $0.01 per 1K tokens, Output: $0.03 per 1K tokens
