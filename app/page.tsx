@@ -951,7 +951,7 @@ function DMIntelligenceEngineTool() {
                 </>
               ) : (
                 <div className="p-8 text-center text-card-foreground/50 border border-border/60 rounded-lg">
-                  <p className="text-sm">Fill in the form and click "Generate DM Reply" to get AI-powered recommendations.</p>
+                  <p className="text-sm">Fill in the form and click &quot;Generate DM Reply&quot; to get AI-powered recommendations.</p>
                 </div>
               )}
             </div>
