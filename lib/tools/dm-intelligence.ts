@@ -134,11 +134,10 @@ function determinePitchReadiness(
   }
 
   // Check conversation snippet for explicit interest
+  // Note: boundary is already checked above, so we know it's not 'no_pitch' here
   const snippet = conversationSnippet.toLowerCase()
   if (snippet.includes('how much') || snippet.includes('tell me more') || snippet.includes('interested')) {
-    if (boundary !== 'no_pitch') {
-      return 'ready'
-    }
+    return 'ready'
   }
 
   return intentReadiness[intent] || 'not_ready'
