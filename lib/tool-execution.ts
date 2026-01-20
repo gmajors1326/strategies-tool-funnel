@@ -3,6 +3,7 @@ import { getUserEntitlements } from './entitlements'
 import { enhanceWithAi, logAiUsage, isAiEnabled, type AiStyle } from './ai'
 import { retrieveKnowledge, getPromptProfile, getPromptRubric } from './knowledge'
 import { prisma } from './db'
+import { minimizeInputsForStorage } from './privacy'
 import type { Prisma } from '@prisma/client'
 import { Plan } from '@prisma/client'
 
@@ -119,8 +120,9 @@ export async function executeTool(
         data: {
           userId: session.userId,
           toolKey,
-          inputsJson: inputs as unknown as Prisma.InputJsonValue,
+          inputsJson: minimizeInputsForStorage(inputs) as unknown as Prisma.InputJsonValue,
           outputsJson: outputs as unknown as Prisma.InputJsonValue,
+          saved: true,
         },
       })
 

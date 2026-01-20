@@ -124,11 +124,6 @@ const createCacheStore = (): CacheStore => {
 const cacheStore = createCacheStore()
 const inFlight = new Map<string, Promise<unknown>>()
 
-type CacheOptions = {
-  ttlSeconds: number
-  staleSeconds?: number
-}
-
 export async function withCache<T>(
   key: string,
   ttlSeconds: number,

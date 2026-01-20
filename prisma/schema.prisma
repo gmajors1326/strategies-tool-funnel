@@ -18,25 +18,29 @@ enum Plan {
 }
 
 model User {
-  id                        String    @id @default(cuid())
+  id                        String   @id @default(cuid())
   name                      String?
-  email                     String    @unique
-  emailVerifiedAt            DateTime?
-  plan                      Plan      @default(FREE)
-  freeVerifiedRunsRemaining Int       @default(3)
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
+  email                     String   @unique
+  emailVerifiedAt           DateTime?
+  plan                      Plan     @default(FREE)
+  freeVerifiedRunsRemaining Int      @default(3)
+  activeOrgId               String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
-  profile       Profile?
-  toolRuns      ToolRun[]
-  entitlements  PlanEntitlement?
-  otps          Otp[]
-  aiUsageLogs   AiUsageLog[]
-  notifications Notification[]
+  profile                Profile?
+  toolRuns               ToolRun[]
+  entitlements           PlanEntitlement?
+  otps                   Otp[]
+  aiUsageLogs            AiUsageLog[]
+  notifications          Notification[]
   notificationPreference NotificationPreference?
+  orgMemberships         OrganizationMember[]
+  activeOrg              Organization? @relation("ActiveOrg", fields: [activeOrgId], references: [id])
 
   @@index([email])
   @@index([plan])
+  @@index([activeOrgId])
 }
 
 model Profile {
@@ -63,6 +67,8 @@ model ToolRun {
   toolKey    String
   inputsJson Json
   outputsJson Json
+  saved      Boolean  @default(false)
+  expiresAt  DateTime?
   createdAt  DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -70,6 +76,8 @@ model ToolRun {
   @@index([userId])
   @@index([toolKey])
   @@index([createdAt])
+  @@index([saved])
+  @@index([expiresAt])
 }
 
 model Otp {
@@ -87,12 +95,12 @@ model Otp {
 }
 
 model PlanEntitlement {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  dmEngine   Boolean  @default(false)
-  strategy   Boolean  @default(false)
-  allAccess  Boolean  @default(false)
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  dmEngine  Boolean  @default(false)
+  strategy  Boolean  @default(false)
+  allAccess Boolean  @default(false)
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -132,27 +140,27 @@ model PromptProfile {
 }
 
 model PromptRubric {
-  id             String   @id @default(cuid())
-  toolKey        String   @unique
-  inputHints     String   @db.Text
+  id              String   @id @default(cuid())
+  toolKey         String   @unique
+  inputHints      String   @db.Text
   outputSchemaJson Json
-  reasoningRules String   @db.Text
-  safetyRules    String   @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  reasoningRules  String   @db.Text
+  safetyRules     String   @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([toolKey])
 }
 
 model AiUsageLog {
-  id            String   @id @default(cuid())
-  userId        String?
-  toolKey       String
-  style         String?  // strategist | closer
-  tokensIn      Int?
-  tokensOut     Int?
-  costEstimate  Float?
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String?
+  toolKey      String
+  style        String? // strategist | closer
+  tokensIn     Int?
+  tokensOut    Int?
+  costEstimate Float?
+  createdAt    DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -162,13 +170,13 @@ model AiUsageLog {
 }
 
 model WebhookDelivery {
-  id          String   @id @default(cuid())
-  eventId     String   @unique
-  type        String
-  customerId  String?
-  status      String
-  receivedAt  DateTime @default(now())
-  processedAt DateTime?
+  id           String   @id @default(cuid())
+  eventId      String   @unique
+  type         String
+  customerId   String?
+  status       String
+  receivedAt   DateTime @default(now())
+  processedAt  DateTime?
   errorMessage String?
 
   @@index([customerId])
@@ -209,10 +217,194 @@ model Notification {
 }
 
 model NotificationPreference {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  digestFrequency String  @default("weekly") // none | daily | weekly
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  digestFrequency String   @default("weekly") // none | daily | weekly
+  updatedAt       DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ToolFeedback {
+  id        String   @id @default(uuid())
+  userId    String
+  toolId    String
+  runId     String?
+
+  rating    Int?
+  thumbs    String?  // "up" | "down"
+  tags      Json?
+  comment   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([toolId])
+  @@index([runId])
+  @@index([userId, toolId, createdAt])
+}
+
+model ToolBonusRuns {
+  id         String   @id @default(uuid())
+  userId     String
+  toolId     String?  // null => usable for any tool
+
+  runsGranted Int
+  runsUsed    Int      @default(0)
+
+  reason     String?
+  expiresAt  DateTime?
+  grantedBy  String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([toolId])
+  @@index([userId, toolId])
+  @@index([userId, expiresAt])
+}
+
+model TokenLedger {
+  id          String   @id @default(uuid())
+  userId      String
+  eventType   String
+  tokensDelta Int
+  toolId      String?
+  runId       String?
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, eventType, createdAt])
+  @@index([runId])
+}
+
+model DailyUsage {
+  id               String   @id @default(uuid())
+  userId           String
+  windowStart      DateTime
+  windowEnd        DateTime
+  aiTokensUsed     Int      @default(0)
+  runsUsed         Int      @default(0)
+  perToolRunsUsed  Json     @default("{}")
+  resetsAt         DateTime
+  updatedAt        DateTime @default(now())
+
+  @@unique([userId, windowEnd])
+  @@index([userId, windowEnd])
+}
+
+model Entitlement {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  plan        String
+  resetsAt    DateTime
+  tokensCache Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model StripeEvent {
+  id        String   @id @default(uuid())
+  eventId   String   @unique
+  type      String
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Organization {
+  id                    String   @id @default(uuid())
+  name                  String
+  slug                  String   @unique
+  domain                String?
+  plan                  String   @default("business") // business|enterprise
+  stripeCustomerId      String?  @unique
+  stripeSubscriptionId  String?  @unique
+  seatsIncluded         Int      @default(1)
+  seatsMax              Int      @default(5)
+  walletMode            String   @default("per_seat") // per_seat|shared
+  sharedTokensCache     Int?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  memberships OrganizationMember[]
+  activeUsers User[] @relation("ActiveOrg")
+
+  @@index([domain])
+}
+
+model OrganizationMember {
+  id           String   @id @default(uuid())
+  orgId        String
+  userId       String
+  role         String   @default("member") // owner|admin|member|viewer
+  status       String   @default("active") // active|invited|disabled
+  invitedEmail String?
+  invitedBy    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id])
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([orgId])
+  @@index([userId])
+  @@index([userId, role])
+}
+
+model OrganizationInvite {
+  id         String   @id @default(uuid())
+  orgId      String
+  email      String
+  role       String   @default("member")
+  token      String   @unique
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@unique([orgId, email])
+  @@index([orgId])
+  @@index([email])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  orgId     String?
+  userId    String?
+  action    String
+  targetId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([action])
+  @@index([orgId, createdAt])
+}
+
+model ToolRunLog {
+  id           String   @id @default(uuid())
+  orgId        String?
+  userId       String
+  toolId       String
+  runId        String   @unique
+  meteringMode String
+  tokensCharged Int     @default(0)
+  status       String   // ok|locked|error
+  lockCode     String?
+  durationMs   Int?
+  createdAt    DateTime @default(now())
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([toolId])
+  @@index([userId, createdAt])
+  @@index([orgId, createdAt])
 }

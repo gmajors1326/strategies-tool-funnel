@@ -5,7 +5,6 @@ export function sanitizeInput(value: any): any {
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
       .replace(/javascript:/gi, '') // Remove javascript: protocol
       .replace(/on\w+\s*=/gi, '') // Remove event handlers
-      .trim()
   }
   
   if (Array.isArray(value)) {

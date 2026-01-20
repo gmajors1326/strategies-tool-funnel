@@ -8,6 +8,8 @@
 DATABASE_URL="postgresql://user:password@host:5432/database"
 # If using Supabase pooler (port 6543), set the pool size (default: 1)
 DATABASE_POOL_SIZE="1"
+# Data retention for unsaved tool runs (days)
+TOOL_RUN_RETENTION_DAYS="30"
 
 # ============================================
 # AUTH SECRETS (Required)

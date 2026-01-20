@@ -1,332 +1,664 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { runTool } from '@/lib/ai/runTool'
-import { ToolId } from '@/lib/ai/schemas'
-import { getSession } from '@/lib/auth'
-import { createNotification } from '@/lib/notifications'
 import { z } from 'zod'
+import { TOOL_META } from '@/src/lib/tools/toolMeta'
+import { validateInput } from '@/src/lib/tools/validate'
+import { runnerRegistry } from '@/src/lib/tools/runnerRegistry'
+import { addRun } from '@/src/lib/tools/runStore'
+import { getBonusRunsRemainingForTool, consumeOneBonusRun } from '@/src/lib/tool/bonusRuns'
+import { getTrialState, markTrialUsed } from '@/src/lib/tool/trialLedger'
+import { ensureUsageWindow, incrementUsageTx } from '@/src/lib/usage/dailyUsage'
+import {
+  dailyAiTokenCapByPlan,
+  dailyRunCapByPlan,
+  orgAiTokenCapByPlan,
+  orgRunCapByPlan,
+} from '@/src/lib/usage/caps'
+import { getTokenBalance } from '@/src/lib/tokens/ledger'
+import { getOrCreateEntitlement } from '@/src/lib/usage/entitlements'
+import type { RunRequest, RunResponse } from '@/src/lib/tools/runTypes'
+import { buildLock } from '@/src/lib/tools/accessGate'
+import { prisma } from '@/src/lib/prisma'
+import { getActiveOrg, getMembership, logAudit, logToolRun } from '@/src/lib/orgs/orgs'
 
-const runToolSchema = z.object({
+const requestSchema = z.object({
   toolId: z.string(),
-  inputs: z.record(z.any()),
+  mode: z.enum(['paid', 'trial']),
+  trialMode: z.enum(['sandbox', 'live', 'preview']).optional(),
+  input: z.record(z.any()),
+  runId: z.string().optional(),
 })
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { toolId, inputs } = runToolSchema.parse(body)
+  const startedAt = Date.now()
+  const body = await request.json()
+  const data = requestSchema.parse(body) as RunRequest
+  const userId = 'user_dev_1'
+  const entitlement = await getOrCreateEntitlement(userId)
+  const personalPlan = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
+  const tool = TOOL_META.find((item) => item.id === data.toolId)
 
-    // Validate toolId
-    const validToolIds: ToolId[] = [
-      'why_post_failed',
-      'hook_pressure_test',
-      'retention_leak_finder',
-      'algorithm_training_mode',
-      'post_type_recommender',
-      'cta_match_checker',
-      'follower_quality_filter',
-      'content_system_builder',
-      'what_to_stop_posting',
-      'controlled_experiment_planner',
-      'signal_vs_noise_analyzer',
-      'ai_hook_rewriter',
-      'weekly_strategy_review',
-      'dm_intelligence_engine',
-      'hook_repurposer',
-      'engagement_diagnostic_lite',
-      'dm_opener_generator_lite',
-      'offer_clarity_fixer_lite',
-      'landing_page_message_map_lite',
-      'content_angle_miner_beginner',
-    ]
+  const activeOrg = await getActiveOrg(userId)
+  const membership = activeOrg ? await getMembership(userId, activeOrg.id) : null
+  const orgPlan = activeOrg?.plan as 'business' | 'enterprise' | undefined
+  const planTokenCap = orgPlan ? orgAiTokenCapByPlan[orgPlan] : dailyAiTokenCapByPlan[personalPlan]
+  const planRunCap = orgPlan ? orgRunCapByPlan[orgPlan] : dailyRunCapByPlan[personalPlan]
 
-    if (!validToolIds.includes(toolId as ToolId)) {
-      return NextResponse.json(
-        { error: `Invalid toolId: ${toolId}` },
-        { status: 400 }
+  const recordRun = async (params: {
+    status: string
+    lockCode?: string | null
+    meteringMode?: string
+    tokensCharged?: number
+  }) => {
+    await logToolRun({
+      orgId: activeOrg?.id,
+      userId,
+      toolId: data.toolId,
+      runId: data.runId || 'pending',
+      meteringMode: params.meteringMode || 'tokens',
+      tokensCharged: params.tokensCharged || 0,
+      status: params.status,
+      lockCode: params.lockCode || null,
+      durationMs: Date.now() - startedAt,
+    })
+  }
+
+  if (!tool) {
+    await recordRun({ status: 'locked', lockCode: 'locked_plan' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_plan',
+          message: 'Tool not found.',
+          cta: { type: 'contact', href: '/app/support' },
+        }),
+      },
+      { status: 404 }
+    )
+  }
+
+  if (membership?.role === 'viewer') {
+    await recordRun({ status: 'locked', lockCode: 'locked_role' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_role',
+          message: 'Viewer seats cannot run tools.',
+          cta: { type: 'upgrade', href: activeOrg ? `/orgs/${activeOrg.slug}/members` : '/pricing' },
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  if (data.runId) {
+    const existing = await prisma.tokenLedger.findFirst({ where: { runId: data.runId } })
+    if (existing) {
+      await recordRun({ status: 'error', lockCode: 'duplicate' })
+      return NextResponse.json<RunResponse>(
+        { status: 'error', error: { message: 'Duplicate run_id; request already processed.', code: 'DUPLICATE_RUN' } },
+        { status: 409 }
       )
     }
+  }
 
-    // Structure inputs for specific tools
-    let structuredInputs = inputs
-    if (toolId === 'why_post_failed') {
-      structuredInputs = {
-        post_type: inputs.post_type,
-        primary_goal: inputs.primary_goal,
-        metrics: {
-          views: Number(inputs.views) || 0,
-          avg_watch_time_sec: Number(inputs.avg_watch_time_sec) || 0,
-          retention_pct_optional: inputs.retention_pct_optional ? Number(inputs.retention_pct_optional) : null,
-          saves: Number(inputs.saves) || 0,
-          profile_visits: Number(inputs.profile_visits) || 0,
+  const validation = validateInput(data.toolId, data.input)
+  if (!validation.valid) {
+    await recordRun({ status: 'error', lockCode: 'validation' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'error',
+        error: {
+          message: validation.errors?.message || 'Validation failed',
+          code: 'VALIDATION_ERROR',
+          details: validation.errors?.details,
         },
-        checkboxes: {
-          hook_felt_strong: inputs.hook_felt_strong === true || inputs.hook_felt_strong === 'true',
-          looped_cleanly: inputs.looped_cleanly === true || inputs.looped_cleanly === 'true',
-          one_clear_idea: inputs.one_clear_idea === true || inputs.one_clear_idea === 'true',
-          calm_delivery: inputs.calm_delivery === true || inputs.calm_delivery === 'true',
-          single_cta: inputs.single_cta === true || inputs.single_cta === 'true',
-        },
-        notes_optional: inputs.notes_optional || null,
-      }
-    } else if (toolId === 'retention_leak_finder') {
-      // Parse retention_points_optional - can be user-friendly format or JSON
-      let retentionPoints = null
-      if (inputs.retention_points_optional) {
-        const inputStr = String(inputs.retention_points_optional).trim()
-        
-        // Try parsing as JSON first
-        try {
-          retentionPoints = JSON.parse(inputStr)
-        } catch {
-          // If not JSON, parse user-friendly format like "1s → 80%, 3s → 60%"
-          // Extract patterns like "1s → 80%" or "3s → 60%"
-          const matches = inputStr.match(/(\d+)s\s*→\s*(\d+)%/g)
-          if (matches && matches.length > 0) {
-            retentionPoints = matches.map(match => {
-              const parts = match.match(/(\d+)s\s*→\s*(\d+)%/)
-              if (parts) {
-                return {
-                  second: parseInt(parts[1]),
-                  retention_pct: parseInt(parts[2])
-                }
-              }
-              return null
-            }).filter(Boolean)
-          } else {
-            // Keep as string if can't parse
-            retentionPoints = inputStr
-          }
-        }
-      }
-      
-      structuredInputs = {
-        video_length_sec: Number(inputs.video_length_sec) || 0,
-        avg_watch_time_sec: Number(inputs.avg_watch_time_sec) || 0,
-        retention_points_optional: retentionPoints,
-        known_drop_second_optional: inputs.known_drop_second_optional ? Number(inputs.known_drop_second_optional) : null,
-        format_optional: inputs.format_optional || null,
-        notes_optional: inputs.notes_optional || null,
-      }
-    } else if (toolId === 'algorithm_training_mode') {
-      structuredInputs = {
-        training_goal: inputs.training_goal,
-        target_audience: inputs.target_audience,
-        core_topic: inputs.core_topic,
-        preferred_format: inputs.preferred_format,
-        days: inputs.days,
-        posting_capacity: inputs.posting_capacity,
-      }
-    } else if (toolId === 'what_to_stop_posting') {
-      // Handle plain-language input - convert option labels back to snake_case for API
-      let recurringIssue = inputs.recurring_issues_optional || null
-      if (recurringIssue) {
-        const issueMap: Record<string, string> = {
-          'Low reach': 'low_reach',
-          'Low retention': 'low_retention',
-          'No saves': 'no_saves',
-          'No DMs': 'no_dms',
-        }
-        recurringIssue = issueMap[recurringIssue] || recurringIssue
-      }
-      
-      structuredInputs = {
-        recent_posts_summary: inputs.recent_posts_summary || '',
-        recurring_issues_optional: recurringIssue,
-        niche_optional: inputs.niche_optional || null,
-      }
-    } else if (toolId === 'signal_vs_noise_analyzer') {
-      structuredInputs = {
-        account_stage: inputs.account_stage,
-        primary_goal: inputs.primary_goal,
-        metrics_available: typeof inputs.metrics_available === 'string' 
-          ? inputs.metrics_available.split(',').map(m => m.trim())
-          : inputs.metrics_available,
-        last_14_days_optional: inputs.last_14_days_optional || null,
-      }
-    } else if (toolId === 'ai_hook_rewriter') {
-      structuredInputs = {
-        topic: inputs.topic,
-        post_type: inputs.post_type,
-        target_emotion: inputs.target_emotion,
-        constraints_optional: {
-          max_words: inputs.max_words || 12,
-          banned_words: inputs.banned_words ? (typeof inputs.banned_words === 'string' ? inputs.banned_words.split(',').map(w => w.trim()) : inputs.banned_words) : [],
-        },
-        must_include_optional: inputs.must_include_optional || null,
-      }
-    } else if (toolId === 'weekly_strategy_review') {
-      structuredInputs = {
-        week_summary: typeof inputs.week_summary === 'string' ? inputs.week_summary : inputs.week_summary,
-        biggest_question: inputs.biggest_question,
-        time_available_next_week: inputs.time_available_next_week,
-      }
-    } else if (toolId === 'dm_intelligence_engine') {
-      structuredInputs = {
-        context: {
-          platform: inputs.platform,
-          relationship_stage: inputs.relationship_stage,
-          goal: inputs.goal,
-        },
-        conversation: {
-          last_incoming_message: inputs.last_incoming_message,
-          last_outgoing_message_optional: inputs.last_outgoing_message_optional || null,
-        },
-        constraints: {
-          tone: inputs.tone,
-          compliance_sensitivity: inputs.compliance_sensitivity,
-        },
-      }
-    } else if (toolId === 'hook_repurposer') {
-      structuredInputs = {
-        original_hook: inputs.original_hook,
-        topic_optional: inputs.topic_optional || null,
-        constraints: {
-          max_words: inputs.max_words || 12,
-          tone: inputs.tone,
-        },
-      }
-    } else if (toolId === 'engagement_diagnostic_lite') {
-      structuredInputs = {
-        metrics: {
-          followers: inputs.followers,
-          avg_reel_views: inputs.avg_reel_views,
-          avg_watch_time_sec_optional: inputs.avg_watch_time_sec_optional || null,
-          avg_saves_optional: inputs.avg_saves_optional || null,
-        },
-        posting: {
-          posts_per_week: inputs.posts_per_week,
-          primary_format: inputs.primary_format,
-        },
-        goal: inputs.goal,
-      }
-    } else if (toolId === 'dm_opener_generator_lite') {
-      structuredInputs = {
-        scenario: {
-          purpose: inputs.purpose,
-          context: inputs.context,
-          what_you_want: inputs.what_you_want,
-        },
-        tone: inputs.tone,
-        constraints: {
-          max_chars: inputs.max_chars || 240,
-        },
-      }
-    } else if (toolId === 'offer_clarity_fixer_lite') {
-      structuredInputs = {
-        current_offer: inputs.current_offer,
-        target_customer: inputs.target_customer,
-        main_problem: inputs.main_problem,
-        proof_optional: inputs.proof_optional || null,
-        pricing_optional: inputs.pricing_optional || null,
-        tone_optional: inputs.tone_optional || null,
-      }
-    } else if (toolId === 'landing_page_message_map_lite') {
-      structuredInputs = {
-        offer: inputs.offer,
-        audience: inputs.audience,
-        primary_goal: inputs.primary_goal,
-        objection_optional: inputs.objection_optional || null,
-        proof_optional: inputs.proof_optional || null,
-      }
-    } else if (toolId === 'content_angle_miner_beginner') {
-      structuredInputs = {
-        niche: inputs.niche,
-        offer_optional: inputs.offer_optional || null,
-        audience_stage_optional: inputs.audience_stage_optional || null,
-        content_goal: inputs.content_goal,
-        time_horizon_optional: inputs.time_horizon_optional || null,
-      }
-    } else if (toolId === 'controlled_experiment_planner') {
-      structuredInputs = {
-        objective: inputs.objective,
-        baseline_description: inputs.baseline_description,
-        variable_options_optional: inputs.variable_options_optional || null,
-        duration_days: Number(inputs.duration_days) || 7,
-        posting_count: Number(inputs.posting_count) || 5,
-      }
-    }
+      },
+      { status: 400 }
+    )
+  }
 
-    // Run the tool
-    const result = await runTool({
-      toolId: toolId as ToolId,
-      inputs: structuredInputs,
-      retryOnInvalid: true,
-    })
+  if (!tool.enabled) {
+    await recordRun({ status: 'locked', lockCode: 'locked_plan' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_plan',
+          message: 'Tool is offline.',
+          cta: { type: 'contact', href: '/app/support' },
+        }),
+      },
+      { status: 403 }
+    )
+  }
 
-    if (!result.success) {
-      const errorMessage = result.error || 'Failed to run tool'
+  if (data.mode === 'paid' && tool.requiresPurchase && !orgPlan && !tool.includedInPlans?.includes(personalPlan)) {
+    await recordRun({ status: 'locked', lockCode: 'locked_plan' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_plan',
+          message: 'Tool requires purchase.',
+          cta: { type: 'upgrade', href: '/pricing' },
+        }),
+      },
+      { status: 403 }
+    )
+  }
 
-      try {
-        const session = await getSession()
-        if (session) {
-          const lower = errorMessage.toLowerCase()
-          const type = lower.includes('limit') || lower.includes('quota')
-            ? 'usage_limit'
-            : 'tool_failed'
-          await createNotification({
-            userId: session.userId,
-            type,
-            title: type === 'usage_limit' ? 'Usage limit reached' : 'Tool run failed',
-            message: errorMessage,
-            metadata: { toolId },
-          })
-        }
-      } catch {
-        // Ignore notification errors
-      }
-      
-      // Check for rate limiting
-      if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: 'Rate limit exceeded. Please wait a few minutes and try again.',
-            rateLimited: true,
-            output: result.output, // Include fallback output if available
+  const usage = await ensureUsageWindow(userId)
+  const toolCap = tool.dailyRunsByPlan?.[personalPlan] ?? planRunCap
+  const toolRunsUsed = (usage.perToolRunsUsed as Record<string, number>)?.[tool.id] ?? 0
+
+  if (usage.runsUsed >= planRunCap) {
+    await recordRun({ status: 'locked', lockCode: 'locked_usage_daily' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_usage_daily',
+          message: 'Daily run cap reached.',
+          cta: { type: 'wait_reset', href: '/app/usage' },
+          usage: {
+            runsUsed: usage.runsUsed,
+            runsCap: planRunCap,
+            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensCap: planTokenCap,
+            toolRunsUsed,
+            toolRunsCap: toolCap,
           },
-          { status: 429 }
-        )
-      }
-      
-      return NextResponse.json(
-        {
-          success: false,
-          error: errorMessage,
-          output: result.output, // Include fallback output if available
-        },
-        { status: 500 }
-      )
-    }
+          resetsAtISO: usage.resetsAt.toISOString(),
+        }),
+      },
+      { status: 403 }
+    )
+  }
 
-    return NextResponse.json({
-      success: true,
-      output: result.output,
-      retried: result.retried,
+  if (usage.aiTokensUsed >= planTokenCap && tool.aiLevel !== 'none') {
+    await recordRun({ status: 'locked', lockCode: 'locked_tokens' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_tokens',
+          message: 'Daily token cap reached.',
+          cta: { type: 'buy_tokens', href: '/pricing' },
+          usage: {
+            runsUsed: usage.runsUsed,
+            runsCap: planRunCap,
+            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensCap: planTokenCap,
+            toolRunsUsed,
+            toolRunsCap: toolCap,
+          },
+          resetsAtISO: usage.resetsAt.toISOString(),
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  if (toolRunsUsed >= toolCap) {
+    await recordRun({ status: 'locked', lockCode: 'locked_tool_daily' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_tool_daily',
+          message: 'Daily tool cap reached.',
+          cta: { type: 'wait_reset', href: '/app/usage' },
+          usage: {
+            runsUsed: usage.runsUsed,
+            runsCap: planRunCap,
+            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensCap: planTokenCap,
+            toolRunsUsed,
+            toolRunsCap: toolCap,
+          },
+          resetsAtISO: usage.resetsAt.toISOString(),
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  const trial = getTrialState(userId, tool.id)
+  const bonusRemaining = await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
+  if (data.mode === 'trial' && !trial.allowed && bonusRemaining <= 0) {
+    await recordRun({ status: 'locked', lockCode: 'locked_trial' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_trial',
+          message: 'Trial used.',
+          cta: { type: 'upgrade', href: '/pricing' },
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  const tokenBalance = await getTokenBalance(userId)
+  const requiredTokens = tool.tokensPerRun
+  const meteringMode =
+    bonusRemaining > 0 && data.mode !== 'trial' ? 'bonus_run' : data.mode === 'trial' ? 'trial' : 'tokens'
+
+  if (meteringMode === 'tokens' && tokenBalance < requiredTokens) {
+    await recordRun({ status: 'locked', lockCode: 'locked_tokens' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_tokens',
+          message: 'Not enough tokens.',
+          cta: { type: 'buy_tokens', href: '/pricing' },
+          requiredTokens,
+          remainingTokens: tokenBalance,
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  const runner = runnerRegistry[data.toolId]
+  if (!runner) {
+    await recordRun({ status: 'error', lockCode: 'tool_error' })
+    return NextResponse.json<RunResponse>(
+      { status: 'error', error: { message: 'Runner not implemented.', code: 'TOOL_ERROR' } },
+      { status: 500 }
+    )
+  }
+
+  const runId = data.runId || crypto.randomUUID()
+  try {
+    const output = await runner(data, {
+      user: { id: userId, planId: personalPlan },
+      toolMeta: tool,
+      usage: { aiTokensRemaining: tokenBalance },
+      logger: { info: () => undefined, error: () => undefined },
     })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
-        { status: 400 }
-      )
+
+    if (data.mode === 'trial' && trial.allowed) {
+      markTrialUsed(userId, tool.id)
     }
 
-    console.error('[tools/run] Error:', error)
-    try {
-      const session = await getSession()
-      if (session) {
-        await createNotification({
-          userId: session.userId,
-          type: 'tool_failed',
-          title: 'Tool run failed',
-          message: error instanceof Error ? error.message : 'Failed to run tool',
-        })
+    let remainingBonusRuns = bonusRemaining
+    let chargedTokens = 0
+
+    await prisma.$transaction(async (tx) => {
+      if (meteringMode === 'bonus_run') {
+        const consumed = await consumeOneBonusRun({ userId, toolId: tool.id })
+        remainingBonusRuns = consumed.ok
+          ? await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
+          : bonusRemaining
       }
-    } catch {
-      // Ignore notification errors
+
+      if (meteringMode === 'tokens') {
+        await tx.tokenLedger.create({
+          data: {
+            userId,
+            eventType: 'spend_tool',
+            tokensDelta: -requiredTokens,
+            toolId: tool.id,
+            runId,
+            reason: 'tool_run',
+          },
+        })
+        chargedTokens = requiredTokens
+      }
+
+      await incrementUsageTx({
+        tx,
+        userId,
+        windowEnd: usage.windowEnd,
+        toolId: tool.id,
+        tokensUsed: meteringMode === 'tokens' ? requiredTokens : 0,
+      })
+    })
+
+    const updatedBalance = await getTokenBalance(userId)
+    const response: RunResponse = {
+      status: 'ok',
+      data: output.output,
+      runId,
+      metering: {
+        chargedTokens,
+        remainingTokens: updatedBalance,
+        aiTokensUsed: usage.aiTokensUsed + (meteringMode === 'tokens' ? requiredTokens : 0),
+        aiTokensCap: planTokenCap,
+        runsUsed: usage.runsUsed + 1,
+        runsCap: planRunCap,
+        resetsAtISO: usage.resetsAt.toISOString(),
+        meteringMode,
+        remainingBonusRuns,
+        orgId: activeOrg?.id ?? null,
+      },
     }
-    return NextResponse.json(
-      { error: 'Failed to run tool' },
+    addRun(userId, response)
+    await logToolRun({
+      orgId: activeOrg?.id,
+      userId,
+      toolId: tool.id,
+      runId,
+      meteringMode,
+      tokensCharged: chargedTokens,
+      status: 'ok',
+      durationMs: Date.now() - startedAt,
+    })
+    return NextResponse.json(response)
+  } catch (error) {
+    await logToolRun({
+      orgId: activeOrg?.id,
+      userId,
+      toolId: tool.id,
+      runId,
+      meteringMode: 'tokens',
+      tokensCharged: 0,
+      status: 'error',
+      durationMs: Date.now() - startedAt,
+    })
+    return NextResponse.json<RunResponse>(
+      { status: 'error', error: { message: 'Tool execution failed.', code: 'TOOL_ERROR' } },
+      { status: 500 }
+    )
+  }
+}
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { TOOL_META } from '@/src/lib/tools/toolMeta'
+import { validateInput } from '@/src/lib/tools/validate'
+import { runnerRegistry } from '@/src/lib/tools/runnerRegistry'
+import { addRun } from '@/src/lib/tools/runStore'
+import { getBonusRunsRemainingForTool, consumeOneBonusRun } from '@/src/lib/tool/bonusRuns'
+import { getTrialState, markTrialUsed } from '@/src/lib/tool/trialLedger'
+import { ensureUsageWindow, incrementUsageTx } from '@/src/lib/usage/dailyUsage'
+import { dailyAiTokenCapByPlan, dailyRunCapByPlan } from '@/src/lib/usage/caps'
+import { getTokenBalance } from '@/src/lib/tokens/ledger'
+import { getOrCreateEntitlement } from '@/src/lib/usage/entitlements'
+import type { RunRequest, RunResponse } from '@/src/lib/tools/runTypes'
+import { buildLock } from '@/src/lib/tools/accessGate'
+import { prisma } from '@/src/lib/prisma'
+
+const requestSchema = z.object({
+  toolId: z.string(),
+  mode: z.enum(['paid', 'trial']),
+  trialMode: z.enum(['sandbox', 'live', 'preview']).optional(),
+  input: z.record(z.any()),
+  runId: z.string().optional(),
+})
+
+export const dynamic = 'force-dynamic'
+
+export async function POST(request: NextRequest) {
+  const body = await request.json()
+  const data = requestSchema.parse(body) as RunRequest
+  const userId = 'user_dev_1'
+  const entitlement = await getOrCreateEntitlement(userId)
+  const planId = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
+  const tool = TOOL_META.find((item) => item.id === data.toolId)
+
+  if (!tool) {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_plan',
+          message: 'Tool not found.',
+          cta: { type: 'contact', href: '/app/support' },
+        }),
+      },
+      { status: 404 }
+    )
+  }
+
+  if (data.runId) {
+    const existing = await prisma.tokenLedger.findFirst({ where: { runId: data.runId } })
+    if (existing) {
+      return NextResponse.json<RunResponse>(
+        { status: 'error', error: { message: 'Duplicate run_id; request already processed.', code: 'DUPLICATE_RUN' } },
+        { status: 409 }
+      )
+    }
+  }
+
+  const validation = validateInput(data.toolId, data.input)
+  if (!validation.valid) {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'error',
+        error: {
+          message: validation.errors?.message || 'Validation failed',
+          code: 'VALIDATION_ERROR',
+          details: validation.errors?.details,
+        },
+      },
+      { status: 400 }
+    )
+  }
+
+  if (!tool.enabled) {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_plan',
+          message: 'Tool is offline.',
+          cta: { type: 'contact', href: '/app/support' },
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  if (data.mode === 'paid' && tool.requiresPurchase && !tool.includedInPlans?.includes(planId)) {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_plan',
+          message: 'Tool requires purchase.',
+          cta: { type: 'upgrade', href: '/pricing' },
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  const usage = await ensureUsageWindow(userId)
+  const planRunCap = dailyRunCapByPlan[planId]
+  const planTokenCap = dailyAiTokenCapByPlan[planId]
+  const toolCap = tool.dailyRunsByPlan?.[planId] ?? planRunCap
+  const toolRunsUsed = (usage.perToolRunsUsed as Record<string, number>)?.[tool.id] ?? 0
+
+  if (usage.runsUsed >= planRunCap) {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_usage_daily',
+          message: 'Daily run cap reached.',
+          cta: { type: 'wait_reset', href: '/app/usage' },
+          usage: {
+            runsUsed: usage.runsUsed,
+            runsCap: planRunCap,
+            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensCap: planTokenCap,
+            toolRunsUsed,
+            toolRunsCap: toolCap,
+          },
+          resetsAtISO: usage.resetsAt.toISOString(),
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  if (usage.aiTokensUsed >= planTokenCap && tool.aiLevel !== 'none') {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_tokens',
+          message: 'Daily token cap reached.',
+          cta: { type: 'buy_tokens', href: '/pricing' },
+          usage: {
+            runsUsed: usage.runsUsed,
+            runsCap: planRunCap,
+            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensCap: planTokenCap,
+            toolRunsUsed,
+            toolRunsCap: toolCap,
+          },
+          resetsAtISO: usage.resetsAt.toISOString(),
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  if (toolRunsUsed >= toolCap) {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_tool_daily',
+          message: 'Daily tool cap reached.',
+          cta: { type: 'wait_reset', href: '/app/usage' },
+          usage: {
+            runsUsed: usage.runsUsed,
+            runsCap: planRunCap,
+            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensCap: planTokenCap,
+            toolRunsUsed,
+            toolRunsCap: toolCap,
+          },
+          resetsAtISO: usage.resetsAt.toISOString(),
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  const trial = getTrialState(userId, tool.id)
+  const bonusRemaining = await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
+  if (data.mode === 'trial' && !trial.allowed && bonusRemaining <= 0) {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_trial',
+          message: 'Trial used.',
+          cta: { type: 'upgrade', href: '/pricing' },
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  const tokenBalance = await getTokenBalance(userId)
+  const requiredTokens = tool.tokensPerRun
+  const meteringMode =
+    bonusRemaining > 0 && data.mode !== 'trial' ? 'bonus_run' : data.mode === 'trial' ? 'trial' : 'tokens'
+
+  if (meteringMode === 'tokens' && tokenBalance < requiredTokens) {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_tokens',
+          message: 'Not enough tokens.',
+          cta: { type: 'buy_tokens', href: '/pricing' },
+          requiredTokens,
+          remainingTokens: tokenBalance,
+        }),
+      },
+      { status: 403 }
+    )
+  }
+
+  const runner = runnerRegistry[data.toolId]
+  if (!runner) {
+    return NextResponse.json<RunResponse>(
+      { status: 'error', error: { message: 'Runner not implemented.', code: 'TOOL_ERROR' } },
+      { status: 500 }
+    )
+  }
+
+  const runId = data.runId || crypto.randomUUID()
+  try {
+    const output = await runner(data, {
+      user: { id: userId, planId },
+      toolMeta: tool,
+      usage: { aiTokensRemaining: tokenBalance },
+      logger: { info: () => undefined, error: () => undefined },
+    })
+
+    if (data.mode === 'trial' && trial.allowed) {
+      markTrialUsed(userId, tool.id)
+    }
+
+    let remainingBonusRuns = bonusRemaining
+    let chargedTokens = 0
+
+    await prisma.$transaction(async (tx) => {
+      if (meteringMode === 'bonus_run') {
+        const consumed = await consumeOneBonusRun({ userId, toolId: tool.id })
+        remainingBonusRuns = consumed.ok
+          ? await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
+          : bonusRemaining
+      }
+
+      if (meteringMode === 'tokens') {
+        await tx.tokenLedger.create({
+          data: {
+            userId,
+            eventType: 'spend_tool',
+            tokensDelta: -requiredTokens,
+            toolId: tool.id,
+            runId,
+            reason: 'tool_run',
+          },
+        })
+        chargedTokens = requiredTokens
+      }
+
+      await incrementUsageTx({
+        tx,
+        userId,
+        windowEnd: usage.windowEnd,
+        toolId: tool.id,
+        tokensUsed: meteringMode === 'tokens' ? requiredTokens : 0,
+      })
+    })
+
+    const updatedBalance = await getTokenBalance(userId)
+    const response: RunResponse = {
+      status: 'ok',
+      data: output.output,
+      runId,
+      metering: {
+        chargedTokens,
+        remainingTokens: updatedBalance,
+        aiTokensUsed: usage.aiTokensUsed + (meteringMode === 'tokens' ? requiredTokens : 0),
+        aiTokensCap: planTokenCap,
+        runsUsed: usage.runsUsed + 1,
+        runsCap: planRunCap,
+        resetsAtISO: usage.resetsAt.toISOString(),
+        meteringMode,
+        remainingBonusRuns,
+      },
+    }
+    addRun(userId, response)
+    return NextResponse.json(response)
+  } catch (error) {
+    return NextResponse.json<RunResponse>(
+      { status: 'error', error: { message: 'Tool execution failed.', code: 'TOOL_ERROR' } },
       { status: 500 }
     )
   }

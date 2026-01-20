@@ -1,0 +1,110 @@
+export type RunMode = 'paid' | 'trial'
+export type TrialMode = 'sandbox' | 'live' | 'preview'
+
+export type LockState =
+  | 'ok'
+  | 'locked_tokens'
+  | 'locked_usage_daily'
+  | 'locked_tool_daily'
+  | 'locked_plan'
+  | 'locked_trial'
+  | 'locked_role'
+
+export type RunRequest = {
+  toolId: string
+  mode: RunMode
+  trialMode?: TrialMode
+  input: Record<string, any>
+  runId?: string
+}
+
+export type RunLock = {
+  code: LockState
+  message: string
+  cta: { type: 'wait_reset' | 'upgrade' | 'buy_tokens' | 'contact' | 'login'; href?: string }
+  resetsAtISO?: string
+  requiredTokens?: number
+  remainingTokens?: number
+  usage?: {
+    aiTokensUsed: number
+    aiTokensCap: number
+    runsUsed: number
+    runsCap: number
+    toolRunsUsed?: number
+    toolRunsCap?: number
+  }
+}
+
+export type RunResponse = {
+  status: 'ok' | 'locked' | 'error'
+  lock?: RunLock
+  data?: any
+  metering?: {
+    chargedTokens: number
+    remainingTokens: number
+    aiTokensUsed: number
+    aiTokensCap: number
+    runsUsed: number
+    runsCap: number
+    resetsAtISO: string
+    meteringMode?: 'bonus_run' | 'tokens' | 'trial'
+    remainingBonusRuns?: number
+    orgId?: string | null
+  }
+  error?: { message: string; code?: string; details?: any }
+  runId?: string
+}
+export type RunMode = 'paid' | 'trial'
+export type TrialMode = 'sandbox' | 'live' | 'preview'
+
+export type LockState =
+  | 'ok'
+  | 'locked_tokens'
+  | 'locked_usage_daily'
+  | 'locked_tool_daily'
+  | 'locked_plan'
+  | 'locked_trial'
+
+export type RunRequest = {
+  toolId: string
+  mode: RunMode
+  trialMode?: TrialMode
+  input: Record<string, any>
+  runId?: string
+}
+
+export type RunLock = {
+  code: LockState
+  message: string
+  cta: { type: 'wait_reset' | 'upgrade' | 'buy_tokens' | 'contact' | 'login'; href?: string }
+  resetsAtISO?: string
+  requiredTokens?: number
+  remainingTokens?: number
+  usage?: {
+    aiTokensUsed: number
+    aiTokensCap: number
+    runsUsed: number
+    runsCap: number
+    toolRunsUsed?: number
+    toolRunsCap?: number
+  }
+}
+
+export type RunResponse = {
+  status: 'ok' | 'locked' | 'error'
+  lock?: RunLock
+  data?: any
+  metering?: {
+    chargedTokens: number
+    remainingTokens: number
+    aiTokensUsed: number
+    aiTokensCap: number
+    runsUsed: number
+    runsCap: number
+    resetsAtISO: string
+    meteringMode?: 'bonus_run' | 'tokens' | 'trial'
+    remainingBonusRuns?: number
+  }
+  error?: { message: string; code?: string }
+  runId?: string
+}

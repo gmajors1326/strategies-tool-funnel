@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { AppPanel } from '@/components/ui/AppPanel'
 import { Button } from '@/components/ui/button'
 import { ChevronDown, ChevronUp, Clock, Star, X } from 'lucide-react'
@@ -34,10 +34,6 @@ export function RecentRunsPanel({ runs, onLoadRun }: RecentRunsPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
-  if (runs.length === 0) {
-    return null
-  }
-
   const handleLoadRun = (run: RecentRun) => {
     onLoadRun(run)
     setIsExpanded(false)
@@ -56,49 +52,48 @@ export function RecentRunsPanel({ runs, onLoadRun }: RecentRunsPanelProps) {
     window.dispatchEvent(new Event('storage'))
   }
 
-  const toSearchText = (run: RecentRun): string => {
-    return [
-      run.title,
-      JSON.stringify(run.inputs),
-      JSON.stringify(run.outputs),
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
-  }
-
-  const scoreRun = (run: RecentRun, query: string): number => {
-    const tokens = query.split(/[^a-z0-9]+/i).filter(Boolean)
-    if (tokens.length === 0) return 1
-    const haystack = toSearchText(run)
-    let score = 0
-    tokens.forEach((token) => {
-      if (haystack.includes(token)) score += 1
-    })
-    return score
-  }
-
-  const filteredRuns = useMemo(() => {
+  const filteredRuns = (() => {
     if (!searchQuery.trim()) {
       return runs
     }
     const query = searchQuery.toLowerCase().trim()
+    const toSearchText = (run: RecentRun): string =>
+      [
+        run.title,
+        JSON.stringify(run.inputs),
+        JSON.stringify(run.outputs),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+    const scoreRun = (run: RecentRun): number => {
+      const tokens = query.split(/[^a-z0-9]+/i).filter(Boolean)
+      if (tokens.length === 0) return 1
+      const haystack = toSearchText(run)
+      let score = 0
+      tokens.forEach((token) => {
+        if (haystack.includes(token)) score += 1
+      })
+      return score
+    }
     return runs
-      .map((run) => ({ run, score: scoreRun(run, query) }))
+      .map((run) => ({ run, score: scoreRun(run) }))
       .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
       .map((item) => item.run)
-  }, [runs, searchQuery])
+  })()
 
-  const pinnedSet = useMemo(() => new Set(getPinnedRunIds()), [runs, searchQuery])
-  const sortedRuns = useMemo(() => {
-    return [...filteredRuns].sort((a, b) => {
-      const aPinned = pinnedSet.has(a.id)
-      const bPinned = pinnedSet.has(b.id)
-      if (aPinned !== bPinned) return aPinned ? -1 : 1
-      return b.timestamp - a.timestamp
-    })
-  }, [filteredRuns, pinnedSet])
+  const pinnedSet = new Set(getPinnedRunIds())
+  const sortedRuns = [...filteredRuns].sort((a, b) => {
+    const aPinned = pinnedSet.has(a.id)
+    const bPinned = pinnedSet.has(b.id)
+    if (aPinned !== bPinned) return aPinned ? -1 : 1
+    return b.timestamp - a.timestamp
+  })
+
+  if (runs.length === 0) {
+    return null
+  }
 
   return (
     <AppPanel variant="subtle" className="mb-4">

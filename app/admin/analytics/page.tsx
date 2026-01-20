@@ -1,39 +1,46 @@
-import { requireAdmin, canViewAnalytics } from '@/lib/adminAuth'
-import AnalyticsDashboard from './ui/AnalyticsDashboard'
+import { getMockAnalytics } from '@/src/lib/mock/data'
+import { Table } from '@/components/app/Table'
 
-export default async function AdminAnalyticsPage() {
-  try {
-    const admin = await requireAdmin()
-    if (!canViewAnalytics(admin.role)) {
-      return (
-        <div className="p-6 text-sm text-red-300">
-          Forbidden — your role can’t view analytics.
-        </div>
-      )
-    }
-  } catch {
-    return (
-      <div className="p-6 text-sm text-red-300">
-        Unauthorized. Please sign in at <a href="/admin/login" className="underline">/admin/login</a>.
-      </div>
-    )
-  }
+export const dynamic = 'force-dynamic'
+
+export default function AdminAnalyticsPage() {
+  const analytics = getMockAnalytics()
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">Analytics</h1>
-        <p className="text-sm text-zinc-400">
-          Global performance, tool usage, funnels, AI cost, and error surface.
-        </p>
-        <div className="mt-2">
-          <a className="text-xs text-zinc-400 underline" href="/admin/webhooks">
-            Webhook Admin →
-          </a>
+    <section className="space-y-6">
+      <div>
+        <h1 className="text-lg font-semibold">Analytics</h1>
+        <p className="text-sm text-[hsl(var(--muted))]">KPI and trend overview.</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        {analytics.kpis.map((kpi) => (
+          <div key={kpi.label} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+            <p className="text-xs text-[hsl(var(--muted))]">{kpi.label}</p>
+            <p className="text-lg font-semibold">{kpi.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+          <p className="text-sm font-semibold">Runs by Day</p>
+          <div className="mt-3 h-40 rounded-md bg-[hsl(var(--surface-3))] flex items-center justify-center text-xs text-[hsl(var(--muted))]">
+            Chart placeholder
+          </div>
+        </div>
+        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+          <p className="text-sm font-semibold">Token Usage</p>
+          <div className="mt-3 h-40 rounded-md bg-[hsl(var(--surface-3))] flex items-center justify-center text-xs text-[hsl(var(--muted))]">
+            Chart placeholder
+          </div>
         </div>
       </div>
 
-      <AnalyticsDashboard />
-    </div>
+      <Table
+        headers={['Tool', 'Runs']}
+        rows={analytics.tables.topTools.map((row) => [row.tool, row.runs])}
+      />
+    </section>
   )
 }

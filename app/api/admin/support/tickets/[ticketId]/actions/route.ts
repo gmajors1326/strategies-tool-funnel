@@ -1,0 +1,25 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+
+const actionSchema = z.object({
+  actionType: z.string(),
+  payload: z.record(z.any()).optional(),
+})
+
+export const dynamic = 'force-dynamic'
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { ticketId: string } }
+) {
+  await requireAdmin()
+  const body = await request.json()
+  const { actionType, payload } = actionSchema.parse(body)
+  return NextResponse.json({
+    ticketId: params.ticketId,
+    actionType,
+    payload,
+    status: 'ok',
+  })
+}

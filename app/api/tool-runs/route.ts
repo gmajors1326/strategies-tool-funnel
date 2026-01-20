@@ -15,7 +15,10 @@ export async function GET(_request: NextRequest) {
     }
 
     const toolRuns = await prisma.toolRun.findMany({
-      where: { userId: session.userId },
+      where: {
+        userId: session.userId,
+        saved: true,
+      },
       orderBy: { createdAt: 'desc' },
       take: 50,
       select: {
