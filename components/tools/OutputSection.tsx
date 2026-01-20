@@ -77,37 +77,11 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
         )
       
       case 'object':
-        if (typeof content === 'object') {
-          // Check if it's an array of objects (like rewrites with nested arrays)
-          if (Array.isArray(content)) {
-            return (
-              <div className="space-y-1.5 sm:space-y-2">
-                {content.map((item, idx) => (
-                  <div key={idx} className="text-xs sm:text-sm">
-                    {typeof item === 'object' ? (
-                      <div className="space-y-1">
-                        {Object.entries(item).map(([key, value]) => (
-                          <div key={key}>
-                            <span className="font-medium text-[hsl(var(--text))] capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
-                            <span className="text-[hsl(var(--text))] break-words">
-                              {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-[hsl(var(--text))] break-words">{String(item)}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )
-          }
-          
+        if (typeof content === 'object' && content !== null && !Array.isArray(content)) {
           // Handle nested objects (like rewrites: { curiosity: [...], threat: [...] })
           return (
             <div className="space-y-2 sm:space-y-3">
-              {Object.entries(content).map(([key, value]) => (
+              {Object.entries(content as Record<string, any>).map(([key, value]) => (
                 <div key={key} className="space-y-1">
                   <div className="font-semibold text-xs sm:text-sm text-[hsl(var(--text))] capitalize">
                     {key.replace(/_/g, ' ')}
@@ -121,9 +95,9 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
                         </li>
                       ))}
                     </ul>
-                  ) : typeof value === 'object' ? (
+                  ) : typeof value === 'object' && value !== null ? (
                     <div className="ml-3 sm:ml-4 space-y-1">
-                      {Object.entries(value).map(([subKey, subValue]) => (
+                      {Object.entries(value as Record<string, any>).map(([subKey, subValue]) => (
                         <div key={subKey} className="text-xs sm:text-sm">
                           <span className="font-medium text-[hsl(var(--muted))] capitalize">{subKey.replace(/_/g, ' ')}:</span>{' '}
                           <span className="text-[hsl(var(--text))] break-words">
