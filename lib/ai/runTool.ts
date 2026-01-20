@@ -52,13 +52,16 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
     case 'hook_pressure_test':
       return {
         ...base,
-        hook_strength: 'medium',
-        scroll_stop_power: 5,
-        curiosity_gap: 'medium',
-        issues: ['Need more context'],
-        improvements: ['Test different variations'],
-        alternative_hooks: ['Alternative 1', 'Alternative 2', 'Alternative 3'],
-        recommended_action: 'Test this hook and compare results',
+        verdict: 'insufficient_signal',
+        what_it_triggers: 'none',
+        strongest_flaw: 'No hook provided for evaluation',
+        one_fix: 'Provide a hook text to pressure-test',
+        rewrites: {
+          curiosity: ['Example curiosity rewrite 1', 'Example curiosity rewrite 2'],
+          threat: ['Example threat rewrite 1', 'Example threat rewrite 2'],
+          status: ['Example status rewrite 1', 'Example status rewrite 2'],
+        },
+        micro_opening_frame: 'Provide a hook to get opening frame suggestions',
       }
     case 'retention_leak_finder':
       return {

@@ -33,13 +33,16 @@ export const whyPostFailedSchema = baseOutputSchema.extend({
 
 // Hook Pressure Test
 export const hookPressureTestSchema = baseOutputSchema.extend({
-  hook_strength: z.enum(['strong', 'medium', 'weak']),
-  scroll_stop_power: z.number().min(1).max(10),
-  curiosity_gap: z.enum(['high', 'medium', 'low', 'none']),
-  issues: z.array(z.string()).min(0).max(5),
-  improvements: z.array(z.string()).min(1).max(5),
-  alternative_hooks: z.array(z.string()).length(3),
-  recommended_action: z.string(),
+  verdict: z.enum(['pass', 'borderline', 'fail', 'insufficient_signal']),
+  what_it_triggers: z.enum(['curiosity', 'threat', 'relief', 'status', 'none']),
+  strongest_flaw: z.string(),
+  one_fix: z.string(),
+  rewrites: z.object({
+    curiosity: z.array(z.string()).length(2),
+    threat: z.array(z.string()).length(2),
+    status: z.array(z.string()).length(2),
+  }),
+  micro_opening_frame: z.string(),
 })
 
 // Retention Leak Finder
