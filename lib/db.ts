@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { logger } from './logger'
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
@@ -14,17 +15,31 @@ const createPrismaClient = () => {
   // Add pgbouncer=true if using pooler (port 6543) and not already present
   if (databaseUrl.includes(':6543') && !databaseUrl.includes('pgbouncer=')) {
     const separator = databaseUrl.includes('?') ? '&' : '?'
-    databaseUrl += `${separator}pgbouncer=true&connection_limit=1`
+    const poolLimit = process.env.DATABASE_POOL_SIZE || '1'
+    databaseUrl += `${separator}pgbouncer=true&connection_limit=${poolLimit}`
   }
 
-  return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  const prisma = new PrismaClient({
+    log: process.env.NODE_ENV === 'development'
+      ? [{ emit: 'event', level: 'query' }, 'error', 'warn']
+      : ['error'],
     datasources: {
       db: {
         url: databaseUrl,
       },
     },
   })
+
+  if (process.env.NODE_ENV === 'development') {
+    prisma.$on('query', (event) => {
+      logger.dbQuery(event.query, event.duration, {
+        params: event.params,
+        target: event.target,
+      })
+    })
+  }
+
+  return prisma
 }
 
 export const prisma =

@@ -1,6 +1,7 @@
 import { prisma } from './db'
 import { Plan } from '@prisma/client'
 import type { AiStyle } from './ai'
+import { withCache } from './cache'
 
 export interface KnowledgeRetrievalOptions {
   category?: string
@@ -15,6 +16,17 @@ export async function retrieveKnowledge(
   options: KnowledgeRetrievalOptions
 ): Promise<string[]> {
   const limit = options.limit || 10
+  const cacheKey = [
+    'knowledge',
+    options.plan,
+    options.style || 'any',
+    options.category || 'any',
+    options.toolKey || 'any',
+    (options.tags || []).join(',') || 'none',
+    limit,
+  ].join(':')
+
+  return withCache(cacheKey, 300, async () => {
 
   // Build where clause
   const where: any = {}
@@ -49,19 +61,20 @@ export async function retrieveKnowledge(
     ]
   }
 
-  const items = await prisma.knowledgeItem.findMany({
-    where,
-    orderBy: [
-      { priority: 'desc' },
-      { createdAt: 'desc' },
-    ],
-    take: limit,
-    select: {
-      content: true,
-    },
-  })
+    const items = await prisma.knowledgeItem.findMany({
+      where,
+      orderBy: [
+        { priority: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      take: limit,
+      select: {
+        content: true,
+      },
+    })
 
-  return items.map((item: { content: string }) => item.content)
+    return items.map((item: { content: string }) => item.content)
+  })
 }
 
 export async function getPromptProfile(style: AiStyle): Promise<{
@@ -70,25 +83,28 @@ export async function getPromptProfile(style: AiStyle): Promise<{
   bannedPhrases: string[]
   toneNotes: string
 } | null> {
-  const profile = await prisma.promptProfile.findFirst({
-    where: {
-      style,
-    },
-    orderBy: {
-      updatedAt: 'desc',
-    },
+  const cacheKey = `prompt_profile:${style}`
+  return withCache(cacheKey, 300, async () => {
+    const profile = await prisma.promptProfile.findFirst({
+      where: {
+        style,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    })
+
+    if (!profile) {
+      return null
+    }
+
+    return {
+      dos: profile.dos,
+      donts: profile.donts,
+      bannedPhrases: profile.bannedPhrases,
+      toneNotes: profile.toneNotes,
+    }
   })
-
-  if (!profile) {
-    return null
-  }
-
-  return {
-    dos: profile.dos,
-    donts: profile.donts,
-    bannedPhrases: profile.bannedPhrases,
-    toneNotes: profile.toneNotes,
-  }
 }
 
 export async function getPromptRubric(toolKey: string): Promise<{
@@ -97,20 +113,23 @@ export async function getPromptRubric(toolKey: string): Promise<{
   reasoningRules: string
   safetyRules: string
 } | null> {
-  const rubric = await prisma.promptRubric.findUnique({
-    where: {
-      toolKey,
-    },
+  const cacheKey = `prompt_rubric:${toolKey}`
+  return withCache(cacheKey, 300, async () => {
+    const rubric = await prisma.promptRubric.findUnique({
+      where: {
+        toolKey,
+      },
+    })
+
+    if (!rubric) {
+      return null
+    }
+
+    return {
+      inputHints: rubric.inputHints,
+      outputSchema: rubric.outputSchemaJson as Record<string, any>,
+      reasoningRules: rubric.reasoningRules,
+      safetyRules: rubric.safetyRules,
+    }
   })
-
-  if (!rubric) {
-    return null
-  }
-
-  return {
-    inputHints: rubric.inputHints,
-    outputSchema: rubric.outputSchemaJson as Record<string, any>,
-    reasoningRules: rubric.reasoningRules,
-    safetyRules: rubric.safetyRules,
-  }
 }
