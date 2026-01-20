@@ -23,24 +23,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const inputs = dmIntelligenceSchema.parse(body)
 
-    // Check session and entitlements
+    // Check session (optional - allow anonymous users)
     const session = await getSession()
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Authentication required. Please verify your email.' },
-        { status: 401 }
-      )
-    }
-
-    const entitlements = await getUserEntitlements(session.userId)
-
-    // Check if user has DM Engine or All Access
-    if (!entitlements.dmEngine && !entitlements.allAccess) {
-      return NextResponse.json(
-        { error: 'DM Intelligence Engine requires DM Engine plan or All Access.' },
-        { status: 403 }
-      )
-    }
 
     // Run deterministic logic first
     const deterministicOutput = runDMIntelligence(inputs)
@@ -53,7 +37,7 @@ export async function POST(request: NextRequest) {
       deterministicFn: runDMIntelligence,
       userText: inputs.conversationSnippet,
       style: inputs.style || 'closer',
-      save: inputs.save !== false, // Default to saving for paid users
+      save: inputs.save !== false, // Default to saving
     })
 
     return NextResponse.json({

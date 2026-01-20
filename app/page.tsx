@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { Lock, Sparkles, MessageSquare, TrendingUp, Zap, Clock, Download } from 'lucide-react'
+import { Sparkles, MessageSquare, TrendingUp, Zap, Clock, Download } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -69,99 +69,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Paid Tools Preview */}
+      {/* All Tools Section */}
       <section className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-12 text-white text-shadow-ink-40">Premium Tools</h2>
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
-          <PremiumToolCard
-            title="Strategic Engagement Planner"
-            icon={TrendingUp}
-            desc="Full breakdown with personalized roadmap"
-            requiredPlan="the_strategy"
-          />
-          <PremiumToolCard
-            title="Comment Impact Engine"
-            icon={MessageSquare}
-            desc="Optimize every comment for maximum impact"
-            requiredPlan="the_strategy"
-          />
-          <PremiumToolCard
-            title="DM Engine Full Flows"
-            icon={Zap}
-            desc="Complete DM sequences and follow-ups"
-            requiredPlan="dm_engine"
-          />
-          <PremiumToolCard
-            title="Timing Engine"
-            icon={Clock}
-            desc="Know exactly when to post and engage"
-            requiredPlan="the_strategy"
-          />
-          <PremiumToolCard
-            title="Saved Results & Exports"
-            icon={Download}
-            desc="Save unlimited runs and export PDFs"
-            requiredPlan="the_strategy"
-          />
-        </div>
-
+        <h2 className="text-4xl font-bold text-center mb-12 text-white text-shadow-ink-40">All Tools</h2>
+        
         {/* DM Intelligence Engine - Full Tool */}
         <DMIntelligenceEngineTool />
-      </section>
-
-      {/* Offers Section */}
-      <section id="offers" className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-12 text-white text-shadow-ink-40">Choose Your Plan</h2>
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <PlanCard
-            title="DM Engine"
-            description="Best for confident, non-cringe DMs"
-            features={[
-              'Unlock DM follow-ups',
-              'Full DM flow logic',
-              'Unlimited DM tool runs',
-              'Copy/export text',
-            ]}
-            planId="dm_engine"
-            highlight={false}
-          />
-          <PlanCard
-            title="The Strategy"
-            description="Best for strategic engagement & visibility"
-            features={[
-              'Full Engagement Diagnostic',
-              'Engagement Planner',
-              'Comment Impact Engine',
-              'Where-to-Engage Finder',
-              'Email + PDF exports',
-            ]}
-            planId="the_strategy"
-            highlight={true}
-          />
-          <PlanCard
-            title="All Access"
-            description="Everything in DM Engine + The Strategy"
-            features={[
-              'DM Engine included',
-              'The Strategy included',
-              'All premium tools',
-              'Priority support',
-            ]}
-            planId="all_access"
-            highlight={false}
-          />
-        </div>
-        <div className="mt-8 text-center">
-          <a
-            href="https://stripe.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <span>Secure payments powered by</span>
-            <span className="font-semibold text-foreground">Stripe</span>
-          </a>
-        </div>
       </section>
 
       {/* FAQ Section */}
@@ -208,14 +121,11 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-6 text-white text-shadow-ink-40">Ready to Get Started?</h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Try the free tools or unlock the full system.
+            All tools are free to use. Get started now.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="bg-cactus-primary text-white hover:opacity-90 shadow-ink-40">
-              <Link href="#tools">Start Free → Get Your Results</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="border-border/60 hover:bg-accent/60 shadow-ink-40">
-              <Link href="#offers">Unlock the Full System</Link>
+              <Link href="#tools">Start Using Tools →</Link>
             </Button>
           </div>
         </div>
@@ -428,7 +338,7 @@ function DMOpenerTool() {
             <div className="pt-2 border-t border-border/60">
               <p className="text-xs text-white mb-2">{results.followUpHint}</p>
               <Button asChild variant="outline" size="sm" className="w-full border-border/60 text-xs h-8">
-                <Link href="/verify">Unlock full DM logic</Link>
+                <Link href="/verify">Email me my full breakdown</Link>
               </Button>
             </div>
           </div>
@@ -647,21 +557,6 @@ function HookRepurposerTool() {
             )}
           </div>
           <div className="rounded-md border border-border/60 bg-background/60 p-2 text-white">
-            <div className="flex items-center gap-1.5 text-xs text-white/80">
-              <Lock className="h-3 w-3" />
-              <span>Hook sequences (3-part openers)</span>
-            </div>
-            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-white/80">
-              <Lock className="h-3 w-3" />
-              <span>Comment-bait vs authority versions</span>
-            </div>
-            <div className="mt-1.5 flex items-center gap-1.5 text-xs text-white/80">
-              <Lock className="h-3 w-3" />
-              <span>CTA-aligned hooks (DM / profile click)</span>
-            </div>
-            <Button asChild size="sm" className="mt-2 w-full text-xs">
-              <Link href="#offers">Unlock full hook systems in The Strategy</Link>
-            </Button>
           </div>
         </div>
       </CardContent>
@@ -670,8 +565,6 @@ function HookRepurposerTool() {
 }
 
 function DMIntelligenceEngineTool() {
-  const [hasAccess, setHasAccess] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [inputs, setInputs] = useState({
     scenario: '',
     intent: '',
@@ -684,26 +577,6 @@ function DMIntelligenceEngineTool() {
   const [results, setResults] = useState<any>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    const checkAccess = async () => {
-      try {
-        const res = await fetch('/api/tool-runs')
-        if (res.ok) {
-          const data = await res.json()
-          if (data.entitlements) {
-            const { dmEngine, allAccess } = data.entitlements
-            setHasAccess(dmEngine || allAccess)
-          }
-        }
-      } catch (error) {
-        console.error('[dm-intelligence] Error checking access:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    checkAccess()
-  }, [])
 
   const handleRun = async () => {
     if (!inputs.scenario || !inputs.intent || !inputs.tone || !inputs.conversationSnippet.trim()) {
@@ -725,10 +598,6 @@ function DMIntelligenceEngineTool() {
         body: JSON.stringify({ ...inputs, save: true }),
       })
       const data = await res.json()
-      if (res.status === 403) {
-        setError('DM Intelligence Engine requires DM Engine plan or All Access.')
-        return
-      }
       if (res.status === 401) {
         setError('Please verify your email to use this tool.')
         return
@@ -748,42 +617,11 @@ function DMIntelligenceEngineTool() {
     }
   }
 
-  const handleCheckout = async () => {
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: 'dm_engine' }),
-      })
-      const data = await res.json()
-      if (res.status === 401) {
-        window.location.href = '/verify'
-        return
-      }
-      if (data.url) {
-        window.location.href = data.url
-      }
-    } catch (error) {
-      console.error('[checkout] Error:', error)
-    }
-  }
-
-  if (loading) {
-    return (
-      <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm max-w-6xl mx-auto">
-        <CardContent className="p-6">
-          <div className="text-center text-card-foreground">Loading...</div>
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm max-w-6xl mx-auto">
       <CardHeader>
         <div className="flex items-center justify-between mb-2">
           <Zap className="h-6 w-6 text-primary" />
-          {!hasAccess && <Lock className="h-5 w-5 text-card-foreground/50" />}
         </div>
         <CardTitle className="text-card-foreground">DM Intelligence Engine™</CardTitle>
         <CardDescription className="text-card-foreground/70">
@@ -791,22 +629,7 @@ function DMIntelligenceEngineTool() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!hasAccess ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-background/50 rounded-lg border border-border/60 blur-sm pointer-events-none">
-              <p className="text-sm text-card-foreground/50">Locked preview...</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-card-foreground/70 mb-4">
-                Unlock DM Intelligence Engine™ with DM Engine plan or All Access
-              </p>
-              <Button onClick={handleCheckout} className="bg-cactus-primary text-white hover:opacity-90">
-                Unlock DM Engine
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6">
             {/* Inputs Panel */}
             <div className="space-y-4">
               <div>
@@ -973,171 +796,9 @@ function DMIntelligenceEngineTool() {
                 </div>
               )}
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function PremiumToolCard({ title, icon: Icon, desc, requiredPlan }: { title: string; icon: any; desc: string; requiredPlan: string }) {
-  const [error, setError] = useState('')
-  const [hasAccess, setHasAccess] = useState(false)
-  const [loading, setLoading] = useState(true)
-
-  // Check user entitlements on mount
-  useEffect(() => {
-    const checkAccess = async () => {
-      try {
-        const res = await fetch('/api/tool-runs')
-        if (res.ok) {
-          const data = await res.json()
-          if (data.entitlements) {
-            const { dmEngine, strategy, allAccess } = data.entitlements
-            const planMap: Record<string, boolean> = {
-              dm_engine: dmEngine || allAccess,
-              the_strategy: strategy || allAccess,
-              all_access: allAccess,
-            }
-            setHasAccess(planMap[requiredPlan] || false)
-          }
-        }
-      } catch (error) {
-        console.error('[premium-tool] Error checking access:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    checkAccess()
-  }, [requiredPlan])
-
-  const handleCheckout = async () => {
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: requiredPlan }),
-      })
-      const data = await res.json()
-      if (res.status === 401) {
-        setError('Verify your email to continue.')
-        window.location.href = '/verify'
-        return
-      }
-      if (!res.ok) {
-        const errorMsg = data?.error || data?.details || 'Checkout is unavailable right now.'
-        console.error('[checkout] Error:', errorMsg, data)
-        setError(errorMsg)
-        return
-      }
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        setError('Checkout is unavailable right now.')
-      }
-    } catch (error: any) {
-      console.error('[checkout] Exception:', error)
-      setError(error?.message || 'Failed to create checkout session. Please try again.')
-    }
-  }
-
-  return (
-    <Card className="bg-card/80 border-border/60 backdrop-blur-sm shadow-sm">
-      <CardHeader>
-        <div className="flex items-center justify-between mb-2">
-          <Icon className="h-6 w-6 text-primary" />
-          {!hasAccess && <Lock className="h-5 w-5 text-card-foreground/50" />}
         </div>
-        <CardTitle className="text-card-foreground">{title}</CardTitle>
-        <CardDescription className="text-card-foreground/70">{desc}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <Button variant="outline" className="w-full border-border/60" disabled>
-            Loading...
-          </Button>
-        ) : hasAccess ? (
-          <Button variant="outline" className="w-full border-border/60 hover:bg-accent/80 bg-green-500/10 border-green-500/30">
-            Access Tool
-          </Button>
-        ) : (
-          <>
-            <Button
-              onClick={handleCheckout}
-              variant="outline"
-              className="w-full border-border/60 hover:bg-accent/80"
-            >
-              Unlock
-            </Button>
-            {error && (
-              <p className="mt-3 text-xs text-red-600">{error}</p>
-            )}
-          </>
-        )}
       </CardContent>
     </Card>
   )
 }
 
-function PlanCard({ title, description, features, planId, highlight }: any) {
-  const [error, setError] = useState('')
-
-  const handleCheckout = async () => {
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId }),
-      })
-      const data = await res.json()
-      if (res.status === 401) {
-        setError('Verify your email to continue.')
-        window.location.href = '/verify'
-        return
-      }
-      if (!res.ok) {
-        const errorMsg = data?.error || data?.details || 'Checkout is unavailable right now.'
-        console.error('[checkout] Error:', errorMsg, data)
-        setError(errorMsg)
-        return
-      }
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        setError('Checkout is unavailable right now.')
-      }
-    } catch (error: any) {
-      console.error('[checkout] Exception:', error)
-      setError(error?.message || 'Failed to create checkout session. Please try again.')
-    }
-  }
-
-  return (
-    <Card className={`bg-card/80 border-border/60 backdrop-blur-sm shadow-sm ${highlight ? 'border-primary/60 ring-2 ring-primary/20' : ''}`}>
-      <CardHeader>
-        <CardTitle className="text-card-foreground">{title}</CardTitle>
-        <CardDescription className="text-card-foreground/70">{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-2 mb-6">
-          {features.map((feature: string, i: number) => (
-            <li key={i} className="flex items-start text-card-foreground/70">
-              <span className="mr-2 text-primary">✓</span>
-              {feature}
-            </li>
-          ))}
-        </ul>
-        <Button
-          onClick={handleCheckout}
-          className={highlight ? 'w-full bg-cactus-primary text-white hover:opacity-90' : 'w-full'}
-          variant={highlight ? 'default' : 'outline'}
-        >
-          Get {title}
-        </Button>
-        {error && (
-          <p className="mt-3 text-xs text-red-600">{error}</p>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
