@@ -8,7 +8,6 @@ const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME?.trim() || 'The Strategy T
 const GMAIL_USER = process.env.GMAIL_USER?.trim()
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD?.trim()
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim() || 'admin@example.com'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 let resend: Resend | null = null
 let gmailTransporter: nodemailer.Transporter | null = null
