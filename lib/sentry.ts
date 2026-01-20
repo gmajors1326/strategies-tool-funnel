@@ -27,9 +27,6 @@ export function initSentry() {
     // Setting this option to true will print useful information to the console while you're setting up Sentry.
     debug: SENTRY_ENVIRONMENT === 'development',
 
-    // Capture unhandled promise rejections
-    captureUnhandledRejections: true,
-
     // Filter out sensitive data
     beforeSend(event, hint) {
       // Filter out sensitive headers
