@@ -98,6 +98,41 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
         soft_cta_suggestions: ['Save this post', 'Follow for more', 'DM me'],
         spicy_experiment: 'Test this post type with a different hook style.',
       }
+    case 'follower_quality_filter':
+      return {
+        ...base,
+        positioning_sentence: 'Insufficient signal. Provide ideal_follower_one_liner to get positioning.',
+        language_to_use: ['Provide ideal follower description', 'Define target audience clearly', 'Specify niche if applicable', 'Describe current problem', 'Be specific about who you serve', 'Use clear identity markers', 'Focus on outcomes they want', 'Avoid generic language'],
+        language_to_avoid: ['Generic buzzwords', 'Overused phrases', 'Vague positioning', 'Try-hard language', 'Trendy terms', 'Empty promises', 'Cliché statements', 'Weak qualifiers'],
+        post_types_to_attract: ['Identity Alignment Posts', 'Calm Insight Reels', 'Soft Direction Posts'],
+        post_types_to_repel: ['Pattern-Breaker Posts', 'Framework / Mental Model Posts', 'Before/After Thinking Shifts'],
+        bio_line_optional: 'Provide ideal follower description to get bio line.',
+      }
+    case 'content_system_builder':
+      return {
+        ...base,
+        system_name: 'Insufficient signal. Provide primary_goal, posting_days_per_week, time_per_post, and niche.',
+        weekly_plan: [],
+        nonnegotiables: ['Provide all required inputs', 'Goal and capacity are required', 'Cannot build system without complete information'],
+        templates: [],
+      }
+    case 'what_to_stop_posting':
+      return {
+        ...base,
+        stop_list: [],
+        keep_list: ['Provide recent posts summary', 'Include at least 5 recent posts', 'Describe results for each post'],
+        one_rule_to_enforce: 'Provide recent_posts_summary with at least 5 posts to get stop list.',
+      }
+    case 'controlled_experiment_planner':
+      return {
+        ...base,
+        hypothesis: 'Insufficient signal. Provide objective, baseline_description, duration_days, and posting_count.',
+        control_definition: 'Provide inputs to get control definition',
+        variable_to_change: 'Provide inputs to get variable',
+        test_matrix: [],
+        success_metric: 'Provide inputs to get success metric',
+        decision_rule: 'Provide inputs to get decision rule',
+      }
     default:
       return base
   }

@@ -13,6 +13,10 @@ export default function HomePage() {
   const hookPressureTestConfig = getToolConfig('hook_pressure_test')
   const retentionLeakFinderConfig = getToolConfig('retention_leak_finder')
   const algorithmTrainingModeConfig = getToolConfig('algorithm_training_mode')
+  const followerQualityFilterConfig = getToolConfig('follower_quality_filter')
+  const contentSystemBuilderConfig = getToolConfig('content_system_builder')
+  const whatToStopPostingConfig = getToolConfig('what_to_stop_posting')
+  const controlledExperimentPlannerConfig = getToolConfig('controlled_experiment_planner')
   const whyPostFailedConfig = getToolConfig('why_post_failed')
 
   return (
@@ -49,6 +53,10 @@ export default function HomePage() {
           <ToolShell config={hookPressureTestConfig} />
           <ToolShell config={retentionLeakFinderConfig} />
           <ToolShell config={algorithmTrainingModeConfig} />
+          <ToolShell config={followerQualityFilterConfig} />
+          <ToolShell config={contentSystemBuilderConfig} />
+          <ToolShell config={whatToStopPostingConfig} />
+          <ToolShell config={controlledExperimentPlannerConfig} />
           <ToolShell config={whyPostFailedConfig} />
         </div>
       </section>

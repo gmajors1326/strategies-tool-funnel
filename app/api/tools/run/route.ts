@@ -20,6 +20,10 @@ export async function POST(request: NextRequest) {
       'retention_leak_finder',
       'algorithm_training_mode',
       'post_type_recommender',
+      'follower_quality_filter',
+      'content_system_builder',
+      'what_to_stop_posting',
+      'controlled_experiment_planner',
     ]
 
     if (!validToolIds.includes(toolId as ToolId)) {
@@ -98,6 +102,33 @@ export async function POST(request: NextRequest) {
         preferred_format: inputs.preferred_format,
         days: inputs.days,
         posting_capacity: inputs.posting_capacity,
+      }
+    } else if (toolId === 'what_to_stop_posting') {
+      // Parse recent_posts_summary if it's a JSON string
+      let postsSummary = null
+      if (inputs.recent_posts_summary) {
+        try {
+          postsSummary = typeof inputs.recent_posts_summary === 'string'
+            ? JSON.parse(inputs.recent_posts_summary)
+            : inputs.recent_posts_summary
+        } catch {
+          // If not JSON, keep as string for AI to parse
+          postsSummary = inputs.recent_posts_summary
+        }
+      }
+      
+      structuredInputs = {
+        recent_posts_summary: postsSummary || [],
+        recurring_issues_optional: inputs.recurring_issues_optional || null,
+        niche_optional: inputs.niche_optional || null,
+      }
+    } else if (toolId === 'controlled_experiment_planner') {
+      structuredInputs = {
+        objective: inputs.objective,
+        baseline_description: inputs.baseline_description,
+        variable_options_optional: inputs.variable_options_optional || null,
+        duration_days: Number(inputs.duration_days) || 7,
+        posting_count: Number(inputs.posting_count) || 5,
       }
     }
 
