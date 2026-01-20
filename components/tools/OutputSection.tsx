@@ -95,7 +95,7 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
                         </li>
                       ))}
                     </ul>
-                  ) : typeof value === 'object' && value !== null ? (
+                  ) : typeof value === 'object' && value !== null && !Array.isArray(value) ? (
                     <div className="ml-3 sm:ml-4 space-y-1">
                       {Object.entries(value as Record<string, any>).map(([subKey, subValue]) => (
                         <div key={subKey} className="text-xs sm:text-sm">
