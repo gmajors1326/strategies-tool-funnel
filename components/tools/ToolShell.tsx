@@ -117,6 +117,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
       window.addEventListener('storage', handleStorageChange)
       return () => window.removeEventListener('storage', handleStorageChange)
     }
+    return undefined
   }, [config.toolId])
 
   const handleRun = async () => {
