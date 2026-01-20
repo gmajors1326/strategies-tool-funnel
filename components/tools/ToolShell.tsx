@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, ReactNode } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AppCard, AppCardContent, AppCardDescription, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { AppPanel } from '@/components/ui/AppPanel'
 import { OutputSection } from './OutputSection'
 import { SaveToPlanButton } from './SaveToPlanButton'
 import { ToolConfig, OutputSection as OutputSectionConfig } from '@/lib/ai/toolRegistry'
@@ -86,7 +87,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
             maxLength={field.maxLength}
             minLength={field.minLength}
             required={field.required}
-            className="mt-1 min-h-[80px] w-full rounded-md border border-input bg-input p-2 text-sm text-card-foreground placeholder:text-card-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="mt-1 min-h-[80px] w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--input))] p-2 text-sm text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted-2))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface-2))]"
             aria-label={field.label}
           />
         )
@@ -144,27 +145,27 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-6">
-      <Card className="bg-card/95 border-border/60">
-        <CardHeader>
-          <CardTitle className="text-card-foreground">{config.title}</CardTitle>
-          <CardDescription className="text-card-foreground/70">
+      <AppCard>
+        <AppCardHeader>
+          <AppCardTitle>{config.title}</AppCardTitle>
+          <AppCardDescription>
             {config.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </AppCardDescription>
+        </AppCardHeader>
+        <AppCardContent>
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Left Column - Inputs */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-card-foreground">Inputs</h3>
+              <h3 className="text-sm font-semibold text-[hsl(var(--text))]">Inputs</h3>
               {config.inputFields.map(field => (
                 <div key={field.key} className="space-y-1.5">
-                  <Label htmlFor={field.key} className="text-card-foreground">
+                  <Label htmlFor={field.key} className="text-[hsl(var(--text))]">
                     {field.label}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                    {field.required && <span className="text-[hsl(var(--destructive))] ml-1">*</span>}
                   </Label>
                   {renderInputField(field)}
                   {field.maxLength && (
-                    <p className="text-xs text-card-foreground/50">
+                    <p className="text-xs text-[hsl(var(--muted))]">
                       Max {field.maxLength} characters
                     </p>
                   )}
@@ -179,19 +180,19 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
                 {loading ? 'Running...' : 'Run Analysis'}
               </Button>
               {error && (
-                <div className="p-3 rounded-md bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
-                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                </div>
+                <AppPanel className="border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10">
+                  <p className="text-sm text-[hsl(var(--destructive))]">{error}</p>
+                </AppPanel>
               )}
             </div>
 
             {/* Right Column - Outputs */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-card-foreground">Results</h3>
+              <h3 className="text-sm font-semibold text-[hsl(var(--text))]">Results</h3>
               {!outputs ? (
-                <div className="p-8 text-center text-card-foreground/50 border border-border/60 rounded-lg">
-                  <p className="text-sm">Fill in the inputs and click &quot;Run Analysis&quot; to get results.</p>
-                </div>
+                <AppPanel variant="subtle">
+                  <p className="text-sm text-center text-[hsl(var(--muted))]">Fill in the inputs and click &quot;Run Analysis&quot; to get results.</p>
+                </AppPanel>
               ) : (
                 <>
                   {config.outputSections.map(section => {
@@ -210,7 +211,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
                     )
                   })}
                   
-                  <Separator />
+                  <Separator className="bg-[hsl(var(--border))]" />
                   
                   <SaveToPlanButton
                     toolId={config.toolId}
@@ -222,8 +223,8 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </AppCardContent>
+      </AppCard>
     </div>
   )
 }

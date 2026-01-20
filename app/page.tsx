@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import { AppCard } from '@/components/ui/AppCard'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -23,7 +24,7 @@ export default function HomePage() {
             Strategic engagement tools that turn conversations into revenue.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" variant="outline" className="border-border/60 hover:bg-accent/60 shadow-ink-40">
+            <Button asChild size="lg" variant="outline" className="shadow-ink-40">
               <Link href="#faq">Learn More</Link>
             </Button>
           </div>
@@ -35,30 +36,38 @@ export default function HomePage() {
         <h2 className="text-4xl font-bold text-center mb-12 text-white text-shadow-ink-40">Frequently Asked Questions</h2>
         <div className="max-w-3xl mx-auto">
           <Accordion type="single" collapsible className="space-y-4">
-            <AccordionItem value="following" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-card-foreground text-[15px]">Do I need a big following?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground text-[15px]">
-                No. These tools work at any follower count. The Strategy is designed to help you build engagement regardless of your current size.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="automation" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-card-foreground text-[15px]">Is this automation? Will it risk my account?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground text-[15px]">
-                No automation. These are strategic frameworks you implement manually. Everything is designed to work within Instagram&apos;s guidelines.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="time" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-card-foreground text-[17px]">How much time does this take per day?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground text-[15px]">
-                The Strategy is designed for 15-30 minutes of focused engagement per day. The tools help you maximize impact in that time.
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="services-vs-products" className="bg-card/80 border-border/60 rounded-lg px-6">
-              <AccordionTrigger className="text-card-foreground text-[15px]">What if I&apos;m selling services vs digital products?</AccordionTrigger>
-              <AccordionContent className="text-card-foreground text-[15px]">
-                The tools adapt to your offer type. DM Engine includes templates for both service-based and product-based businesses.
-              </AccordionContent>
-            </AccordionItem>
+            <AppCard>
+              <AccordionItem value="following" className="border-0">
+                <AccordionTrigger className="px-6 py-4">Do I need a big following?</AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  No. These tools work at any follower count. The Strategy is designed to help you build engagement regardless of your current size.
+                </AccordionContent>
+              </AccordionItem>
+            </AppCard>
+            <AppCard>
+              <AccordionItem value="automation" className="border-0">
+                <AccordionTrigger className="px-6 py-4">Is this automation? Will it risk my account?</AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  No automation. These are strategic frameworks you implement manually. Everything is designed to work within Instagram&apos;s guidelines.
+                </AccordionContent>
+              </AccordionItem>
+            </AppCard>
+            <AppCard>
+              <AccordionItem value="time" className="border-0">
+                <AccordionTrigger className="px-6 py-4">How much time does this take per day?</AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  The Strategy is designed for 15-30 minutes of focused engagement per day. The tools help you maximize impact in that time.
+                </AccordionContent>
+              </AccordionItem>
+            </AppCard>
+            <AppCard>
+              <AccordionItem value="services-vs-products" className="border-0">
+                <AccordionTrigger className="px-6 py-4">What if I&apos;m selling services vs digital products?</AccordionTrigger>
+                <AccordionContent className="px-6 pb-4">
+                  The tools adapt to your offer type. DM Engine includes templates for both service-based and product-based businesses.
+                </AccordionContent>
+              </AccordionItem>
+            </AppCard>
           </Accordion>
         </div>
       </section>
@@ -67,11 +76,11 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-6 text-white text-shadow-ink-40">Ready to Get Started?</h2>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-[hsl(var(--muted))] mb-8">
             All tools are free to use. Get started now.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-cactus-primary text-white hover:opacity-90 shadow-ink-40">
+            <Button asChild size="lg" className="shadow-ink-40">
               <Link href="#faq">Learn More →</Link>
             </Button>
           </div>

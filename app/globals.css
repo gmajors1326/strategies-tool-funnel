@@ -4,46 +4,71 @@
 
 @layer base {
   :root {
-    --background: 156 45% 12%;
-    --foreground: 120 20% 98%;
-    --card: 51 47% 94%;
-    --card-foreground: 133 24% 22%;
-    --popover: 51 47% 94%;
-    --popover-foreground: 154 30% 14%;
-    --primary: 151 45% 33%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 150 22% 22%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 150 18% 18%;
-    --muted-foreground: 154 30% 14%;
-    --accent: 150 22% 26%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 4 72% 43%;
+    /* Semantic surface tokens */
+    --bg: 154 35% 8%;
+    --surface-1: 154 35% 8%;
+    --surface-2: 154 35% 12%;
+    --surface-3: 154 35% 16%;
+    
+    /* Text tokens */
+    --text: 120 20% 96%;
+    --muted: 150 18% 70%;
+    --muted-2: 150 18% 60%;
+    
+    /* Border and input */
+    --border: 154 22% 25%;
+    --input: 154 22% 20%;
+    
+    /* Primary (red/cactus) */
+    --primary: 151 45% 45%;
+    --primary-foreground: 154 35% 8%;
+    
+    /* Ring/focus */
+    --ring: 151 45% 45%;
+    
+    /* Legacy shadcn compatibility */
+    --background: var(--bg);
+    --foreground: var(--text);
+    --card: var(--surface-2);
+    --card-foreground: var(--text);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--text);
+    --secondary: 154 22% 18%;
+    --secondary-foreground: var(--text);
+    --muted-foreground: var(--muted);
+    --accent: 154 22% 20%;
+    --accent-foreground: var(--text);
+    --destructive: 4 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 150 15% 85%;
-    --input: 40 10% 96%;
-    --ring: 151 45% 33%;
-    --radius: 1rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 154 35% 8%;
-    --foreground: 120 20% 96%;
-    --card: 154 35% 12%;
-    --card-foreground: 120 20% 96%;
-    --popover: 154 35% 12%;
-    --popover-foreground: 120 20% 96%;
+    --bg: 154 35% 8%;
+    --surface-1: 154 35% 8%;
+    --surface-2: 154 35% 12%;
+    --surface-3: 154 35% 16%;
+    --text: 120 20% 96%;
+    --muted: 150 18% 70%;
+    --muted-2: 150 18% 60%;
+    --border: 154 22% 25%;
+    --input: 154 22% 20%;
     --primary: 151 45% 45%;
     --primary-foreground: 154 35% 8%;
-    --secondary: 154 22% 18%;
-    --secondary-foreground: 120 20% 96%;
-    --muted: 154 22% 18%;
-    --muted-foreground: 150 18% 70%;
-    --accent: 154 22% 20%;
-    --accent-foreground: 120 20% 96%;
-    --border: 154 22% 20%;
-    --input: 154 22% 20%;
     --ring: 151 45% 45%;
+    
+    /* Legacy compatibility */
+    --background: var(--bg);
+    --foreground: var(--text);
+    --card: var(--surface-2);
+    --card-foreground: var(--text);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--text);
+    --secondary: 154 22% 18%;
+    --secondary-foreground: var(--text);
+    --muted-foreground: var(--muted);
+    --accent: 154 22% 20%;
+    --accent-foreground: var(--text);
     --destructive: 4 72% 55%;
     --destructive-foreground: 0 0% 100%;
   }
@@ -54,26 +79,26 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[hsl(var(--bg))] text-[hsl(var(--text))];
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   h1,
   h2 {
     font-family: var(--font-heading), "Times New Roman", Times, serif;
-    color: #f6f6e9;
+    color: hsl(var(--text));
     letter-spacing: -0.01em;
   }
 
   h3,
   h4 {
     font-family: var(--font-heading), "Times New Roman", Times, serif;
-    color: hsl(var(--foreground));
+    color: hsl(var(--text));
     letter-spacing: -0.01em;
   }
 
   p {
-    color: hsl(var(--card-foreground));
+    color: hsl(var(--text));
     font-weight: 500;
   }
 }
@@ -91,11 +116,7 @@
   }
 
   .bg-cactus-primary {
-    background: linear-gradient(135deg, #2F6F4E 0%, #255B3F 100%);
-  }
-
-  .bg-card-sheen {
-    background: linear-gradient(180deg, rgba(47,111,78,0.12) 0%, rgba(47,111,78,0.00) 40%);
+    background-color: hsl(var(--primary));
   }
 
   .shadow-ink-40 {

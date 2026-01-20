@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Copy, Check } from 'lucide-react'
 import { copyToClipboard } from '@/lib/clipboard'
+import { AppPanel } from '@/components/ui/AppPanel'
 
 interface OutputSectionProps {
   title: string
@@ -38,40 +39,40 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
 
   const renderContent = () => {
     if (content === null || content === undefined) {
-      return <p className="text-sm text-card-foreground/50">No data</p>
+      return <p className="text-sm text-[hsl(var(--muted))]">No data</p>
     }
 
     switch (type) {
       case 'text':
-        return <p className="text-sm text-card-foreground/90 whitespace-pre-wrap">{String(content)}</p>
+        return <p className="text-sm text-[hsl(var(--text))] whitespace-pre-wrap">{String(content)}</p>
       
       case 'list':
         if (Array.isArray(content)) {
           return (
             <ul className="space-y-2">
               {content.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-sm text-card-foreground/90">
-                  <span className="text-cactus-primary mt-0.5">•</span>
+                <li key={idx} className="flex items-start gap-2 text-sm text-[hsl(var(--text))]">
+                  <span className="text-[hsl(var(--primary))] mt-0.5">•</span>
                   <span>{String(item)}</span>
                 </li>
               ))}
             </ul>
           )
         }
-        return <p className="text-sm text-card-foreground/90">{String(content)}</p>
+        return <p className="text-sm text-[hsl(var(--text))]">{String(content)}</p>
       
       case 'score':
         const score = typeof content === 'number' ? content : parseInt(String(content)) || 0
         return (
           <div className="flex items-center gap-3">
-            <div className="text-2xl font-bold text-cactus-primary">{score}</div>
-            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+            <div className="text-2xl font-bold text-[hsl(var(--primary))]">{score}</div>
+            <div className="flex-1 h-2 bg-[hsl(var(--surface-2))] rounded-full overflow-hidden border border-[hsl(var(--border))]">
               <div 
-                className="h-full bg-cactus-primary transition-all"
+                className="h-full bg-[hsl(var(--primary))] transition-all"
                 style={{ width: `${(score / 10) * 100}%` }}
               />
             </div>
-            <span className="text-xs text-card-foreground/70">/ 10</span>
+            <span className="text-xs text-[hsl(var(--muted))]">/ 10</span>
           </div>
         )
       
@@ -81,8 +82,8 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
             <div className="space-y-2">
               {Object.entries(content).map(([key, value]) => (
                 <div key={key} className="text-sm">
-                  <span className="font-medium text-card-foreground/80 capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
-                  <span className="text-card-foreground/90">
+                  <span className="font-medium text-[hsl(var(--text))] capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
+                  <span className="text-[hsl(var(--text))]">
                     {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
                   </span>
                 </div>
@@ -90,17 +91,17 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
             </div>
           )
         }
-        return <p className="text-sm text-card-foreground/90">{String(content)}</p>
+        return <p className="text-sm text-[hsl(var(--text))]">{String(content)}</p>
       
       default:
-        return <p className="text-sm text-card-foreground/90">{String(content)}</p>
+        return <p className="text-sm text-[hsl(var(--text))]">{String(content)}</p>
     }
   }
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-card-foreground">{title}</h4>
+        <h4 className="text-sm font-semibold text-[hsl(var(--text))]">{title}</h4>
         {copyable && (
           <Button
             variant="ghost"
@@ -117,9 +118,9 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
           </Button>
         )}
       </div>
-      <div className="p-3 rounded-md bg-muted/50">
+      <AppPanel>
         {renderContent()}
-      </div>
+      </AppPanel>
     </div>
   )
 }
