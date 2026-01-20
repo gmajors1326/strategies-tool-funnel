@@ -103,7 +103,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
             maxLength={field.maxLength}
             minLength={field.minLength}
             required={field.required}
-            className="mt-1 min-h-[80px] w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--input))] p-2 text-sm text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted-2))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface-2))]"
+            className="mt-1 min-h-[60px] sm:min-h-[80px] w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--input))] p-2 text-xs sm:text-sm text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted-2))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface-2))]"
             aria-label={field.label}
           />
         )
@@ -177,22 +177,22 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 md:p-6">
+    <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6">
       <AppCard>
-        <AppCardHeader>
-          <AppCardTitle>{config.title}</AppCardTitle>
-          <AppCardDescription>
+        <AppCardHeader className="p-4 sm:p-6">
+          <AppCardTitle className="text-xl sm:text-2xl">{config.title}</AppCardTitle>
+          <AppCardDescription className="text-sm sm:text-base">
             {config.description}
           </AppCardDescription>
         </AppCardHeader>
-        <AppCardContent>
-          <div className="grid lg:grid-cols-2 gap-6">
+        <AppCardContent className="p-4 sm:p-6">
+          <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Left Column - Inputs */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-[hsl(var(--text))]">Inputs</h3>
+            <div className="space-y-3 sm:space-y-4">
+              <h3 className="text-xs sm:text-sm font-semibold text-[hsl(var(--text))]">Inputs</h3>
               {config.inputFields.map(field => (
-                <div key={field.key} className="space-y-1.5">
-                  <Label htmlFor={field.key} className="text-[hsl(var(--text))]">
+                <div key={field.key} className="space-y-1 sm:space-y-1.5">
+                  <Label htmlFor={field.key} className="text-xs sm:text-sm text-[hsl(var(--text))]">
                     {field.label}
                     {field.required && <span className="text-[hsl(var(--destructive))] ml-1">*</span>}
                   </Label>
@@ -207,24 +207,24 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
               <Button
                 onClick={handleRun}
                 disabled={loading}
-                className="w-full mt-4"
+                className="w-full mt-3 sm:mt-4 text-xs sm:text-sm"
                 aria-label="Run tool"
               >
                 {loading ? 'Running...' : 'Run Analysis'}
               </Button>
               {error && (
-                <AppPanel className="border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10">
-                  <p className="text-sm text-[hsl(var(--destructive))]">{error}</p>
+                <AppPanel className="border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10 p-2 sm:p-3">
+                  <p className="text-xs sm:text-sm text-[hsl(var(--destructive))] break-words">{error}</p>
                 </AppPanel>
               )}
             </div>
 
             {/* Right Column - Outputs */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-[hsl(var(--text))]">Results</h3>
+            <div className="space-y-3 sm:space-y-4">
+              <h3 className="text-xs sm:text-sm font-semibold text-[hsl(var(--text))]">Results</h3>
               {!outputs ? (
-                <AppPanel variant="subtle">
-                  <p className="text-sm text-center text-[hsl(var(--muted))]">Fill in the inputs and click &quot;Run Analysis&quot; to get results.</p>
+                <AppPanel variant="subtle" className="p-4 sm:p-6">
+                  <p className="text-xs sm:text-sm text-center text-[hsl(var(--muted))]">Fill in the inputs and click &quot;Run Analysis&quot; to get results.</p>
                 </AppPanel>
               ) : (
                 <>

@@ -10,7 +10,7 @@ const AppPanel = React.forwardRef<HTMLDivElement, AppPanelProps>(
     <div
       ref={ref}
       className={cn(
-        "rounded-lg border border-[hsl(var(--border))] p-4",
+        "rounded-lg border border-[hsl(var(--border))] p-3 sm:p-4",
         variant === "default"
           ? "bg-[hsl(var(--surface-3))] text-[hsl(var(--text))]"
           : "bg-[hsl(var(--surface-2))]/50 text-[hsl(var(--text))]",

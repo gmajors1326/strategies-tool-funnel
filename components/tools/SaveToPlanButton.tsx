@@ -29,18 +29,18 @@ export function SaveToPlanButton({ toolId, title, inputs, outputs }: SaveToPlanB
   return (
     <Button
       onClick={handleSave}
-      className="w-full"
+      className="w-full text-xs sm:text-sm"
       variant={saved ? 'outline' : 'default'}
       aria-label="Save to plan"
     >
       {saved ? (
         <>
-          <Check className="h-4 w-4 mr-2" />
+          <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
           Saved!
         </>
       ) : (
         <>
-          <Save className="h-4 w-4 mr-2" />
+          <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
           Save to Plan
         </>
       )}

@@ -44,46 +44,46 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
 
     switch (type) {
       case 'text':
-        return <p className="text-sm text-[hsl(var(--text))] whitespace-pre-wrap">{String(content)}</p>
+        return <p className="text-xs sm:text-sm text-[hsl(var(--text))] whitespace-pre-wrap break-words">{String(content)}</p>
       
       case 'list':
         if (Array.isArray(content)) {
           return (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5 sm:space-y-2">
               {content.map((item, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-sm text-[hsl(var(--text))]">
-                  <span className="text-[hsl(var(--primary))] mt-0.5">•</span>
-                  <span>{String(item)}</span>
+                <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-[hsl(var(--text))]">
+                  <span className="text-[hsl(var(--primary))] mt-0.5 flex-shrink-0">•</span>
+                  <span className="break-words">{String(item)}</span>
                 </li>
               ))}
             </ul>
           )
         }
-        return <p className="text-sm text-[hsl(var(--text))]">{String(content)}</p>
+        return <p className="text-xs sm:text-sm text-[hsl(var(--text))] break-words">{String(content)}</p>
       
       case 'score':
         const score = typeof content === 'number' ? content : parseInt(String(content)) || 0
         return (
-          <div className="flex items-center gap-3">
-            <div className="text-2xl font-bold text-[hsl(var(--primary))]">{score}</div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="text-xl sm:text-2xl font-bold text-[hsl(var(--primary))]">{score}</div>
             <div className="flex-1 h-2 bg-[hsl(var(--surface-2))] rounded-full overflow-hidden border border-[hsl(var(--border))]">
               <div 
                 className="h-full bg-[hsl(var(--primary))] transition-all"
                 style={{ width: `${(score / 10) * 100}%` }}
               />
             </div>
-            <span className="text-xs text-[hsl(var(--muted))]">/ 10</span>
+            <span className="text-xs text-[hsl(var(--muted))] whitespace-nowrap">/ 10</span>
           </div>
         )
       
       case 'object':
         if (typeof content === 'object') {
           return (
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               {Object.entries(content).map(([key, value]) => (
-                <div key={key} className="text-sm">
+                <div key={key} className="text-xs sm:text-sm">
                   <span className="font-medium text-[hsl(var(--text))] capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
-                  <span className="text-[hsl(var(--text))]">
+                  <span className="text-[hsl(var(--text))] break-words">
                     {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
                   </span>
                 </div>
@@ -91,34 +91,34 @@ export function OutputSection({ title, content, type, copyable, sectionKey }: Ou
             </div>
           )
         }
-        return <p className="text-sm text-[hsl(var(--text))]">{String(content)}</p>
+        return <p className="text-xs sm:text-sm text-[hsl(var(--text))] break-words">{String(content)}</p>
       
       default:
-        return <p className="text-sm text-[hsl(var(--text))]">{String(content)}</p>
+        return <p className="text-xs sm:text-sm text-[hsl(var(--text))] break-words">{String(content)}</p>
     }
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold text-[hsl(var(--text))]">{title}</h4>
+    <div className="space-y-1.5 sm:space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <h4 className="text-xs sm:text-sm font-semibold text-[hsl(var(--text))]">{title}</h4>
         {copyable && (
           <Button
             variant="ghost"
             size="sm"
             onClick={handleCopy}
-            className="h-7 px-2"
+            className="h-6 sm:h-7 px-1.5 sm:px-2 flex-shrink-0"
             aria-label={`Copy ${title}`}
           >
             {copied ? (
-              <Check className="h-3.5 w-3.5" />
+              <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             ) : (
-              <Copy className="h-3.5 w-3.5" />
+              <Copy className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             )}
           </Button>
         )}
       </div>
-      <AppPanel>
+      <AppPanel className="p-2 sm:p-4">
         {renderContent()}
       </AppPanel>
     </div>
