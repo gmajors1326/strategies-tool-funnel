@@ -11,6 +11,7 @@ import Link from 'next/link'
 export default function HomePage() {
   const postTypeRecommenderConfig = getToolConfig('post_type_recommender')
   const hookPressureTestConfig = getToolConfig('hook_pressure_test')
+  const retentionLeakFinderConfig = getToolConfig('retention_leak_finder')
   const whyPostFailedConfig = getToolConfig('why_post_failed')
 
   return (
@@ -45,6 +46,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto space-y-12">
           <ToolShell config={postTypeRecommenderConfig} />
           <ToolShell config={hookPressureTestConfig} />
+          <ToolShell config={retentionLeakFinderConfig} />
           <ToolShell config={whyPostFailedConfig} />
         </div>
       </section>

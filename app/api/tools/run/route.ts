@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Structure inputs for why_post_failed tool
+    // Structure inputs for specific tools
     let structuredInputs = inputs
     if (toolId === 'why_post_failed') {
       structuredInputs = {
@@ -49,6 +49,27 @@ export async function POST(request: NextRequest) {
           calm_delivery: inputs.calm_delivery === true || inputs.calm_delivery === 'true',
           single_cta: inputs.single_cta === true || inputs.single_cta === 'true',
         },
+        notes_optional: inputs.notes_optional || null,
+      }
+    } else if (toolId === 'retention_leak_finder') {
+      // Parse retention_points_optional if it's a JSON string
+      let retentionPoints = null
+      if (inputs.retention_points_optional) {
+        try {
+          retentionPoints = typeof inputs.retention_points_optional === 'string'
+            ? JSON.parse(inputs.retention_points_optional)
+            : inputs.retention_points_optional
+        } catch {
+          retentionPoints = null
+        }
+      }
+      
+      structuredInputs = {
+        video_length_sec: Number(inputs.video_length_sec) || 0,
+        avg_watch_time_sec: Number(inputs.avg_watch_time_sec) || 0,
+        retention_points_optional: retentionPoints,
+        known_drop_second_optional: inputs.known_drop_second_optional ? Number(inputs.known_drop_second_optional) : null,
+        format_optional: inputs.format_optional || null,
         notes_optional: inputs.notes_optional || null,
       }
     }

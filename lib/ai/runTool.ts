@@ -66,11 +66,11 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
     case 'retention_leak_finder':
       return {
         ...base,
-        retention_score: 5,
-        leak_points: [{ timestamp: 'midway', issue: 'Need more data', impact: 'medium', fix: 'Test different content structure' }],
-        overall_pattern: 'Insufficient data to identify pattern',
-        quick_fixes: ['Test shorter content', 'Improve hook'],
-        long_term_strategy: 'Run controlled tests to identify what works',
+        primary_leak: 'Insufficient signal',
+        likely_cause: 'Missing video_length_sec or avg_watch_time_sec',
+        one_structural_fix: 'Provide video_length_sec and avg_watch_time_sec to identify the retention leak',
+        cut_list: ['Provide metrics to get specific cuts', 'Run analysis with complete data', 'Test after implementing fixes'],
+        loop_tweak: 'Provide metrics to get loop tweak suggestions',
       }
     case 'algorithm_training_mode':
       return {

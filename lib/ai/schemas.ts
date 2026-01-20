@@ -47,16 +47,19 @@ export const hookPressureTestSchema = baseOutputSchema.extend({
 
 // Retention Leak Finder
 export const retentionLeakFinderSchema = baseOutputSchema.extend({
-  retention_score: z.number().min(1).max(10),
-  leak_points: z.array(z.object({
-    timestamp: z.string(),
-    issue: z.string(),
-    impact: z.enum(['high', 'medium', 'low']),
-    fix: z.string(),
-  })).min(1).max(5),
-  overall_pattern: z.string(),
-  quick_fixes: z.array(z.string()).min(2).max(4),
-  long_term_strategy: z.string(),
+  primary_leak: z.enum([
+    'Opening frame mismatch',
+    'Early pacing stall',
+    'Mid-post value drop',
+    'Over-explaining',
+    'Visual stagnation',
+    'Weak loop ending',
+    'Insufficient signal',
+  ]),
+  likely_cause: z.string(),
+  one_structural_fix: z.string(),
+  cut_list: z.array(z.string()).length(3),
+  loop_tweak: z.string(),
 })
 
 // Algorithm Training Mode
