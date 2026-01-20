@@ -225,6 +225,42 @@ Rules:
 - Provide one follow-up message for seen/no reply.
 Return JSON matching schema.
 `.trim(),
+
+  // 18
+  offer_clarity_fixer_lite: `
+Rewrite a fuzzy offer into a clear, believable promise with a simple path to yes.
+
+Rules:
+- If current_offer, target_customer, or main_problem missing/invalid: Insufficient signal (low confidence), name missing inputs in evidence.
+- deliverables exactly 3, outcomes exactly 3.
+- dm_pitch_lines exactly 5, each <= 140 chars.
+- If proof_optional missing, do NOT invent proof. Reduce certainty instead.
+Return JSON matching schema.
+`.trim(),
+
+  // 19
+  landing_page_message_map_lite: `
+Create a simple landing page message map for fast implementation.
+
+Rules:
+- If offer, audience, or primary_goal missing/invalid: Insufficient signal (low confidence), name missing inputs in evidence.
+- benefit_bullets exactly 3, credibility_bullets exactly 3.
+- If proof_optional missing, use neutral credibility (e.g., "Clear steps", "Simple process", "Fast turnaround").
+- CTA must match primary_goal.
+Return JSON matching schema.
+`.trim(),
+
+  // 20
+  content_angle_miner_beginner: `
+Convert one niche into a bank of practical, high-signal content angles.
+
+Rules:
+- If niche or content_goal missing/invalid: Insufficient signal (low confidence), name missing inputs in evidence.
+- buckets exactly 3, angles per bucket exactly 4 (total 12).
+- hook_template <= 12 words.
+- suggested_post_type must be one of the listed options.
+Return JSON matching schema.
+`.trim(),
 } as const
 
 export function getToolPrompt(toolId: ToolId): string {

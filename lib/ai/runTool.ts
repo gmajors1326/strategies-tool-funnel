@@ -210,6 +210,41 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
         opener: 'Provide context and purpose to get opener',
         follow_up_if_seen_no_reply: 'Provide context to get follow-up',
       }
+    case 'offer_clarity_fixer_lite':
+      return {
+        ...base,
+        offer_statement: 'Insufficient signal. Provide current_offer, target_customer, and main_problem.',
+        deliverables: ['Provide inputs to get deliverables'],
+        outcomes: ['Provide inputs to get outcomes'],
+        best_next_action: 'dm',
+        dm_pitch_lines: ['Provide inputs to get pitch lines'],
+      }
+    case 'landing_page_message_map_lite':
+      return {
+        ...base,
+        hero_headline: 'Insufficient signal',
+        hero_subheadline: 'Provide offer, audience, and primary_goal',
+        benefit_bullets: ['Provide inputs to get benefits'],
+        credibility_bullets: ['Provide inputs to get credibility'],
+        objection_line: 'Provide inputs to get objection handling',
+        cta_button_label: 'Get Started',
+        form_prompt: 'Provide inputs to get form prompt',
+      }
+    case 'content_angle_miner_beginner':
+      return {
+        ...base,
+        buckets: [
+          {
+            bucket_name: 'Insufficient signal',
+            angles: [
+              { angle_name: 'Provide niche and content_goal', who_it_hits: '', hook_template: '', save_reason: '', suggested_post_type: 'Pattern-Breaker Posts' },
+              { angle_name: 'Provide niche and content_goal', who_it_hits: '', hook_template: '', save_reason: '', suggested_post_type: 'Pattern-Breaker Posts' },
+              { angle_name: 'Provide niche and content_goal', who_it_hits: '', hook_template: '', save_reason: '', suggested_post_type: 'Pattern-Breaker Posts' },
+              { angle_name: 'Provide niche and content_goal', who_it_hits: '', hook_template: '', save_reason: '', suggested_post_type: 'Pattern-Breaker Posts' },
+            ],
+          },
+        ],
+      }
     default:
       return base
   }

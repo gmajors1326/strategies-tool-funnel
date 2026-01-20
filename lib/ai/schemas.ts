@@ -238,6 +238,40 @@ export const dmOpenerGeneratorLiteSchema = baseOutputSchema.extend({
   follow_up_if_seen_no_reply: z.string(),
 })
 
+// Offer Clarity Fixer (Lite)
+export const offerClarityFixerLiteSchema = baseOutputSchema.extend({
+  offer_statement: z.string(),
+  deliverables: z.array(z.string()).length(3),
+  outcomes: z.array(z.string()).length(3),
+  best_next_action: z.enum(['dm', 'call', 'signup', 'download']),
+  dm_pitch_lines: z.array(z.string()).length(5),
+})
+
+// Landing Page Message Map (Lite)
+export const landingPageMessageMapLiteSchema = baseOutputSchema.extend({
+  hero_headline: z.string(),
+  hero_subheadline: z.string(),
+  benefit_bullets: z.array(z.string()).length(3),
+  credibility_bullets: z.array(z.string()).length(3),
+  objection_line: z.string(),
+  cta_button_label: z.string(),
+  form_prompt: z.string(),
+})
+
+// Content Angle Miner (Beginner)
+export const contentAngleMinerBeginnerSchema = baseOutputSchema.extend({
+  buckets: z.array(z.object({
+    bucket_name: z.string(),
+    angles: z.array(z.object({
+      angle_name: z.string(),
+      who_it_hits: z.string(),
+      hook_template: z.string(),
+      save_reason: z.string(),
+      suggested_post_type: z.string(),
+    })).length(4),
+  })).length(3),
+})
+
 // Union type for all tool schemas
 export type WhyPostFailedOutput = z.infer<typeof whyPostFailedSchema>
 export type HookPressureTestOutput = z.infer<typeof hookPressureTestSchema>
@@ -256,6 +290,9 @@ export type DMIntelligenceEngineOutput = z.infer<typeof dmIntelligenceEngineSche
 export type HookRepurposerOutput = z.infer<typeof hookRepurposerSchema>
 export type EngagementDiagnosticLiteOutput = z.infer<typeof engagementDiagnosticLiteSchema>
 export type DMOpenerGeneratorLiteOutput = z.infer<typeof dmOpenerGeneratorLiteSchema>
+export type OfferClarityFixerLiteOutput = z.infer<typeof offerClarityFixerLiteSchema>
+export type LandingPageMessageMapLiteOutput = z.infer<typeof landingPageMessageMapLiteSchema>
+export type ContentAngleMinerBeginnerOutput = z.infer<typeof contentAngleMinerBeginnerSchema>
 
 // Schema registry
 export const toolSchemas = {
@@ -276,6 +313,9 @@ export const toolSchemas = {
   hook_repurposer: hookRepurposerSchema,
   engagement_diagnostic_lite: engagementDiagnosticLiteSchema,
   dm_opener_generator_lite: dmOpenerGeneratorLiteSchema,
+  offer_clarity_fixer_lite: offerClarityFixerLiteSchema,
+  landing_page_message_map_lite: landingPageMessageMapLiteSchema,
+  content_angle_miner_beginner: contentAngleMinerBeginnerSchema,
 } as const
 
 export type ToolId = keyof typeof toolSchemas

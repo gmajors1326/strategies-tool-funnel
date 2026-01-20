@@ -26,6 +26,9 @@ export default function HomePage() {
   const hookRepurposerConfig = getToolConfig('hook_repurposer')
   const engagementDiagnosticLiteConfig = getToolConfig('engagement_diagnostic_lite')
   const dmOpenerGeneratorLiteConfig = getToolConfig('dm_opener_generator_lite')
+  const offerClarityFixerLiteConfig = getToolConfig('offer_clarity_fixer_lite')
+  const landingPageMessageMapLiteConfig = getToolConfig('landing_page_message_map_lite')
+  const contentAngleMinerBeginnerConfig = getToolConfig('content_angle_miner_beginner')
 
   return (
     <div className="min-h-screen bg-[#7d9b76] text-foreground">
@@ -74,6 +77,9 @@ export default function HomePage() {
           <ToolShell config={hookRepurposerConfig} />
           <ToolShell config={engagementDiagnosticLiteConfig} />
           <ToolShell config={dmOpenerGeneratorLiteConfig} />
+          <ToolShell config={offerClarityFixerLiteConfig} />
+          <ToolShell config={landingPageMessageMapLiteConfig} />
+          <ToolShell config={contentAngleMinerBeginnerConfig} />
         </div>
       </section>
 

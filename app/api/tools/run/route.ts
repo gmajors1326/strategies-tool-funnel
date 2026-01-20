@@ -32,6 +32,9 @@ export async function POST(request: NextRequest) {
       'hook_repurposer',
       'engagement_diagnostic_lite',
       'dm_opener_generator_lite',
+      'offer_clarity_fixer_lite',
+      'landing_page_message_map_lite',
+      'content_angle_miner_beginner',
     ]
 
     if (!validToolIds.includes(toolId as ToolId)) {
@@ -205,6 +208,31 @@ export async function POST(request: NextRequest) {
         constraints: {
           max_chars: inputs.max_chars || 240,
         },
+      }
+    } else if (toolId === 'offer_clarity_fixer_lite') {
+      structuredInputs = {
+        current_offer: inputs.current_offer,
+        target_customer: inputs.target_customer,
+        main_problem: inputs.main_problem,
+        proof_optional: inputs.proof_optional || null,
+        pricing_optional: inputs.pricing_optional || null,
+        tone_optional: inputs.tone_optional || null,
+      }
+    } else if (toolId === 'landing_page_message_map_lite') {
+      structuredInputs = {
+        offer: inputs.offer,
+        audience: inputs.audience,
+        primary_goal: inputs.primary_goal,
+        objection_optional: inputs.objection_optional || null,
+        proof_optional: inputs.proof_optional || null,
+      }
+    } else if (toolId === 'content_angle_miner_beginner') {
+      structuredInputs = {
+        niche: inputs.niche,
+        offer_optional: inputs.offer_optional || null,
+        audience_stage_optional: inputs.audience_stage_optional || null,
+        content_goal: inputs.content_goal,
+        time_horizon_optional: inputs.time_horizon_optional || null,
       }
     } else if (toolId === 'controlled_experiment_planner') {
       structuredInputs = {
