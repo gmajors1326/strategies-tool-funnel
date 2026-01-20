@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { runHookRepurposer, type HookRepurposerInputs } from '@/lib/tools/hook-repurposer'
+import { runHookRepurposer } from '@/lib/tools/hook-repurposer'
 import { executeTool } from '@/lib/tool-execution'
 import { getSession } from '@/lib/auth'
 import { z } from 'zod'
