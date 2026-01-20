@@ -44,13 +44,10 @@ function createFallbackOutput(toolId: ToolId): Record<string, any> {
       return {
         ...base,
         primary_failure: 'Insufficient signal',
-        secondary_issues: ['Need more data'],
-        one_fix: 'Run a controlled test: change only the hook.',
-        hook_analysis: { strength: 'weak', suggestion: 'Test a different hook' },
-        caption_analysis: { length_appropriate: true, suggestion: 'Keep testing' },
-        cta_analysis: { present: false, effective: false, suggestion: 'Add a soft CTA' },
-        visual_analysis: { engaging: false, suggestion: 'Test different visuals' },
-        next_post_recommendation: 'Run a controlled test with one variable changed',
+        one_fix: 'Provide all required inputs: post_type, primary_goal, metrics (views, avg_watch_time_sec, saves, profile_visits), and all checkboxes.',
+        do_not_change: ['Post type', 'Goal', 'Delivery style'],
+        recommended_next_post_type: 'Pattern-Breaker',
+        one_sentence_reasoning: 'Cannot diagnose without complete input data.',
       }
     case 'hook_pressure_test':
       return {

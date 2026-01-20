@@ -8,31 +8,27 @@ const baseOutputSchema = z.object({
 
 // Why Post Failed
 export const whyPostFailedSchema = baseOutputSchema.extend({
-  primary_failure: z.string(),
-  secondary_issues: z.array(z.string()).min(1).max(3),
+  primary_failure: z.enum([
+    'Hook failed to stop scroll',
+    'Retention collapsed mid-post',
+    'Idea wasn\'t sharp enough',
+    'Too much explanation',
+    'Wrong post type for the goal',
+    'CTA mismatch',
+    'Insufficient signal',
+  ]),
   one_fix: z.string(),
-  hook_analysis: z.object({
-    strength: z.enum(['strong', 'weak', 'missing']),
-    issue: z.string().optional(),
-    suggestion: z.string(),
-  }),
-  caption_analysis: z.object({
-    length_appropriate: z.boolean(),
-    issue: z.string().optional(),
-    suggestion: z.string(),
-  }),
-  cta_analysis: z.object({
-    present: z.boolean(),
-    effective: z.boolean(),
-    issue: z.string().optional(),
-    suggestion: z.string(),
-  }),
-  visual_analysis: z.object({
-    engaging: z.boolean(),
-    issue: z.string().optional(),
-    suggestion: z.string(),
-  }),
-  next_post_recommendation: z.string(),
+  do_not_change: z.array(z.string()).min(2).max(3),
+  recommended_next_post_type: z.enum([
+    'Pattern-Breaker',
+    'Calm Insight',
+    'Nobody-Tells-You-This',
+    'Framework',
+    'Before/After Shift',
+    'Identity Alignment',
+    'Soft Direction',
+  ]),
+  one_sentence_reasoning: z.string(),
 })
 
 // Hook Pressure Test

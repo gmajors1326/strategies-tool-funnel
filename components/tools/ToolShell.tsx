@@ -31,12 +31,28 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
   const handleRun = async () => {
     // Validate required fields
     const missingFields = config.inputFields
-      .filter(field => field.required && !inputs[field.key])
+      .filter(field => {
+        if (!field.required) return false
+        const value = inputs[field.key]
+        // Check for empty string, null, undefined, or empty array
+        return value === '' || value === null || value === undefined || (Array.isArray(value) && value.length === 0)
+      })
       .map(field => field.label)
 
     if (missingFields.length > 0) {
       setError(`Please fill in: ${missingFields.join(', ')}`)
       return
+    }
+
+    // Prepare inputs - convert boolean strings to actual booleans
+    const preparedInputs: Record<string, any> = {}
+    for (const [key, value] of Object.entries(inputs)) {
+      const field = config.inputFields.find(f => f.key === key)
+      if (field?.type === 'select' && field.options?.includes('true') && field.options?.includes('false')) {
+        preparedInputs[key] = value === 'true' || value === true
+      } else {
+        preparedInputs[key] = value
+      }
     }
 
     setLoading(true)
@@ -48,7 +64,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           toolId: config.toolId,
-          inputs,
+          inputs: preparedInputs,
         }),
       })
 
@@ -93,6 +109,23 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
         )
       
       case 'select':
+        // Handle boolean selects (true/false)
+        if (field.options?.length === 2 && field.options.includes('true') && field.options.includes('false')) {
+          return (
+            <Select
+              id={field.key}
+              value={value}
+              onChange={(e) => handleInputChange(field.key, e.target.value === 'true')}
+              required={field.required}
+              className="mt-1"
+              aria-label={field.label}
+            >
+              <option value="">{field.placeholder || 'Select...'}</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </Select>
+          )
+        }
         return (
           <Select
             id={field.key}
