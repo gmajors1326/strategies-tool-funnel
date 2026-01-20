@@ -25,7 +25,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
   const [outputs, setOutputs] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [recentRuns, setRecentRuns] = useState(getRecentRunsByTool(config.toolId))
+  const [recentRuns, setRecentRuns] = useState<any[]>([])
 
   const handleInputChange = (key: string, value: any) => {
     setInputs(prev => ({ ...prev, [key]: value }))
@@ -43,13 +43,18 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
     setError(null)
   }
 
-  // Listen for storage changes to refresh recent runs
+  // Load recent runs on mount and listen for storage changes
   useEffect(() => {
-    const handleStorageChange = () => {
+    // Only access localStorage on client side
+    if (typeof window !== 'undefined') {
       setRecentRuns(getRecentRunsByTool(config.toolId))
+      
+      const handleStorageChange = () => {
+        setRecentRuns(getRecentRunsByTool(config.toolId))
+      }
+      window.addEventListener('storage', handleStorageChange)
+      return () => window.removeEventListener('storage', handleStorageChange)
     }
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
   }, [config.toolId])
 
   const handleRun = async () => {
