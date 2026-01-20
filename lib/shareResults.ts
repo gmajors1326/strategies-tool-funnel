@@ -1,4 +1,4 @@
-export function generateShareLink(outputs: Record<string, any>, _toolId: string): string {
+export function generateShareLink(outputs: Record<string, any>): string {
   try {
     // Encode outputs as base64 in URL
     const encoded = btoa(JSON.stringify({ outputs, timestamp: Date.now() }))
@@ -22,9 +22,9 @@ export function decodeShareLink(encoded: string): { outputs: Record<string, any>
   }
 }
 
-export async function copyShareLink(outputs: Record<string, any>, toolId: string): Promise<boolean> {
+export async function copyShareLink(outputs: Record<string, any>): Promise<boolean> {
   try {
-    const link = generateShareLink(outputs, toolId)
+    const link = generateShareLink(outputs)
     if (!link) return false
     
     await navigator.clipboard.writeText(link)

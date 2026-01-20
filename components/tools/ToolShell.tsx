@@ -237,7 +237,7 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
   
   const handleShare = async () => {
     if (outputs) {
-      const success = await copyShareLink(outputs, config.toolId)
+      const success = await copyShareLink(outputs)
       if (success) {
         // Show toast or notification
         alert('Share link copied to clipboard!')
