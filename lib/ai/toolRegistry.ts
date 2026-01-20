@@ -533,7 +533,7 @@ export const toolRegistry: Record<ToolId, ToolConfig> = {
   what_to_stop_posting: {
     toolId: 'what_to_stop_posting',
     title: 'What to Stop Posting',
-    description: 'Spot what's dragging your performance down — and what to post instead.',
+    description: 'Spot what\'s dragging your performance down — and what to post instead.',
     inputFields: [
       {
         key: 'recent_posts_summary',
