@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Download, FileText, FileJson } from 'lucide-react'
+import { FileText, FileJson } from 'lucide-react'
 
 interface ExportButtonsProps {
   outputs: Record<string, any>
