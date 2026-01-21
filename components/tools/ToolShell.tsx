@@ -17,6 +17,7 @@ import { LoadingProgress } from './LoadingProgress'
 import { HelpTooltip } from './HelpTooltip'
 import { ToolConfig } from '@/lib/ai/toolRegistry'
 import { RunToolResult } from '@/lib/ai/runTool'
+import type { RunResponse } from '@/src/lib/tools/runTypes'
 import { saveRecentRun, getRecentRunsByTool } from '@/lib/recentRuns'
 import { RecentRunsPanel } from './RecentRunsPanel'
 import { inputExamples } from '@/lib/inputExamples'
@@ -159,17 +160,23 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           toolId: config.toolId,
-          inputs: sanitizedInputs,
+          mode: 'paid',
+          input: sanitizedInputs,
         }),
       })
 
-      const data = await result.json()
+      const data = (await result.json()) as RunResponse
 
-      if (!result.ok) {
-        const formattedError = formatErrorMessage(data.error || 'Failed to run tool')
-        const validationErrs = extractValidationErrors(data.error || '')
+      if (!result.ok || data.status !== 'ok') {
+        const errorMessage =
+          data.status === 'locked'
+            ? data.lock?.message || 'Tool is locked.'
+            : data.error?.message || 'Failed to run tool'
+        const formattedError = formatErrorMessage(errorMessage)
+        const validationErrs = extractValidationErrors(errorMessage)
         setError(formattedError)
         setLastError(formattedError)
+        onResult?.({ success: false, error: formattedError })
         if (validationErrs.length > 0) {
           // Map validation errors to fields if possible
           const fieldErrors: Record<string, string[]> = {}
@@ -187,42 +194,48 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
         return
       }
 
-            if (data.success && data.output) {
-              setOutputs(data.output)
-              
-              // Save to recent runs
-              saveRecentRun({
-                toolId: config.toolId,
-                inputs: sanitizedInputs,
-                outputs: data.output,
-                title: `${config.title} - ${new Date().toLocaleDateString()}`,
-              })
-              
-              // Persist results for refresh persistence
-              persistResult(config.toolId, sanitizedInputs, data.output)
-              
-              // Track usage
-              trackToolUsage(config.toolId)
-              
-              // Refresh recent runs list
-              setRecentRuns(getRecentRunsByTool(config.toolId))
-              
-              onResult?.(data)
-            } else {
-              const formattedError = formatErrorMessage(data.error || 'No output received')
-              setError(formattedError)
-              setLastError(formattedError)
-            }
-          } catch (err: any) {
-            console.error('[ToolShell] Error:', err)
-            let errorMessage = err.message || 'Failed to run tool'
-            
-            // Check for quota/billing errors in catch block too
-            if (errorMessage.includes('quota') || errorMessage.includes('429')) {
-              errorMessage = 'OpenAI quota exceeded. Please check your billing at https://platform.openai.com/account/billing. You may need to add a payment method or increase your spending limit.'
-            }
-            
-            setError(errorMessage)
+      const output = data.data as Record<string, any> | undefined
+      if (!output) {
+        const formattedError = formatErrorMessage('No output received')
+        setError(formattedError)
+        setLastError(formattedError)
+        onResult?.({ success: false, error: formattedError })
+        return
+      }
+
+      setOutputs(output)
+
+      // Save to recent runs
+      saveRecentRun({
+        toolId: config.toolId,
+        inputs: sanitizedInputs,
+        outputs: output,
+        title: `${config.title} - ${new Date().toLocaleDateString()}`,
+      })
+
+      // Persist results for refresh persistence
+      persistResult(config.toolId, sanitizedInputs, output)
+
+      // Track usage
+      trackToolUsage(config.toolId)
+
+      // Refresh recent runs list
+      setRecentRuns(getRecentRunsByTool(config.toolId))
+
+      onResult?.({ success: true, output })
+    } catch (err: any) {
+      console.error('[ToolShell] Error:', err)
+      let errorMessage = err.message || 'Failed to run tool'
+
+      // Check for quota/billing errors in catch block too
+      if (errorMessage.includes('quota') || errorMessage.includes('429')) {
+        errorMessage =
+          'OpenAI quota exceeded. Please check your billing at https://platform.openai.com/account/billing. You may need to add a payment method or increase your spending limit.'
+      }
+
+      setError(errorMessage)
+      setLastError(errorMessage)
+      onResult?.({ success: false, error: errorMessage })
     } finally {
       setLoading(false)
     }
