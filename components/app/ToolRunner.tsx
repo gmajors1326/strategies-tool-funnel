@@ -9,6 +9,7 @@ type ToolRunnerProps = {
   toolId: string
   defaultMode?: 'paid' | 'trial'
   defaultTrialMode?: 'sandbox' | 'live' | 'preview'
+  planId?: 'free' | 'pro_monthly' | 'team' | 'lifetime'
   onResult?: (result: any) => void
 }
 
@@ -129,15 +130,16 @@ export default function ToolRunner({
   toolId,
   defaultMode = 'paid',
   defaultTrialMode = 'sandbox',
+  planId,
   onResult,
 }: ToolRunnerProps) {
   const tool = useMemo(() => getToolMeta(toolId), [toolId])
-  const [mode, setMode] = useState<'paid' | 'trial'>(defaultMode)
   const [trialMode, setTrialMode] = useState<'sandbox' | 'live' | 'preview'>(defaultTrialMode)
   const [values, setValues] = useState<Record<string, any>>(() => buildInitialValues(tool.fields))
   const [isRunning, setIsRunning] = useState(false)
   const [result, setResult] = useState<RunResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const effectiveMode: 'paid' | 'trial' = planId ? (planId === 'free' ? 'trial' : 'paid') : defaultMode
 
   useEffect(() => {
     setValues(buildInitialValues(tool.fields))
@@ -165,8 +167,8 @@ export default function ToolRunner({
     for (const f of tool.fields) input[f.key] = coerceValue(f, values[f.key])
     return {
       toolId,
-      mode,
-      trialMode: mode === 'trial' ? trialMode : undefined,
+      mode: effectiveMode,
+      trialMode: effectiveMode === 'trial' ? trialMode : undefined,
       input,
     }
   }
@@ -428,32 +430,13 @@ export default function ToolRunner({
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setMode('paid')}
-            className={`rounded-md px-2 py-1 text-xs ${
-              mode === 'paid'
-                ? 'bg-[hsl(var(--surface-4))] text-[hsl(var(--foreground))]'
-                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted))]'
-            }`}
-          >
-            Paid
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('trial')}
-            className={`rounded-md px-2 py-1 text-xs ${
-              mode === 'trial'
-                ? 'bg-[hsl(var(--surface-4))] text-[hsl(var(--foreground))]'
-                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted))]'
-            }`}
-          >
-            Trial
-          </button>
+          <span className="rounded-md bg-[hsl(var(--surface-4))] px-2 py-1 text-xs text-[hsl(var(--foreground))]">
+            {effectiveMode === 'trial' ? 'Trial' : 'Paid'}
+          </span>
         </div>
       </div>
 
-      {mode === 'trial' ? (
+      {effectiveMode === 'trial' ? (
         <div className="flex gap-2">
           {(['sandbox', 'preview', 'live'] as const).map((m) => (
             <button

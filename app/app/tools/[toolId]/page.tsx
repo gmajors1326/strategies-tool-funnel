@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import ToolRunner from '@/components/app/ToolRunner'
 import { getToolMeta } from '@/src/lib/tools/registry'
+import { requireUser } from '@/src/lib/auth/requireUser'
+import { getOrCreateEntitlement } from '@/src/lib/usage/entitlements'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +25,10 @@ export default async function ToolDetailPage({ params, searchParams }: PageProps
     return notFound()
   }
 
+  const session = await requireUser()
+  const entitlement = await getOrCreateEntitlement(session.id)
+  const planId = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
+
   const mode = readParam(searchParams, 'mode')
   const trialMode = readParam(searchParams, 'trialMode')
 
@@ -30,6 +36,7 @@ export default async function ToolDetailPage({ params, searchParams }: PageProps
     <section className="space-y-4">
       <ToolRunner
         toolId={tool.id}
+        planId={planId}
         defaultMode={mode === 'trial' ? 'trial' : 'paid'}
         defaultTrialMode={trialMode === 'preview' ? 'preview' : trialMode === 'live' ? 'live' : 'sandbox'}
       />

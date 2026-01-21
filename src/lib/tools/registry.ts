@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 export type PlanId = 'free' | 'pro_monthly' | 'team' | 'lifetime'
 
 export type ToolFieldType =
@@ -43,6 +45,7 @@ export type ToolMeta = {
   aiLevel: 'none' | 'light' | 'heavy'
   tokensPerRun: number
   dailyRunsByPlan: Record<PlanId, number>
+  inputSchema?: z.ZodTypeAny
   fields: ToolField[]
 }
 
@@ -82,6 +85,11 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 2,
     dailyRunsByPlan: { free: 5, pro_monthly: 50, team: 100, lifetime: 200 },
+    inputSchema: z.object({
+      hook: z.string().min(1, 'Hook is required.'),
+      audience: z.string().optional(),
+      format: z.enum(['reel', 'carousel', 'story']).optional(),
+    }),
     fields: [
       {
         key: 'hook',
@@ -124,6 +132,11 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 2,
     dailyRunsByPlan: { free: 5, pro_monthly: 50, team: 100, lifetime: 200 },
+    inputSchema: z.object({
+      contentSummary: z.string().min(1, 'Content summary is required.'),
+      cta: z.string().min(1, 'CTA used is required.'),
+      offerType: z.enum(['lead_magnet', 'call', 'course', 'service', 'product']),
+    }),
     fields: [
       { key: 'contentSummary', label: 'Content summary', type: 'longText', required: true },
       {
@@ -160,6 +173,12 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'heavy',
     tokensPerRun: 4,
     dailyRunsByPlan: { free: 0, pro_monthly: 30, team: 80, lifetime: 150 },
+    inputSchema: z.object({
+      leadMessage: z.string().min(1, 'Their message is required.'),
+      goal: z.enum(['qualify', 'book_call', 'close', 'objection']),
+      tone: z.enum(['calm', 'friendly', 'direct']).optional(),
+      offerOneLiner: z.string().optional(),
+    }),
     fields: [
       { key: 'leadMessage', label: 'Their message', type: 'longText', required: true },
       {
@@ -207,6 +226,16 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 4,
     dailyRunsByPlan: { free: 0, pro_monthly: 30, team: 80, lifetime: 150 },
+    inputSchema: z.object({
+      reelScript: z.string().min(1, 'Reel script / outline is required.'),
+      lengthSeconds: z.coerce
+        .number()
+        .int()
+        .min(3, 'Length must be at least 3 seconds.')
+        .max(180, 'Length must be 180 seconds or less.')
+        .optional(),
+      targetAction: z.enum(['save', 'follow', 'dm', 'click']).optional(),
+    }),
     fields: [
       { key: 'reelScript', label: 'Reel script / outline', type: 'longText', required: true },
       {
@@ -245,6 +274,16 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 2,
     dailyRunsByPlan: { free: 5, pro_monthly: 50, team: 100, lifetime: 200 },
+    inputSchema: z.object({
+      topic: z.string().min(1, 'Topic is required.'),
+      angle: z.enum(['contrarian', 'nobody', 'truth', 'before_after']).optional(),
+      lengthSeconds: z.coerce
+        .number()
+        .int()
+        .min(6, 'Length must be at least 6 seconds.')
+        .max(60, 'Length must be 60 seconds or less.')
+        .optional(),
+    }),
     fields: [
       { key: 'topic', label: 'Topic', type: 'shortText', required: true },
       {
@@ -284,6 +323,11 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'heavy',
     tokensPerRun: 3,
     dailyRunsByPlan: { free: 0, pro_monthly: 30, team: 80, lifetime: 150 },
+    inputSchema: z.object({
+      offer: z.string().min(1, 'Offer description is required.'),
+      audience: z.string().min(1, "Who it's for is required."),
+      price: z.string().optional(),
+    }),
     fields: [
       { key: 'offer', label: 'Offer description', type: 'longText', required: true },
       { key: 'audience', label: "Who it's for", type: 'shortText', required: true },
@@ -302,6 +346,11 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'heavy',
     tokensPerRun: 3,
     dailyRunsByPlan: { free: 0, pro_monthly: 30, team: 80, lifetime: 150 },
+    inputSchema: z.object({
+      whatYouDo: z.string().min(1, 'What you do is required.'),
+      whoFor: z.string().min(1, "Who it's for is required."),
+      proof: z.string().optional(),
+    }),
     fields: [
       { key: 'whatYouDo', label: 'What you do', type: 'longText', required: true },
       { key: 'whoFor', label: "Who it's for", type: 'shortText', required: true },
@@ -320,6 +369,10 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 2,
     dailyRunsByPlan: { free: 5, pro_monthly: 50, team: 100, lifetime: 200 },
+    inputSchema: z.object({
+      source: z.string().min(1, 'Source content is required.'),
+      outputs: z.array(z.enum(['reels', 'carousel', 'stories', 'captions'])).min(1, 'Outputs are required.'),
+    }),
     fields: [
       { key: 'source', label: 'Source content', type: 'longText', required: true },
       {
@@ -349,6 +402,9 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 2,
     dailyRunsByPlan: { free: 5, pro_monthly: 50, team: 100, lifetime: 200 },
+    inputSchema: z.object({
+      postTopic: z.string().min(1, 'Post topic is required.'),
+    }),
     fields: [{ key: 'postTopic', label: 'Post topic', type: 'shortText', required: true }],
   },
 
@@ -363,6 +419,11 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 2,
     dailyRunsByPlan: { free: 5, pro_monthly: 50, team: 100, lifetime: 200 },
+    inputSchema: z.object({
+      bio: z.string().min(1, 'Current bio is required.'),
+      link: z.string().optional(),
+      offer: z.string().optional(),
+    }),
     fields: [
       { key: 'bio', label: 'Current bio', type: 'longText', required: true },
       { key: 'link', label: 'Link destination', type: 'shortText', required: false },
@@ -381,6 +442,9 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 2,
     dailyRunsByPlan: { free: 5, pro_monthly: 50, team: 100, lifetime: 200 },
+    inputSchema: z.object({
+      bio: z.string().min(1, 'Bio is required.'),
+    }),
     fields: [{ key: 'bio', label: 'Bio', type: 'longText', required: true }],
   },
 
@@ -395,6 +459,15 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 3,
     dailyRunsByPlan: { free: 0, pro_monthly: 30, team: 80, lifetime: 150 },
+    inputSchema: z.object({
+      topic: z.string().min(1, 'Topic is required.'),
+      slides: z.coerce
+        .number()
+        .int()
+        .min(5, 'Slide count must be at least 5.')
+        .max(12, 'Slide count must be 12 or less.')
+        .optional(),
+    }),
     fields: [
       { key: 'topic', label: 'Topic', type: 'shortText', required: true },
       {
@@ -421,6 +494,10 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 3,
     dailyRunsByPlan: { free: 0, pro_monthly: 30, team: 80, lifetime: 150 },
+    inputSchema: z.object({
+      goal: z.string().min(1, 'Goal is required.'),
+      context: z.string().optional(),
+    }),
     fields: [
       { key: 'goal', label: 'Goal', type: 'shortText', required: true },
       { key: 'context', label: 'Context', type: 'longText', required: false },
@@ -438,6 +515,10 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'light',
     tokensPerRun: 1,
     dailyRunsByPlan: { free: 10, pro_monthly: 100, team: 200, lifetime: 300 },
+    inputSchema: z.object({
+      topic: z.string().min(1, 'Topic is required.'),
+      niche: z.string().optional(),
+    }),
     fields: [
       { key: 'topic', label: 'Topic', type: 'shortText', required: true },
       { key: 'niche', label: 'Niche', type: 'shortText', required: false },
@@ -455,6 +536,10 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'heavy',
     tokensPerRun: 5,
     dailyRunsByPlan: { free: 0, pro_monthly: 10, team: 40, lifetime: 80 },
+    inputSchema: z.object({
+      competitorHandle: z.string().min(1, 'Competitor handle is required.'),
+      yourAngle: z.string().optional(),
+    }),
     fields: [
       { key: 'competitorHandle', label: 'Competitor handle', type: 'shortText', required: true },
       { key: 'yourAngle', label: 'Your advantage', type: 'shortText', required: false },
@@ -472,6 +557,10 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'heavy',
     tokensPerRun: 4,
     dailyRunsByPlan: { free: 0, pro_monthly: 30, team: 80, lifetime: 150 },
+    inputSchema: z.object({
+      last30: z.string().min(1, 'Last 30 days metrics (paste) is required.'),
+      priority: z.enum(['followers', 'leads', 'sales', 'watch_time']).optional(),
+    }),
     fields: [
       { key: 'last30', label: 'Last 30 days metrics (paste)', type: 'longText', required: true },
       {
@@ -501,6 +590,9 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'heavy',
     tokensPerRun: 2,
     dailyRunsByPlan: { free: 5, pro_monthly: 50, team: 100, lifetime: 200 },
+    inputSchema: z.object({
+      audience: z.string().min(1, 'Audience is required.'),
+    }),
     fields: [{ key: 'audience', label: 'Audience', type: 'shortText', required: true }],
   },
 
@@ -515,6 +607,11 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'heavy',
     tokensPerRun: 4,
     dailyRunsByPlan: { free: 0, pro_monthly: 30, team: 80, lifetime: 150 },
+    inputSchema: z.object({
+      objection: z.string().min(1, 'Objection is required.'),
+      offer: z.string().optional(),
+      channel: z.enum(['dm', 'comment', 'caption']).optional(),
+    }),
     fields: [
       { key: 'objection', label: 'Objection', type: 'longText', required: true },
       { key: 'offer', label: 'Your offer', type: 'shortText', required: false },
@@ -544,6 +641,10 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'heavy',
     tokensPerRun: 5,
     dailyRunsByPlan: { free: 0, pro_monthly: 10, team: 40, lifetime: 80 },
+    inputSchema: z.object({
+      offer: z.string().min(1, 'Offer is required.'),
+      timeframe: z.enum(['3d', '7d', '14d']),
+    }),
     fields: [
       { key: 'offer', label: 'Offer', type: 'longText', required: true },
       {
@@ -571,6 +672,15 @@ export const TOOL_REGISTRY: Record<string, ToolMeta> = {
     aiLevel: 'heavy',
     tokensPerRun: 2,
     dailyRunsByPlan: { free: 5, pro_monthly: 50, team: 100, lifetime: 200 },
+    inputSchema: z.object({
+      topicPillars: z.string().min(1, 'Topic pillars are required.'),
+      postsPerWeek: z.coerce
+        .number()
+        .int()
+        .min(1, 'Posts per week must be at least 1.')
+        .max(14, 'Posts per week must be 14 or less.')
+        .optional(),
+    }),
     fields: [
       { key: 'topicPillars', label: 'Topic pillars (comma separated)', type: 'shortText', required: true },
       {
