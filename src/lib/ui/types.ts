@@ -26,4 +26,5 @@ export type UiConfig = {
   }
   myTools: ToolUiItem[]
   catalog: ToolUiItem[]
+  catalogTools: ToolUiItem[]
 }

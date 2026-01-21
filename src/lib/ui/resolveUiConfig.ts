@@ -117,5 +117,6 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
     },
     myTools,
     catalog,
+    catalogTools: catalog,
   }
 }

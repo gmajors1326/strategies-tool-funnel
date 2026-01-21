@@ -14,11 +14,17 @@ export default async function ExplorePage() {
           Browse every tool and see what&apos;s unlocked.
         </p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        {uiConfig.catalog.map((tool) => (
-          <ToolCard key={tool.id} tool={tool} />
-        ))}
-      </div>
+      {uiConfig.catalogTools.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-6 text-center text-sm text-[hsl(var(--muted))]">
+          No tools found. If this is production, your registry or access mapping is miswired.
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {uiConfig.catalogTools.map((tool) => (
+            <ToolCard key={tool.id} tool={tool as any} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }
