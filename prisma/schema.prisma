@@ -31,6 +31,7 @@ model User {
   profile                Profile?
   toolRuns               ToolRun[]
   planItems              PlanItem[]
+  supportTickets         SupportTicket[]
   entitlements           PlanEntitlement?
   otps                   Otp[]
   aiUsageLogs            AiUsageLog[]
