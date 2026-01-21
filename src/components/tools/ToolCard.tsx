@@ -60,7 +60,7 @@ export function ToolCard({ tool }: ToolCardProps) {
 
       {/* CTA */}
       <Link href={cta.href} className="block">
-        <Button className="w-full" variant={tool.lockState === 'ok' || tool.lockState === 'locked_trial' ? 'default' : 'outline'}>
+        <Button className="w-full" variant={tool.lockState === 'ok' || tool.lockState === 'locked_trial' ? 'primary' : 'outline'}>
           {cta.label}
         </Button>
       </Link>
