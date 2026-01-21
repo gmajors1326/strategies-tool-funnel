@@ -49,5 +49,6 @@ export async function GET() {
     tokensRemaining: tokenBalance,
     purchasedTokensRemaining: tokenBalance,
     resetsAtISO: usage.resetsAt.toISOString(),
+    perToolRunsUsed: (usage.perToolRunsUsed as Record<string, number>) || {},
   })
 }

@@ -96,7 +96,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
         reason,
         cta,
         tokensPerRun: tool.tokensPerRun,
-        runsRemainingToday: Math.max(planRunCap - usageWindow.runsUsed, 0),
+        runsRemainingToday: Math.max(toolCap - toolRunsUsed, 0),
         bonusRunsRemaining: bonus.remainingRuns,
       }
     })
