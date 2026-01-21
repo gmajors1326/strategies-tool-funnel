@@ -5,6 +5,7 @@ import { getActiveOrg, requireOrgRole, logAudit } from '@/src/lib/orgs/orgs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  // TODO: replace (auth): derive user ID from authenticated session.
   const userId = 'user_dev_1'
   const { searchParams } = new URL(request.url)
   const month = searchParams.get('month') || ''

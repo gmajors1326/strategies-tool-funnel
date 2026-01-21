@@ -243,12 +243,16 @@ export default function AnalyticsDashboard() {
                 { key: 'runs', label: 'Runs', right: true },
                 { key: 'uniqueUsers', label: 'Users', right: true },
                 { key: 'successRatePct', label: 'Success', right: true },
+                { key: 'lockedRatePct', label: 'Locked', right: true },
+                { key: 'errorRatePct', label: 'Error', right: true },
               ]}
               rows={data.toolUsage.map((t) => ({
                 toolId: t.toolId,
                 runs: t.runs.toLocaleString(),
                 uniqueUsers: t.uniqueUsers.toLocaleString(),
                 successRatePct: `${t.successRatePct}%`,
+                lockedRatePct: `${t.lockedRatePct}%`,
+                errorRatePct: `${t.errorRatePct}%`,
               }))}
             />
           </TableCard>

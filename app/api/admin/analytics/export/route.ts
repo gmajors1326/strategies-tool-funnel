@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, canViewAnalytics } from '@/lib/adminAuth'
-import { buildMockAnalytics } from '@/lib/analytics/mockData'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+import { buildAnalytics } from '@/src/lib/analytics/buildAnalytics'
 
 export const runtime = 'nodejs'
 
@@ -22,15 +22,12 @@ function toCSV(rows: Record<string, any>[]) {
 
 export async function GET(req: NextRequest) {
   try {
-    const admin = await requireAdmin()
-    if (!canViewAnalytics(admin.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    await requireAdmin()
 
     const { searchParams } = new URL(req.url)
     const format = (searchParams.get('format') ?? 'json').toLowerCase()
 
-    const data = buildMockAnalytics({
+    const data = await buildAnalytics({
       preset: (searchParams.get('preset') ?? '7d') as any,
       from: searchParams.get('from') ?? undefined,
       to: searchParams.get('to') ?? undefined,

@@ -4,6 +4,7 @@ import { Button } from '@/components/app/Button'
 export const dynamic = 'force-dynamic'
 
 export default async function BillingPage() {
+  // TODO: replace (ui): fetch billing data from authenticated backend endpoint.
   const uiConfig = await fetchUiConfig()
 
   return (

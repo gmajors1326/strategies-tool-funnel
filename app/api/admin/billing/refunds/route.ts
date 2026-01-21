@@ -6,5 +6,6 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   await requireAdmin()
+  // TODO: replace (billing): load refund queue from billing system.
   return NextResponse.json({ refunds: getMockRefunds() })
 }

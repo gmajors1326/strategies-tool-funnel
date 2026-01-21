@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/src/components/ui/Button'
 
 export default function AdminTokensPage() {
+  // TODO: replace (auth): prefill admin tools from authenticated admin context.
   const [userId, setUserId] = useState('user_dev_1')
   const [tokensDelta, setTokensDelta] = useState('1000')
   const [reason, setReason] = useState('adjustment')
@@ -13,6 +14,7 @@ export default function AdminTokensPage() {
     setStatus('working')
     const res = await fetch('/api/admin/tokens/adjust', {
       method: 'POST',
+      // TODO: replace (auth): send admin identity via real auth/session.
       headers: { 'Content-Type': 'application/json', 'x-admin-id': 'admin_dev_1' },
       body: JSON.stringify({ userId, tokensDelta: Number(tokensDelta), reason }),
     })
@@ -24,6 +26,7 @@ export default function AdminTokensPage() {
     setStatus('granting')
     const res = await fetch('/api/admin/bonus-runs/grant', {
       method: 'POST',
+      // TODO: replace (auth): send admin identity via real auth/session.
       headers: { 'Content-Type': 'application/json', 'x-admin-id': 'admin_dev_1' },
       body: JSON.stringify({ userId, runsGranted: 3, reason: 'admin grant' }),
     })

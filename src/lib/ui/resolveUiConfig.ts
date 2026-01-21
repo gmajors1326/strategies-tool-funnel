@@ -13,6 +13,7 @@ type UserPlanState = {
 }
 
 export const resolveUserPlanState = (): UserPlanState => {
+  // TODO: replace (auth): derive user plan state from authenticated session + billing.
   return {
     user: {
       id: 'user_dev_1',

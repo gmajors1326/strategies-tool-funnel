@@ -4,6 +4,7 @@ import { Button } from '@/components/app/Button'
 export const dynamic = 'force-dynamic'
 
 export default async function AccountPage() {
+  // TODO: replace (ui): fetch account data from authenticated backend endpoint.
   const uiConfig = await fetchUiConfig()
 
   return (

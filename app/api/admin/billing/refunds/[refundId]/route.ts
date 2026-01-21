@@ -9,5 +9,6 @@ export async function GET(
   { params }: { params: { refundId: string } }
 ) {
   await requireAdmin()
+  // TODO: replace (billing): fetch refund details from billing system.
   return NextResponse.json(getMockRefundDetail(params.refundId))
 }

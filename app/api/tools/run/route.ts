@@ -1,7 +1,7 @@
+// app/api/tools/run/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { TOOL_META } from '@/src/lib/tools/toolMeta'
-import { validateInput } from '@/src/lib/tools/validate'
 import { runnerRegistry } from '@/src/lib/tools/runnerRegistry'
 import { addRun } from '@/src/lib/tools/runStore'
 import { getBonusRunsRemainingForTool, consumeOneBonusRun } from '@/src/lib/tool/bonusRuns'
@@ -15,6 +15,8 @@ import type { RunRequest, RunResponse } from '@/src/lib/tools/runTypes'
 import { buildLock } from '@/src/lib/tools/accessGate'
 import { prisma } from '@/src/lib/prisma'
 import { getActiveOrg, getMembership, logToolRun } from '@/src/lib/orgs/orgs'
+import { requireUser } from '@/src/lib/auth/requireUser'
+import { validateInput } from '@/src/lib/tools/validate'
 
 const requestSchema = z.object({
   toolId: z.string(),
@@ -28,32 +30,42 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   const startedAt = Date.now()
+
+  const session = await requireUser()
+  const userId = session.id
+
   const body = await request.json()
   const data = requestSchema.parse(body) as RunRequest
-  const userId = 'user_dev_1'
+
   const entitlement = await getOrCreateEntitlement(userId)
   const personalPlan = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
   const personalPlanKey = getPlanKeyFromEntitlement(personalPlan)
+
   const tool = TOOL_META.find((item) => item.id === data.toolId)
 
   const activeOrg = await getActiveOrg(userId)
   const membership = activeOrg ? await getMembership(userId, activeOrg.id) : null
   const orgPlan = activeOrg?.plan as 'business' | 'enterprise' | undefined
   const orgPlanKey = getPlanKeyFromOrgPlan(orgPlan)
+
   const personalCaps = getPlanCaps(personalPlanKey)
+
   const planRunCap = orgPlanKey
     ? getPlanCaps(orgPlanKey).runsPerDay
     : orgPlan === 'enterprise'
       ? orgRunCapByPlan.enterprise
       : personalCaps.runsPerDay
+
   const planTokenCap = orgPlanKey
     ? getPlanCaps(orgPlanKey).tokensPerDay
     : orgPlan === 'enterprise'
       ? orgAiTokenCapByPlan.enterprise
       : personalCaps.tokensPerDay
 
+  const runId = data.runId || crypto.randomUUID()
+
   const recordRun = async (params: {
-    status: string
+    status: 'ok' | 'locked' | 'error'
     lockCode?: string | null
     meteringMode?: string
     tokensCharged?: number
@@ -62,7 +74,7 @@ export async function POST(request: NextRequest) {
       orgId: activeOrg?.id,
       userId,
       toolId: data.toolId,
-      runId: data.runId || 'pending',
+      runId,
       meteringMode: params.meteringMode || 'tokens',
       tokensCharged: params.tokensCharged || 0,
       status: params.status,
@@ -101,6 +113,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Idempotency: if a runId was provided and already exists in ledger, reject
   if (data.runId) {
     const existing = await prisma.tokenLedger.findFirst({ where: { runId: data.runId } })
     if (existing) {
@@ -236,8 +249,9 @@ export async function POST(request: NextRequest) {
 
   const trial = getTrialState(userId, tool.id)
   const bonusRemaining = await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
+
   if (data.mode === 'trial' && !trial.allowed && bonusRemaining <= 0) {
-    await recordRun({ status: 'locked', lockCode: 'locked_trial' })
+    await recordRun({ status: 'locked', lockCode: 'locked_trial', meteringMode: 'trial' })
     return NextResponse.json<RunResponse>(
       {
         status: 'locked',
@@ -253,11 +267,12 @@ export async function POST(request: NextRequest) {
 
   const tokenBalance = await getTokenBalance(userId)
   const requiredTokens = tool.tokensPerRun
+
   const meteringMode =
     bonusRemaining > 0 && data.mode !== 'trial' ? 'bonus_run' : data.mode === 'trial' ? 'trial' : 'tokens'
 
   if (meteringMode === 'tokens' && tokenBalance < requiredTokens) {
-    await recordRun({ status: 'locked', lockCode: 'locked_tokens' })
+    await recordRun({ status: 'locked', lockCode: 'locked_tokens', meteringMode: 'tokens' })
     return NextResponse.json<RunResponse>(
       {
         status: 'locked',
@@ -282,7 +297,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const runId = data.runId || crypto.randomUUID()
   try {
     const output = await runner(data, {
       user: { id: userId, planId: personalPlan },
@@ -330,6 +344,7 @@ export async function POST(request: NextRequest) {
     })
 
     const updatedBalance = await getTokenBalance(userId)
+
     const response: RunResponse = {
       status: 'ok',
       data: output.output,
@@ -347,31 +362,35 @@ export async function POST(request: NextRequest) {
         orgId: activeOrg?.id ?? null,
       },
     }
-    addRun(userId, response)
-    await logToolRun({
-      orgId: activeOrg?.id,
-      userId,
-      toolId: tool.id,
-      runId,
+
+    // Persist recent runs (DB-backed now)
+    await addRun(userId, response)
+
+    await recordRun({
+      status: 'ok',
       meteringMode,
       tokensCharged: chargedTokens,
-      status: 'ok',
-      durationMs: Date.now() - startedAt,
+      lockCode: null,
     })
+
     return NextResponse.json(response)
-  } catch {
-    await logToolRun({
-      orgId: activeOrg?.id,
-      userId,
-      toolId: tool.id,
-      runId,
-      meteringMode: 'tokens',
-      tokensCharged: 0,
-      status: 'error',
-      durationMs: Date.now() - startedAt,
-    })
+  } catch (err: any) {
+    // Ensure we do not spend tokens or increment usage on failure (transaction only happens on success)
+    await recordRun({ status: 'error', lockCode: 'tool_error' })
+
     return NextResponse.json<RunResponse>(
-      { status: 'error', error: { message: 'Tool execution failed.', code: 'TOOL_ERROR' } },
+      {
+        status: 'error',
+        error: {
+          message: 'Tool execution failed.',
+          code: 'TOOL_ERROR',
+          // Keep details minimal; avoid leaking user input/output.
+          details:
+            process.env.NODE_ENV !== 'production'
+              ? { message: err?.message || String(err) }
+              : undefined,
+        },
+      },
       { status: 500 }
     )
   }

@@ -14,6 +14,7 @@ export default function AdminHomePage() {
         {['Platform Status', 'Queue Health', 'Payments'].map((card) => (
           <div key={card} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
             <p className="text-sm font-semibold">{card}</p>
+            {/* TODO: replace (ui): show real system status metrics. */}
             <p className="text-xs text-[hsl(var(--muted))]">Mock status ok.</p>
           </div>
         ))}

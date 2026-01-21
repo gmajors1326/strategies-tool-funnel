@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     plan?: string
   }
 
+  // TODO: replace (auth): derive user ID from authenticated session.
   const userId = 'user_dev_1'
   const stripe = getStripe()
   const baseUrl = getBaseUrl(request)

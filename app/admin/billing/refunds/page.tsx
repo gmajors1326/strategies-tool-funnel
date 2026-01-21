@@ -5,6 +5,7 @@ import { Table } from '@/components/app/Table'
 export const dynamic = 'force-dynamic'
 
 export default function AdminRefundsPage() {
+  // TODO: replace (billing): load refunds from billing provider.
   const refunds = getMockRefunds()
 
   return (

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { grantBonusRuns } from '@/src/lib/tool/bonusRuns'
 
 async function getAuthedAdminId(req: Request): Promise<string> {
+  // TODO: replace (auth): verify admin identity via real auth/session middleware.
   const devHeader = req.headers.get('x-admin-id')
   if (process.env.NODE_ENV === 'development' && devHeader) return devHeader
   throw new Error('Unauthorized: missing admin auth integration for getAuthedAdminId()')

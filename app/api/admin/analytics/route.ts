@@ -1,10 +1,21 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/src/lib/auth/requireAdmin'
-import { getMockAnalytics } from '@/src/lib/mock/data'
+import { buildAnalytics } from '@/src/lib/analytics/buildAnalytics'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   await requireAdmin()
-  return NextResponse.json(getMockAnalytics())
+
+  const { searchParams } = new URL(req.url)
+  const data = await buildAnalytics({
+    preset: (searchParams.get('preset') ?? '7d') as any,
+    from: searchParams.get('from') ?? undefined,
+    to: searchParams.get('to') ?? undefined,
+    toolId: searchParams.get('toolId') ?? undefined,
+    plan: searchParams.get('plan') ?? undefined,
+    country: searchParams.get('country') ?? undefined,
+  })
+
+  return NextResponse.json(data)
 }

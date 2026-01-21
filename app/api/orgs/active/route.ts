@@ -4,6 +4,7 @@ import { getMembership, setActiveOrg, logAudit } from '@/src/lib/orgs/orgs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
+  // TODO: replace (auth): derive user ID from authenticated session.
   const userId = 'user_dev_1'
   const body = await request.json()
   const orgId = String(body.orgId || '')

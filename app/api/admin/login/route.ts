@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const ADMIN_COOKIE_NAME = 'admin_session'
+// TODO: replace (auth): validate admin login against real identity provider.
 const ADMIN_EMAIL = process.env.ADMIN_LOGIN_EMAIL || 'gmajors1326@gmail.com'
+// TODO: replace (auth): remove hardcoded fallback password and use secure auth flow.
 const ADMIN_PASSWORD = process.env.ADMIN_LOGIN_PASSWORD || '123456'
 
 function encodeSession(payload: { userId: string; email: string; role: 'admin' }): string {
@@ -20,6 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = NextResponse.json({ success: true })
+    // TODO: replace (auth): use real admin user ID from auth provider.
     const session = encodeSession({
       userId: 'admin-user',
       email: ADMIN_EMAIL,

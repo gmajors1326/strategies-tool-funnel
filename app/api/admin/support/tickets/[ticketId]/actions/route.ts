@@ -16,6 +16,7 @@ export async function POST(
   await requireAdmin()
   const body = await request.json()
   const { actionType, payload } = actionSchema.parse(body)
+  // TODO: replace (ui): execute real admin action against support system.
   return NextResponse.json({
     ticketId: params.ticketId,
     actionType,

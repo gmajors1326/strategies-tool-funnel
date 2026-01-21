@@ -80,6 +80,23 @@ model ToolRun {
   @@index([expiresAt])
 }
 
+model PlanItem {
+  id        String   @id @default(uuid())
+  userId    String
+  toolId    String
+  title     String
+  inputs    Json
+  outputs   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([toolId])
+  @@index([createdAt])
+}
+
 model Otp {
   id        String   @id @default(cuid())
   email     String

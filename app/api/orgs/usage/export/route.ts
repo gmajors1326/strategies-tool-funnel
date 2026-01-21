@@ -8,6 +8,7 @@ const toCsv = (rows: string[][]) =>
   rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
 
 export async function GET(request: NextRequest) {
+  // TODO: replace (auth): derive user ID from authenticated session.
   const userId = 'user_dev_1'
   const { searchParams } = new URL(request.url)
   const month = searchParams.get('month') || ''

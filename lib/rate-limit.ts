@@ -19,6 +19,7 @@ interface RateLimitStore {
   reset(key: string): Promise<void>
 }
 
+// TODO: replace (usage): use persistent rate limit store in all environments.
 // In-memory store for development/testing
 class MemoryStore implements RateLimitStore {
   private store: Map<string, { count: number; resetTime: number }> = new Map()
@@ -153,6 +154,7 @@ class RedisStore implements RateLimitStore {
 
 // Create store instance
 const createStore = (): RateLimitStore => {
+  // TODO: replace (usage): remove in-memory fallback for production traffic.
   const useRedis = process.env.REDIS_URL && process.env.NODE_ENV === 'production'
   return useRedis ? new RedisStore() : new MemoryStore()
 }

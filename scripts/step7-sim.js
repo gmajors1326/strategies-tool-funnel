@@ -3,6 +3,7 @@ const { createOrg, logAudit, setActiveOrg } = require('../src/lib/orgs/orgs')
 const { createInvite, acceptInvite } = require('../src/lib/orgs/invites')
 
 async function run() {
+  // TODO: replace (usage): drive simulation from real user fixtures or test harness.
   const userId = 'user_dev_1'
   const org = await createOrg({ name: 'Acme', slug: 'acme', ownerId: userId, domain: 'acme.com' })
   await logAudit({ orgId: org.id, userId, action: 'org_created', targetId: org.id })

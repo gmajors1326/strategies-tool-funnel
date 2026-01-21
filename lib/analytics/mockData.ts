@@ -9,6 +9,7 @@ function daysBetween(from: Date, to: Date) {
   return Math.max(1, Math.round((to.getTime() - from.getTime()) / ms) + 1)
 }
 
+// TODO: replace (ui): build analytics from real telemetry data.
 export function buildMockAnalytics(filters: AnalyticsFilters): AnalyticsResponse {
   const to = filters.to ? new Date(filters.to) : new Date()
   const from = filters.from
@@ -65,10 +66,54 @@ export function buildMockAnalytics(filters: AnalyticsFilters): AnalyticsResponse
       { step: 'Paid', users: Math.round(totalSignups * 0.12), conversionPct: 19.4 },
     ],
     toolUsage: [
-      { toolId: 'hook-analyzer', runs: 1240, uniqueUsers: 318, successRatePct: 97.2, avgLatencyMs: 480, avgCostUsd: 0.012 },
-      { toolId: 'cta-match', runs: 882, uniqueUsers: 241, successRatePct: 98.4, avgLatencyMs: 310, avgCostUsd: 0.0 },
-      { toolId: 'dm-intel', runs: 510, uniqueUsers: 144, successRatePct: 94.1, avgLatencyMs: 1120, avgCostUsd: 0.046 },
-      { toolId: 'yt-analyzer', runs: 190, uniqueUsers: 66, successRatePct: 92.6, avgLatencyMs: 1780, avgCostUsd: 0.071 },
+      {
+        toolId: 'hook-analyzer',
+        runs: 1240,
+        uniqueUsers: 318,
+        successRatePct: 97.2,
+        lockedRatePct: 1.4,
+        errorRatePct: 1.4,
+        lockedRuns: 18,
+        errorRuns: 17,
+        avgLatencyMs: 480,
+        avgCostUsd: 0.012,
+      },
+      {
+        toolId: 'cta-match',
+        runs: 882,
+        uniqueUsers: 241,
+        successRatePct: 98.4,
+        lockedRatePct: 1.0,
+        errorRatePct: 0.6,
+        lockedRuns: 9,
+        errorRuns: 5,
+        avgLatencyMs: 310,
+        avgCostUsd: 0.0,
+      },
+      {
+        toolId: 'dm-intel',
+        runs: 510,
+        uniqueUsers: 144,
+        successRatePct: 94.1,
+        lockedRatePct: 3.1,
+        errorRatePct: 2.8,
+        lockedRuns: 16,
+        errorRuns: 14,
+        avgLatencyMs: 1120,
+        avgCostUsd: 0.046,
+      },
+      {
+        toolId: 'yt-analyzer',
+        runs: 190,
+        uniqueUsers: 66,
+        successRatePct: 92.6,
+        lockedRatePct: 4.2,
+        errorRatePct: 3.2,
+        lockedRuns: 8,
+        errorRuns: 6,
+        avgLatencyMs: 1780,
+        avgCostUsd: 0.071,
+      },
     ],
     aiCosts: Array.from({ length: n }).map((_, i) => ({
       date: sessions[i].date,

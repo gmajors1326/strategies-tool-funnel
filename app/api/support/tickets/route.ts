@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   await requireUser()
+  // TODO: replace (ui): load real support tickets for the authenticated user.
   return NextResponse.json({ tickets: getMockTickets() })
 }
 
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
   const user = await requireUser()
   const body = await request.json()
   const { category } = createTicketSchema.parse(body)
+  // TODO: replace (ui): persist support ticket and return real ID/metadata.
   const ticketId = `tkt_${Math.random().toString(36).slice(2, 7)}`
 
   return NextResponse.json({

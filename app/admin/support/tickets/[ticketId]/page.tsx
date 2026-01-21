@@ -4,6 +4,7 @@ import { Button } from '@/components/app/Button'
 export const dynamic = 'force-dynamic'
 
 export default function AdminTicketDetailPage({ params }: { params: { ticketId: string } }) {
+  // TODO: replace (ui): load ticket detail and user context from backend.
   const ticket = getMockTicketDetail(params.ticketId)
 
   return (
@@ -24,6 +25,7 @@ export default function AdminTicketDetailPage({ params }: { params: { ticketId: 
         <div className="space-y-3">
           <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
             <p className="text-sm font-semibold">User Context</p>
+            {/* TODO: replace (ui): render real user context from backend. */}
             <p className="text-xs text-[hsl(var(--muted))]">User ID: user_dev_1</p>
             <p className="text-xs text-[hsl(var(--muted))]">Plan: pro_monthly</p>
           </div>

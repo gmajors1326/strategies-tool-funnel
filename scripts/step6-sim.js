@@ -3,6 +3,7 @@ const { createLedgerEntry, getTokenBalance } = require('../src/lib/tokens/ledger
 const { ensureUsageWindow, incrementUsageTx } = require('../src/lib/usage/dailyUsage')
 
 async function run() {
+  // TODO: replace (usage): drive simulation from real user fixtures or test harness.
   const userId = 'user_dev_1'
   console.log('--- Step 6 simulation ---')
 

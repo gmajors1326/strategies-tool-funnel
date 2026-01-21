@@ -24,6 +24,7 @@ export function ToolFeedbackPanel({ toolId, eligible, onGranted }: ToolFeedbackP
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // TODO: replace (auth): rely on real session identity instead of dev header.
         ...(process.env.NODE_ENV === 'development' ? { 'x-user-id': 'user_dev_1' } : {}),
       },
       body: JSON.stringify({ toolId, rating, goal, message }),

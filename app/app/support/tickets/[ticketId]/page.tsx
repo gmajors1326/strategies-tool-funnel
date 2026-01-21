@@ -5,6 +5,7 @@ import { Input } from '@/components/app/Input'
 export const dynamic = 'force-dynamic'
 
 export default function SupportTicketDetailPage({ params }: { params: { ticketId: string } }) {
+  // TODO: replace (ui): load support ticket detail from backend.
   const ticket = getMockTicketDetail(params.ticketId)
 
   return (

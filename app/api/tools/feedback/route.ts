@@ -3,6 +3,7 @@ import { createToolFeedback, listToolFeedback } from '@/src/lib/tool/feedback'
 import { getBonusRunGrantExists, getBonusRunsSummary, grantBonusRuns } from '@/src/lib/tool/bonusRuns'
 
 async function getAuthedUserId(req: Request): Promise<string> {
+  // TODO: replace (auth): verify user identity via real auth/session middleware.
   const devHeader = req.headers.get('x-user-id')
   if (process.env.NODE_ENV === 'development' && devHeader) return devHeader
   throw new Error('Unauthorized: missing auth integration for getAuthedUserId()')

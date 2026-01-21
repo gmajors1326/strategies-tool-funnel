@@ -14,6 +14,7 @@ export default function SupportPage() {
         {['Reset limits', 'Billing help', 'Tool failed', 'Account issues'].map((item) => (
           <div key={item} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
             <p className="text-sm font-semibold">{item}</p>
+            {/* TODO: replace (ui): wire troubleshoot actions to support flows. */}
             <p className="text-xs text-[hsl(var(--muted))]">Mock troubleshoot action.</p>
             <Button variant="outline">Start</Button>
           </div>

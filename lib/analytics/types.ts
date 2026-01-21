@@ -37,6 +37,10 @@ export type ToolUsageRow = {
   runs: number
   uniqueUsers: number
   successRatePct: number
+  lockedRatePct: number
+  errorRatePct: number
+  lockedRuns: number
+  errorRuns: number
   avgLatencyMs: number
   avgCostUsd: number
 }

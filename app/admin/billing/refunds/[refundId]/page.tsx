@@ -4,6 +4,7 @@ import { Button } from '@/components/app/Button'
 export const dynamic = 'force-dynamic'
 
 export default function AdminRefundDetailPage({ params }: { params: { refundId: string } }) {
+  // TODO: replace (billing): load refund detail from billing provider.
   const refund = getMockRefundDetail(params.refundId)
 
   return (

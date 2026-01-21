@@ -12,6 +12,7 @@ type CacheEnvelope = {
   staleUntil: number
 }
 
+// TODO: replace (usage): use persistent cache store outside development.
 class MemoryCache implements CacheStore {
   private store = new Map<string, CacheEnvelope>()
 
@@ -117,6 +118,7 @@ class RedisCache implements CacheStore {
 }
 
 const createCacheStore = (): CacheStore => {
+  // TODO: replace (usage): remove in-memory cache fallback for production traffic.
   const useRedis = !!process.env.REDIS_URL && process.env.NODE_ENV === 'production'
   return useRedis ? new RedisCache() : new MemoryCache()
 }
