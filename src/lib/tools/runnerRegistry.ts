@@ -1,6 +1,8 @@
+import { z } from 'zod'
 import type { RunRequest } from '@/src/lib/tools/runTypes'
 import type { ToolMeta } from '@/src/lib/tools/toolMeta'
-import { TOOL_REGISTRY } from '@/src/lib/tools/registry'
+import { getOpenAIClient, pickModel, safetyIdentifierFromUserId } from '@/src/lib/ai/openaiClient'
+import { zodTextFormat } from 'openai/helpers/zod'
 
 export type RunContext = {
   user: { id: string; planId: 'free' | 'pro_monthly' | 'team' | 'lifetime' }
@@ -9,487 +11,556 @@ export type RunContext = {
   logger: { info: (msg: string, meta?: any) => void; error: (msg: string, meta?: any) => void }
 }
 
-type Runner = (req: RunRequest, ctx: RunContext) => Promise<{ output: any }>
-
-const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n))
-
-const safeStr = (v: any) => (typeof v === 'string' ? v : v == null ? '' : String(v))
-const safeNum = (v: any) => {
-  const n = Number(v)
-  return Number.isFinite(n) ? n : null
-}
-
-const makeScoreFromText = (text: string) => clamp(Math.floor(text.trim().length * 1.6), 30, 95)
-
-const deterministicFallback: Runner = async (req) => {
-  const input = req.input ?? {}
-  const text = safeStr(input.text || input.note || input.topic || input.hook || input.caption || '')
-  const score = makeScoreFromText(text)
-
-  return {
-    output: {
-      summary: 'Deterministic analysis (fallback)',
-      score,
-      inputsSeen: Object.keys(input),
-      quickFixes: ['Shorten the first line.', 'Make the promise explicit.', 'Remove extra qualifiers.'],
-    },
-  }
-}
-
-const lightAiFallback: Runner = async (req) => {
-  const input = req.input ?? {}
-  const topic = safeStr(input.topic || input.hook || input.subject || input.offer || input.text || 'your topic')
-
-  return {
-    output: {
-      summary: 'Light AI (mock) output — replace with real model call later.',
-      variations: [
-        `Stop scrolling: ${topic}.`,
-        `Nobody tells you this about ${topic}.`,
-        `The fastest fix for ${topic}.`,
-        `You’re doing ${topic} wrong — here’s why.`,
-        `If you want results, do THIS with ${topic}.`,
-      ],
-      nextStep: 'Pick one variation and tighten to 6–10 words.',
-    },
-  }
-}
-
-const heavyAiFallback: Runner = async (req) => {
-  const input = req.input ?? {}
-  const context = safeStr(input.context || input.caption || input.postText || input.topic || input.offer || '')
-
-  return {
-    output: {
-      summary: 'Heavy AI (mock) output — replace with real model call later.',
-      analysis: [
-        'Main friction: unclear promise.',
-        'Secondary friction: weak specificity.',
-        'Conversion leak: CTA doesn’t match offer.',
-      ],
-      rewrite: context ? `${context.slice(0, 160)}… (tightened + clarified)` : 'Provide context to get a rewrite.',
-      actionPlan: ['Rewrite hook', 'Add one proof point', 'Single CTA', 'Loop ending back to opening frame'],
-    },
-  }
-}
-
 /**
- * Custom runners for key tools (stable outputs your UI can count on).
+ * IMPORTANT:
+ * - Each tool uses Structured Outputs (Zod) so you ALWAYS get valid JSON.
+ * - Your /api/tools/run already meters tokens; this file just makes outputs real.
  */
-const customRunners: Record<string, Runner> = {
-  // DM / conversation
-  'dm-opener': async (req) => {
-    const niche = safeStr(req.input?.niche)
-    const offer = safeStr(req.input?.offer)
-    const leadContext = safeStr(req.input?.leadContext || req.input?.lead || req.input?.context)
-    const tone = safeStr(req.input?.tone || 'direct')
-    const goal = safeStr(req.input?.goal || 'get_reply')
 
-    const seed = `${niche} | ${offer} | ${leadContext}`.trim()
-    const score = makeScoreFromText(seed)
+// ---------- Shared Schemas ----------
+const HookAnalyzerSchema = z.object({
+  hookScore: z.number().min(0).max(100),
+  hookType: z.enum(['Curiosity', 'Direct', 'Contrarian', 'Authority', 'Story', 'Shock']),
+  strongerHooks: z.array(z.string()).min(3).max(7),
+  notes: z.array(z.string()).min(2).max(8),
+})
 
-    return {
-      output: {
-        goal,
-        tone,
-        openerOptions: [
-          `Quick one — saw your work in ${niche}. Are you open to a fast idea to help with ${offer}?`,
-          `Real question: what’s the biggest thing blocking results in ${niche} right now?`,
-          `Not pitching — but if I could show a simple way to improve ${offer}, would you want it?`,
-        ],
-        followups: [
-          `Totally get it. If I send one quick idea, would you prefer it here or a short Loom?`,
-          `If you’re not the right person, who handles this for you?`,
-        ],
-        confidenceScore: score,
-      },
-    }
-  },
+const CtaMatchAnalyzerSchema = z.object({
+  matchScore: z.number().min(0).max(100),
+  mismatchReasons: z.array(z.string()),
+  improvedCtas: z.array(z.string()).min(3).max(8),
+})
 
-  'dm-reply-builder': async (req) => {
-    const lastMessage = safeStr(req.input?.lastMessage || req.input?.message || req.input?.text)
-    const desiredOutcome = safeStr(req.input?.outcome || 'continue_convo')
+const IgPostIntelSchema = z.object({
+  hookQuality: z.enum(['Strong', 'Medium', 'Weak']),
+  clarity: z.enum(['Clear', 'Mixed', 'Unclear']),
+  savePotential: z.enum(['High', 'Medium', 'Low']),
+  rewriteCaption: z.string(),
+  hookOptions: z.array(z.string()).min(3).max(8),
+  pacingNotes: z.array(z.string()).min(2).max(10),
+})
 
-    return {
-      output: {
-        desiredOutcome,
-        replies: [
-          `Totally fair — quick question so I don’t waste your time: what would make this a “yes” for you?`,
-          `Got it. If I can show you a simple example, are you open to a 30-second version?`,
-          `No worries. What are you focusing on this month instead?`,
-        ],
-        shorter: `Fair — what would make it worth it?`,
-        basedOn: lastMessage ? lastMessage.slice(0, 140) : '(no message provided)',
-      },
-    }
-  },
+const YtVideoIntelSchema = z.object({
+  retentionRisks: z.array(z.string()).min(2).max(10),
+  hookRewrite: z.string(),
+  titleOptions: z.array(z.string()).min(3).max(8),
+  pacingNotes: z.array(z.string()).min(2).max(10),
+})
 
-  'dm-objection-crusher': async (req) => {
-    const objection = safeStr(req.input?.objection || req.input?.message || req.input?.text)
-    return {
-      output: {
-        objection,
-        angles: [
-          { angle: 'Reframe', reply: `Makes sense. The goal isn’t “more content,” it’s fewer posts that convert.` },
-          { angle: 'Proof', reply: `Totally. Here’s what typically changes when people fix the hook + CTA alignment.` },
-          { angle: 'Risk reversal', reply: `If it doesn’t help, you don’t keep it. Simple.` },
-        ],
-        quickReply: `Fair. What’s the one thing you’d need to see to feel confident?`,
-      },
-    }
-  },
+const DmOpenerSchema = z.object({
+  openerOptions: z.array(z.string()).min(5).max(12),
+  followUpOptions: z.array(z.string()).min(3).max(8),
+  doNotSay: z.array(z.string()).min(3).max(10),
+  tone: z.enum(['Calm', 'Direct', 'Playful', 'Professional']),
+})
 
-  'dm-intelligence': async (req) => {
-    const lead = safeStr(req.input?.lead || req.input?.leadContext || req.input?.profileSummary || '')
-    const offer = safeStr(req.input?.offer || '')
-    const score = clamp(makeScoreFromText(lead + offer), 20, 95)
+const EngagementDiagnosticSchema = z.object({
+  diagnosis: z.array(z.string()).min(3).max(10),
+  fixes: z.array(z.string()).min(3).max(12),
+  nextPostIdeas: z.array(z.string()).min(3).max(10),
+  priority: z.enum(['Fix Hook', 'Fix Offer', 'Fix Targeting', 'Fix Format', 'Fix Consistency']),
+})
 
-    return {
-      output: {
-        leadScore: score,
-        leadTier: score >= 80 ? 'Hot' : score >= 60 ? 'Warm' : 'Cold',
-        riskFlags: score < 60 ? ['Low clarity on need', 'No urgency signal'] : [],
-        bestAngle: score >= 70 ? 'Direct CTA to next step' : 'Value-first micro win',
-        recommendedSequence: [
-          'Opener that asks one qualifying question',
-          'Micro win (1 tip / 1 insight)',
-          'Permission-based CTA',
-          'Time-bound close',
-        ],
-      },
-    }
-  },
+const HookRepurposerSchema = z.object({
+  hookVariants: z.array(z.string()).min(10).max(25),
+  best3: z.array(z.string()).length(3),
+  recommendedAngle: z.enum(['Contrarian', 'Practical', 'Curiosity', 'Authority', 'Story']),
+})
 
-  // Hooks / reels performance
-  'hook-repurposer': async (req) => {
-    const topic = safeStr(req.input?.topic || req.input?.hook || req.input?.text || 'your topic')
-    const score = makeScoreFromText(topic)
+const DmIntelligenceSchema = z.object({
+  leadScore: z.number().min(0).max(100),
+  intentSignals: z.array(z.string()).min(2).max(12),
+  bestNextMessage: z.string(),
+  objectionGuesses: z.array(z.string()).min(1).max(8),
+  closePaths: z.array(z.string()).min(2).max(8),
+})
 
-    return {
-      output: {
-        hookScore: score,
-        hookTypes: ['Curiosity', 'Direct', 'Contrarian', 'Proof-first', 'Fear-of-missing-out'],
-        hooks: [
-          `Stop doing this with ${topic}.`,
-          `Nobody tells you this about ${topic}.`,
-          `The fastest fix for ${topic}.`,
-          `If ${topic} isn’t working, it’s because of THIS.`,
-          `The simple rule that makes ${topic} convert.`,
-          `You’re losing reach because of how you start ${topic}.`,
-          `Do this before you post about ${topic}.`,
-          `Here’s the uncomfortable truth about ${topic}.`,
-        ],
-        notes: ['Aim for 6–10 words', 'Make the promise concrete', 'End on the opening frame for a loop'],
-      },
-    }
-  },
+const RetentionLeakFinderSchema = z.object({
+  leaks: z.array(z.string()).min(3).max(10),
+  fixes: z.array(z.string()).min(3).max(12),
+  rewriteOutline: z.array(z.string()).min(4).max(14),
+  loopSuggestion: z.string(),
+})
 
-  'hook-library-builder': async (req) => {
-    const niche = safeStr(req.input?.niche || req.input?.audience || 'your niche')
-    return {
-      output: {
-        niche,
-        buckets: {
-          contrarian: [
-            `Most ${niche} advice is backwards.`,
-            `Stop copying what big accounts do.`,
-            `The “best practice” that kills reach.`,
-          ],
-          nobodyTellsYou: [
-            `Nobody tells you this about saves.`,
-            `Nobody tells you the real job of a hook.`,
-            `Nobody tells you to design for rewatches.`,
-          ],
-          proofFirst: [
-            `I changed one thing and got 2x saves.`,
-            `This is why your Reels stall at 1.2k views.`,
-            `Before/after: what actually moved the needle.`,
-          ],
+// ---- Extra schemas to get you to 20 tools ----
+const CaptionShortenerSchema = z.object({
+  shortCaption: z.string(),
+  ultraShortCaption: z.string(),
+  ctaOptions: z.array(z.string()).min(3).max(8),
+})
+
+const ReelScriptBuilderSchema = z.object({
+  hook: z.string(),
+  beats: z.array(z.string()).min(4).max(12),
+  onScreenText: z.array(z.string()).min(4).max(12),
+  loopEnding: z.string(),
+})
+
+const ContentCalendarSchema = z.object({
+  days: z
+    .array(
+      z.object({
+        day: z.number().min(1).max(30),
+        reelIdea: z.string(),
+        hook: z.string(),
+        cta: z.string(),
+      })
+    )
+    .min(7)
+    .max(30),
+})
+
+const HashtagCuratorSchema = z.object({
+  hashtagSets: z
+    .array(
+      z.object({
+        label: z.string(),
+        tags: z.array(z.string()).min(10).max(25),
+      })
+    )
+    .min(2)
+    .max(6),
+})
+
+const BioOptimizerSchema = z.object({
+  bio: z.string(),
+  nameField: z.string(),
+  profileCta: z.string(),
+  pinnedPostIdeas: z.array(z.string()).min(3).max(8),
+})
+
+const OfferClarifierSchema = z.object({
+  oneLiner: z.string(),
+  bullets: z.array(z.string()).min(3).max(8),
+  whoItsFor: z.string(),
+  whoItsNotFor: z.string(),
+  pricingPositioning: z.string(),
+})
+
+const CommentReplyGeneratorSchema = z.object({
+  replies: z.array(z.string()).min(8).max(20),
+  pinnedReply: z.string(),
+  questionsToAskBack: z.array(z.string()).min(3).max(10),
+})
+
+const StorySequencePlannerSchema = z.object({
+  slides: z
+    .array(
+      z.object({
+        slide: z.number().min(1).max(20),
+        text: z.string(),
+        stickerSuggestion: z.string().optional(),
+      })
+    )
+    .min(3)
+    .max(12),
+  dmPrompt: z.string(),
+})
+
+const CarouselOutlineSchema = z.object({
+  title: z.string(),
+  slides: z.array(z.string()).min(5).max(10),
+  caption: z.string(),
+  saveHook: z.string(),
+})
+
+const AudienceClarifierSchema = z.object({
+  target: z.string(),
+  pains: z.array(z.string()).min(3).max(10),
+  desires: z.array(z.string()).min(3).max(10),
+  languageToUse: z.array(z.string()).min(5).max(15),
+  languageToAvoid: z.array(z.string()).min(5).max(15),
+})
+
+const CompetitorAngleFinderSchema = z.object({
+  competitorPatterns: z.array(z.string()).min(3).max(12),
+  gapsToExploit: z.array(z.string()).min(3).max(12),
+  angles: z.array(z.string()).min(5).max(15),
+  first3Reels: z.array(z.string()).min(3).max(3),
+})
+
+// ---------- Tool Spec Map (20 tools) ----------
+type AiLevel = 'none' | 'light' | 'heavy'
+type ToolSpec = {
+  aiLevel: AiLevel
+  schema: z.ZodTypeAny
+  buildMessages: (req: RunRequest, ctx: RunContext) => Array<{ role: 'system' | 'user'; content: string }>
+}
+
+const TOOL_SPECS: Record<string, ToolSpec> = {
+  // 1
+  'hook-analyzer': {
+    aiLevel: 'light',
+    schema: HookAnalyzerSchema,
+    buildMessages: (req) => {
+      const hook = String(req.input.hook ?? req.input.topic ?? '').trim()
+      return [
+        {
+          role: 'system',
+          content:
+            'You are an elite short-form hook editor. Output must match the provided JSON schema. No extra text.',
         },
-      },
-    }
+        {
+          role: 'user',
+          content: `Analyze this hook and improve it:\n\nHOOK:\n${hook || '(missing hook)'}\n\nReturn: score, type, strongerHooks, notes.`,
+        },
+      ]
+    },
   },
 
-  'retention-leak-finder': async (req) => {
-    const len = safeNum(req.input?.videoLengthSeconds) ?? safeNum(req.input?.length) ?? 30
-    const hookText = safeStr(req.input?.hookText || req.input?.hook || '')
-    const avg = safeNum(req.input?.avgViewDurationSeconds)
-
-    const risk = clamp(Math.floor((len - (avg ?? len * 0.45)) * 1.2), 0, 100)
-
-    return {
-      output: {
-        videoLengthSeconds: len,
-        avgViewDurationSeconds: avg ?? null,
-        retentionRiskScore: risk,
-        likelyLeaks: [
-          hookText.length < 12 ? 'Hook too vague / too long' : 'Hook okay, but payoff timing may be late',
-          'No pattern interrupt in first 2 seconds',
-          'Ending doesn’t loop back to start',
-        ],
-        fixes: [
-          'Make first frame pattern-breaking (text-only or hard cut)',
-          'One idea only; cut supporting points',
-          'Add micro-tension (“here’s the twist…”) at 2–3 seconds',
-          'Loop the last frame back to the first',
-        ],
-      },
-    }
+  // 2
+  'cta-match-analyzer': {
+    aiLevel: 'light',
+    schema: CtaMatchAnalyzerSchema,
+    buildMessages: (req) => {
+      const offer = String(req.input.offer ?? '').trim()
+      const cta = String(req.input.cta ?? '').trim()
+      return [
+        { role: 'system', content: 'You are a conversion strategist. Output JSON matching schema only.' },
+        {
+          role: 'user',
+          content: `Score CTA-to-offer match.\n\nOFFER:\n${offer}\n\nCTA:\n${cta}\n\nReturn: matchScore, mismatchReasons, improvedCtas.`,
+        },
+      ]
+    },
   },
 
-  'reel-script-6sec': async (req) => {
-    const topic = safeStr(req.input?.topic || req.input?.text || 'your topic')
-    return {
-      output: {
-        format: '6-second reel',
-        script: [
-          { t: '0.0–1.2s', line: `Stop. ${topic}.` },
-          { t: '1.2–4.8s', line: `Do this instead: one clear promise + one proof line.` },
-          { t: '4.8–6.0s', line: `Save this. (Loop to opening frame)` },
-        ],
-        onScreenText: [`Stop: ${topic}`, 'One promise. One proof.', 'Save this.'],
-      },
-    }
+  // 3
+  'ig-post-intelligence': {
+    aiLevel: 'heavy',
+    schema: IgPostIntelSchema,
+    buildMessages: (req) => {
+      const caption = String(req.input.caption ?? req.input.postText ?? '').trim()
+      return [
+        { role: 'system', content: 'You analyze IG posts for retention + saves. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Analyze this caption and rewrite it for clarity + saves.\n\nCAPTION:\n${caption}\n\nReturn: hookQuality, clarity, savePotential, rewriteCaption, hookOptions, pacingNotes.`,
+        },
+      ]
+    },
   },
 
-  'reel-do-not-post': async (req) => {
-    const hook = safeStr(req.input?.hook || req.input?.hookText || '')
-    const verdict = hook.length < 10 ? 'Do not post' : 'Postable'
-    return {
-      output: {
-        verdict,
-        reasons:
-          verdict === 'Do not post'
-            ? ['Hook is too vague/short', 'No clear promise', 'Low curiosity tension']
-            : ['Hook has a concrete claim', 'Viewer knows what they get'],
-        fix: verdict === 'Do not post' ? 'Rewrite hook as: “Stop doing X. Do Y to get Z.”' : 'Tighten to fewer words.',
-      },
-    }
+  // 4
+  'yt-video-intelligence': {
+    aiLevel: 'heavy',
+    schema: YtVideoIntelSchema,
+    buildMessages: (req) => {
+      const title = String(req.input.title ?? '').trim()
+      const desc = String(req.input.description ?? req.input.desc ?? '').trim()
+      return [
+        { role: 'system', content: 'You are a retention-first YouTube strategist. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Analyze this YouTube video concept for retention risks.\n\nTITLE:\n${title || '(missing)'}\n\nDESCRIPTION/NOTES:\n${desc || '(none)'}\n\nReturn: retentionRisks, hookRewrite, titleOptions, pacingNotes.`,
+        },
+      ]
+    },
   },
 
-  // Account diagnostics / positioning
-  'engagement-diagnostic': async (req) => {
-    const caption = safeStr(req.input?.caption || req.input?.postText || req.input?.text || '')
-    const score = makeScoreFromText(caption)
-
-    return {
-      output: {
-        engagementScore: score,
-        biggestIssues: score < 70 ? ['Weak hook', 'Unclear CTA', 'Too much setup'] : ['Minor tightening'],
-        savePotential: score > 80 ? 'High' : 'Medium',
-        rewrite: caption ? `${caption.slice(0, 140)}… (cleaned + stronger CTA)` : 'Provide a caption/post text for rewrite.',
-        commentBait: [
-          'Which one are you guilty of?',
-          'Want the checklist? Comment “LIST”.',
-          'Do you agree or nah?',
-        ],
-      },
-    }
+  // 5
+  'dm-opener': {
+    aiLevel: 'light',
+    schema: DmOpenerSchema,
+    buildMessages: (req) => {
+      const niche = String(req.input.niche ?? req.input.audience ?? '').trim()
+      const context = String(req.input.context ?? req.input.theirPost ?? '').trim()
+      return [
+        { role: 'system', content: 'You write non-cringe DMs that start conversations. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Generate DM openers.\n\nNICHE/AUDIENCE:\n${niche || '(unknown)'}\n\nCONTEXT (their post / situation):\n${context || '(none)'}\n\nReturn: openerOptions, followUpOptions, doNotSay, tone.`,
+        },
+      ]
+    },
   },
 
-  'profile-clarity-audit': async (req) => {
-    const bio = safeStr(req.input?.bio || req.input?.text || '')
-    return {
-      output: {
-        currentBio: bio,
-        problems: ['Who it’s for is unclear', 'No outcome/promise', 'No CTA'],
-        upgradedBioOptions: [
-          'I help [audience] get [result] with [method]. DM “START” for the playbook.',
-          'Daily [niche] systems. Fewer posts, more buyers. Grab the free template ↓',
-        ],
-      },
-    }
+  // 6
+  'engagement-diagnostic': {
+    aiLevel: 'heavy',
+    schema: EngagementDiagnosticSchema,
+    buildMessages: (req) => {
+      const stats = String(req.input.stats ?? req.input.metrics ?? '').trim()
+      const sample = String(req.input.samplePost ?? req.input.post ?? '').trim()
+      return [
+        { role: 'system', content: 'You diagnose IG engagement issues with practical fixes. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Diagnose engagement and prescribe fixes.\n\nSTATS:\n${stats || '(none)'}\n\nSAMPLE POST/CAPTION:\n${sample || '(none)'}\n\nReturn: diagnosis, fixes, nextPostIdeas, priority.`,
+        },
+      ]
+    },
   },
 
-  'niche-magnet': async (req) => {
-    const audience = safeStr(req.input?.audience || req.input?.niche || 'your audience')
-    const outcome = safeStr(req.input?.outcome || 'a clear result')
-    return {
-      output: {
-        positioning: `This account is for ${audience} who want ${outcome}.`,
-        contentAngles: ['Mistakes to avoid', 'Proof-first breakdowns', 'Simple systems', 'Hot takes'],
-        bioOneLiner: `Helping ${audience} get ${outcome} — without posting more.`,
-      },
-    }
+  // 7
+  'hook-repurposer': {
+    aiLevel: 'light',
+    schema: HookRepurposerSchema,
+    buildMessages: (req) => {
+      const base = String(req.input.hook ?? req.input.topic ?? req.input.idea ?? '').trim()
+      return [
+        { role: 'system', content: 'You generate MANY hook variants fast. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Repurpose this into multiple hooks optimized for retention.\n\nBASE:\n${base}\n\nReturn: hookVariants (10-25), best3 (exactly 3), recommendedAngle.`,
+        },
+      ]
+    },
   },
 
-  'bio-optimizer': async (req) => {
-    const niche = safeStr(req.input?.niche || req.input?.audience || '')
-    const offer = safeStr(req.input?.offer || '')
-    return {
-      output: {
-        bios: [
-          `I help ${niche || '[audience]'} get ${offer || '[result]'} with short, high-retention Reels. DM “START”.`,
-          `${niche || 'Creators'} → ${offer || 'more leads'} using calm, conversion-first content. Free template ↓`,
-        ],
-        profileChecklist: ['Clear niche', 'Outcome promise', 'Proof line', 'One CTA', 'Link destination matches CTA'],
-      },
-    }
+  // 8
+  'dm-intelligence': {
+    aiLevel: 'heavy',
+    schema: DmIntelligenceSchema,
+    buildMessages: (req) => {
+      const convo = String(req.input.conversation ?? req.input.thread ?? '').trim()
+      const offer = String(req.input.offer ?? '').trim()
+      return [
+        { role: 'system', content: 'You analyze DMs for intent and next best move. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Analyze this DM thread and recommend next message.\n\nOFFER:\n${offer || '(none)'}\n\nDM THREAD:\n${convo || '(missing)'}\n\nReturn: leadScore, intentSignals, bestNextMessage, objectionGuesses, closePaths.`,
+        },
+      ]
+    },
   },
 
-  // Offers / conversion sanity
-  'cta-match-analyzer': async (req) => {
-    const offer = safeStr(req.input?.offer || '')
-    const cta = safeStr(req.input?.cta || '')
-    const score = clamp(Math.floor((offer.length + cta.length) * 1.9), 30, 100)
-
-    return {
-      output: {
-        matchScore: score,
-        mismatchReasons: score < 60 ? ['CTA too generic', 'Offer not explicit', 'No clear next step'] : [],
-        improvedCtas: [
-          'DM “PLAN” and I’ll send the template.',
-          'Comment “CHECKLIST” and I’ll drop it.',
-          'Grab the 2-minute walkthrough — link in bio.',
-        ],
-      },
-    }
+  // 9
+  'retention-leak-finder': {
+    aiLevel: 'light',
+    schema: RetentionLeakFinderSchema,
+    buildMessages: (req) => {
+      const script = String(req.input.script ?? req.input.transcript ?? '').trim()
+      return [
+        { role: 'system', content: 'You find retention leaks in short-form scripts. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Find retention leaks and fixes.\n\nSCRIPT/TRANSCRIPT:\n${script || '(missing)'}\n\nReturn: leaks, fixes, rewriteOutline, loopSuggestion.`,
+        },
+      ]
+    },
   },
 
-  'offer-one-liner': async (req) => {
-    const who = safeStr(req.input?.audience || req.input?.niche || '[audience]')
-    const result = safeStr(req.input?.result || req.input?.outcome || '[result]')
-    const method = safeStr(req.input?.method || '[method]')
-    return {
-      output: {
-        oneLiners: [
-          `I help ${who} get ${result} using ${method}.`,
-          `${who}: get ${result} without doing more — using ${method}.`,
-          `Get ${result} in ${who} with ${method}.`,
-        ],
-      },
-    }
+  // 10
+  'caption-shortener': {
+    aiLevel: 'light',
+    schema: CaptionShortenerSchema,
+    buildMessages: (req) => {
+      const caption = String(req.input.caption ?? '').trim()
+      return [
+        { role: 'system', content: 'You compress captions without losing the point. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Shorten this caption.\n\nCAPTION:\n${caption || '(missing)'}\n\nReturn: shortCaption, ultraShortCaption, ctaOptions.`,
+        },
+      ]
+    },
   },
 
-  'landing-page-teardown': async (req) => {
-    const url = safeStr(req.input?.url || '')
-    const offer = safeStr(req.input?.offer || '')
-    return {
-      output: {
-        url: url || '(not provided)',
-        teardown: [
-          'Above-the-fold promise needs a concrete outcome and timeframe.',
-          'Add proof: 1 screenshot/testimonial or metric.',
-          'Single CTA repeated 3x (top/mid/bottom).',
-          'Remove extra navigation.',
-        ],
-        suggestedHero: offer ? `Get ${offer} without posting more.` : 'Make the promise concrete: result + timeframe + who it’s for.',
-      },
-    }
+  // 11
+  'reel-script-builder': {
+    aiLevel: 'heavy',
+    schema: ReelScriptBuilderSchema,
+    buildMessages: (req) => {
+      const topic = String(req.input.topic ?? req.input.idea ?? '').trim()
+      const audience = String(req.input.audience ?? '').trim()
+      return [
+        { role: 'system', content: 'You write retention-optimized Reels scripts. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Write a Reel script.\n\nTOPIC:\n${topic || '(missing)'}\n\nAUDIENCE:\n${audience || '(unknown)'}\n\nReturn: hook, beats, onScreenText, loopEnding.`,
+        },
+      ]
+    },
   },
 
-  // Content planning / consistency
-  '30-day-reels-plan': async (req) => {
-    const niche = safeStr(req.input?.niche || req.input?.audience || 'your niche')
-    return {
-      output: {
-        niche,
-        schedule: Array.from({ length: 30 }).map((_, i) => ({
-          day: i + 1,
-          idea: i % 3 === 0 ? 'Contrarian take' : i % 3 === 1 ? 'Nobody tells you this' : 'Before/after shift',
-          hook: i % 3 === 0 ? 'Stop doing this.' : i % 3 === 1 ? 'Nobody tells you…' : 'I used to think… now I do…',
-        })),
-      },
-    }
+  // 12
+  'content-calendar': {
+    aiLevel: 'heavy',
+    schema: ContentCalendarSchema,
+    buildMessages: (req) => {
+      const niche = String(req.input.niche ?? '').trim()
+      const days = Number(req.input.days ?? 14)
+      return [
+        { role: 'system', content: 'You build a realistic posting calendar. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Create a ${days}-day content calendar.\n\nNICHE:\n${niche || '(missing)'}\n\nReturn: days[{day,reelIdea,hook,cta}].`,
+        },
+      ]
+    },
   },
 
-  'content-pillar-generator': async (req) => {
-    const niche = safeStr(req.input?.niche || req.input?.audience || 'your niche')
-    return {
-      output: {
-        niche,
-        pillars: [
-          { name: 'Mistakes', examples: ['3 reasons your content stalls', 'The hook error you repeat'] },
-          { name: 'Systems', examples: ['My 6-second script', 'One-idea Reels framework'] },
-          { name: 'Proof', examples: ['Before/after rewrite', 'Audit breakdown'] },
-          { name: 'Hot takes', examples: ['Why consistency beats virality', 'Why likes don’t matter'] },
-        ],
-      },
-    }
+  // 13
+  'hashtag-curator': {
+    aiLevel: 'light',
+    schema: HashtagCuratorSchema,
+    buildMessages: (req) => {
+      const niche = String(req.input.niche ?? '').trim()
+      const topic = String(req.input.topic ?? '').trim()
+      return [
+        { role: 'system', content: 'You provide hashtags as supporting metadata. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Create 2-6 hashtag sets.\n\nNICHE:\n${niche}\n\nTOPIC:\n${topic}\n\nReturn: hashtagSets[{label,tags[10-25]}].`,
+        },
+      ]
+    },
   },
 
-  'carousel-outline-builder': async (req) => {
-    const topic = safeStr(req.input?.topic || req.input?.text || 'your topic')
-    return {
-      output: {
-        topic,
-        slides: [
-          { slide: 1, title: `Stop doing this with ${topic}`, body: 'Pattern-break + promise.' },
-          { slide: 2, title: 'Why it fails', body: 'One clear reason.' },
-          { slide: 3, title: 'The fix', body: 'One clear step.' },
-          { slide: 4, title: 'Example', body: 'Show the rewrite / before-after.' },
-          { slide: 5, title: 'CTA', body: 'Save this + DM keyword.' },
-        ],
-      },
-    }
+  // 14
+  'bio-optimizer': {
+    aiLevel: 'light',
+    schema: BioOptimizerSchema,
+    buildMessages: (req) => {
+      const who = String(req.input.who ?? req.input.niche ?? '').trim()
+      const offer = String(req.input.offer ?? '').trim()
+      return [
+        { role: 'system', content: 'You rewrite IG bios for clarity and clicks. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Rewrite IG bio.\n\nWHO YOU HELP:\n${who}\n\nOFFER:\n${offer}\n\nReturn: bio, nameField, profileCta, pinnedPostIdeas.`,
+        },
+      ]
+    },
   },
 
-  'comment-reply-generator': async (req) => {
-    const comment = safeStr(req.input?.comment || req.input?.text || '')
-    return {
-      output: {
-        comment,
-        replies: [
-          'Yep — and here’s the part people miss…',
-          'Facts. Want the template? DM “PLAN”.',
-          'This is exactly why I made that post.',
-          'Curious: what niche are you in?',
-        ],
-      },
-    }
+  // 15
+  'offer-clarifier': {
+    aiLevel: 'heavy',
+    schema: OfferClarifierSchema,
+    buildMessages: (req) => {
+      const messy = String(req.input.offer ?? req.input.description ?? '').trim()
+      return [
+        { role: 'system', content: 'You clarify offers into a clean pitch. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Clarify this offer:\n\n${messy || '(missing)'}\n\nReturn: oneLiner, bullets, whoItsFor, whoItsNotFor, pricingPositioning.`,
+        },
+      ]
+    },
   },
 
-  // Competitive intelligence
-  'competitor-reverse-engineer': async (req) => {
-    const competitor = safeStr(req.input?.competitor || req.input?.handle || req.input?.url || '')
-    return {
-      output: {
-        competitor: competitor || '(not provided)',
-        whatTheyDoWell: ['Simple hooks', 'Clear niche framing', 'Repeating formats'],
-        gapsToExploit: ['Weak CTA alignment', 'No “why now” urgency', 'Not enough proof'],
-        stealThisFormat: ['3 slides: claim → proof → CTA', 'Reel: hook → 1 idea → loop'],
-      },
-    }
+  // 16
+  'comment-reply-generator': {
+    aiLevel: 'light',
+    schema: CommentReplyGeneratorSchema,
+    buildMessages: (req) => {
+      const comment = String(req.input.comment ?? '').trim()
+      const vibe = String(req.input.tone ?? 'calm').trim()
+      return [
+        { role: 'system', content: 'You write replies that drive conversation and saves. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Generate replies to this comment.\n\nCOMMENT:\n${comment || '(missing)'}\n\nTONE:\n${vibe}\n\nReturn: replies, pinnedReply, questionsToAskBack.`,
+        },
+      ]
+    },
   },
 
-  // Captions
-  'caption-polisher': async (req) => {
-    const caption = safeStr(req.input?.caption || req.input?.text || '')
-    return {
-      output: {
-        original: caption,
-        polished: caption ? `${caption.trim().slice(0, 200)}… (tightened, more punchy)` : 'Provide a caption to polish.',
-        shortCaptionOptions: ['Save this.', 'DM “PLAN”.', 'Which one is you?', 'Don’t post until you do this.'],
-      },
-    }
+  // 17
+  'story-sequence-planner': {
+    aiLevel: 'light',
+    schema: StorySequencePlannerSchema,
+    buildMessages: (req) => {
+      const goal = String(req.input.goal ?? req.input.offer ?? '').trim()
+      return [
+        { role: 'system', content: 'You design IG story sequences with simple text. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Plan a story sequence to achieve this goal:\n\nGOAL:\n${goal || '(missing)'}\n\nReturn: slides[{slide,text,stickerSuggestion?}], dmPrompt.`,
+        },
+      ]
+    },
+  },
+
+  // 18
+  'carousel-outline': {
+    aiLevel: 'light',
+    schema: CarouselOutlineSchema,
+    buildMessages: (req) => {
+      const topic = String(req.input.topic ?? '').trim()
+      return [
+        { role: 'system', content: 'You outline carousels that get saves. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Outline a carousel.\n\nTOPIC:\n${topic || '(missing)'}\n\nReturn: title, slides[5-10], caption, saveHook.`,
+        },
+      ]
+    },
+  },
+
+  // 19
+  'audience-clarifier': {
+    aiLevel: 'heavy',
+    schema: AudienceClarifierSchema,
+    buildMessages: (req) => {
+      const niche = String(req.input.niche ?? '').trim()
+      return [
+        { role: 'system', content: 'You clarify audiences into real language and real pains. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Clarify the audience for:\n\nNICHE:\n${niche || '(missing)'}\n\nReturn: target, pains, desires, languageToUse, languageToAvoid.`,
+        },
+      ]
+    },
+  },
+
+  // 20
+  'competitor-angle-finder': {
+    aiLevel: 'heavy',
+    schema: CompetitorAngleFinderSchema,
+    buildMessages: (req) => {
+      const competitors = String(req.input.competitors ?? req.input.handles ?? '').trim()
+      const niche = String(req.input.niche ?? '').trim()
+      return [
+        { role: 'system', content: 'You find angles that exploit competitor sameness. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Find angles.\n\nNICHE:\n${niche || '(missing)'}\n\nCOMPETITORS (handles/links/notes):\n${competitors || '(missing)'}\n\nReturn: competitorPatterns, gapsToExploit, angles, first3Reels.`,
+        },
+      ]
+    },
   },
 }
 
-/**
- * Build final registry:
- * - For every tool in TOOL_REGISTRY, ensure there is a runner.
- * - Prefer custom runner; otherwise use fallback based on tool.type.
- * - Add legacy aliases for older IDs that may still exist in UI/tests.
- */
-const built: Record<string, Runner> = {}
+// ---------- Generic AI Runner ----------
+async function runToolWithOpenAI(req: RunRequest, ctx: RunContext) {
+  const toolId = req.toolId
+  const spec = TOOL_SPECS[toolId]
 
-// 1) Populate all current tools (registry-driven)
-for (const tool of TOOL_REGISTRY) {
-  if (customRunners[tool.id]) {
-    built[tool.id] = customRunners[tool.id]
-    continue
+  if (!spec) {
+    throw new Error(`No TOOL_SPECS entry for toolId="${toolId}". Add schema + prompt.`)
   }
 
-  if (tool.type === 'deterministic') built[tool.id] = deterministicFallback
-  else if (tool.type === 'light_ai') built[tool.id] = lightAiFallback
-  else built[tool.id] = heavyAiFallback
+  const openai = getOpenAIClient()
+  const model = pickModel(spec.aiLevel === 'none' ? 'light' : spec.aiLevel)
+
+  const messages = spec.buildMessages(req, ctx)
+
+  ctx.logger.info('openai.run.start', { toolId, model })
+
+  // Structured Outputs via Responses API parse helper
+  // This guarantees the output adheres to the Zod schema.
+  const parsed = await openai.responses.parse({
+    model,
+    input: messages,
+    text: {
+      format: zodTextFormat(spec.schema, `${toolId}_output`),
+    },
+    // stable id for abuse detection + safety bucketing
+    safety_identifier: safetyIdentifierFromUserId(ctx.user.id),
+  })
+
+  ctx.logger.info('openai.run.done', { toolId, model })
+
+  return { output: parsed.output_parsed }
 }
 
-// 2) Legacy aliases (so old references don’t explode)
-if (!built['hook-analyzer'] && built['hook-repurposer']) built['hook-analyzer'] = built['hook-repurposer']
-if (!built['ig-post-intelligence'] && built['engagement-diagnostic'])
-  built['ig-post-intelligence'] = built['engagement-diagnostic']
-if (!built['yt-video-intelligence'] && built['retention-leak-finder'])
-  built['yt-video-intelligence'] = built['retention-leak-finder']
-
-export const runnerRegistry: Record<string, Runner> = built
+export const runnerRegistry: Record<string, (req: RunRequest, ctx: RunContext) => Promise<{ output: any }>> =
+  Object.fromEntries(
+    Object.keys(TOOL_SPECS).map((toolId) => [
+      toolId,
+      async (req: RunRequest, ctx: RunContext) => runToolWithOpenAI(req, ctx),
+    ])
+  )
