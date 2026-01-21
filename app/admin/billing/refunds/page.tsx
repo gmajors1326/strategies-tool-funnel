@@ -4,9 +4,9 @@ import { Table } from '@/components/app/Table'
 
 export const dynamic = 'force-dynamic'
 
-export default function AdminRefundsPage() {
+export default async function AdminRefundsPage() {
   // TODO: replace (billing): load refunds from billing provider.
-  const refunds = getMockRefunds()
+  const refunds = await getMockRefunds()
 
   return (
     <section className="space-y-4">

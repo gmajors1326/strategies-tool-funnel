@@ -17,7 +17,7 @@ export async function POST(
   const body = await request.json()
   replySchema.parse(body)
   // TODO: replace (ui): append reply to persisted support thread.
-  const detail = getMockTicketDetail(params.ticketId)
+  const detail = await getMockTicketDetail(params.ticketId)
 
   return NextResponse.json({
     ...detail,

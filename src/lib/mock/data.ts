@@ -52,7 +52,7 @@ function devFallbackAllowed() {
  * - usage window (DB-backed)
  * - token ledger balance (DB-backed)
  */
-export const getUsage = async (planId?: PlanId) => {
+export const getUsage = async () => {
   const session = await requireUser()
   const userId = session.id
 
@@ -105,7 +105,7 @@ export const getUiConfig = async (): Promise<UiConfig> => {
 
   // We keep planId as the user’s personal plan for UI decisions,
   // but usage caps may be org-influenced inside getUsage().
-  const usage = await getUsage(personalPlan)
+  const usage = await getUsage()
 
   const user = {
     id: session.id,
@@ -169,14 +169,38 @@ export const getMockUiConfig = async (): Promise<UiConfig> => {
  * In dev, return empty states to keep UI stable until routes are wired.
  */
 
-export const getMockTickets = async () => {
+export type TicketSummary = {
+  id: string
+  subject: string
+  status: string
+  category: string
+  createdAtISO: string
+}
+
+export const getMockTickets = async (): Promise<TicketSummary[]> => {
   if (isProd()) {
     throw new Error('Support tickets not implemented: replace getMockTickets() with real backend store.')
   }
   return devFallbackAllowed() ? [] : []
 }
 
-export const getMockTicketDetail = async (ticketId: string) => {
+export type TicketThreadMessage = {
+  id: string
+  author: string
+  message: string
+  createdAtISO: string
+}
+
+export type TicketDetail = {
+  id: string
+  status: string
+  category: string
+  subject: string
+  createdAtISO: string
+  thread: TicketThreadMessage[]
+}
+
+export const getMockTicketDetail = async (ticketId: string): Promise<TicketDetail> => {
   if (isProd()) {
     throw new Error('Support ticket detail not implemented: replace getMockTicketDetail() with real backend store.')
   }
@@ -199,7 +223,17 @@ export const getMockTicketDetail = async (ticketId: string) => {
       }
 }
 
-export const getMockRefunds = async () => {
+export type RefundSummary = {
+  id: string
+  userId: string | null
+  planId: string | null
+  amount: number | null
+  currency: string | null
+  status: string
+  createdAtISO: string
+}
+
+export const getMockRefunds = async (): Promise<RefundSummary[]> => {
   if (isProd()) {
     throw new Error('Refund queue not implemented: replace getMockRefunds() with Stripe + DB-backed workflow.')
   }
@@ -213,6 +247,10 @@ export const getMockRefundDetail = async (refundId: string) => {
   return devFallbackAllowed()
     ? {
         id: refundId,
+        userId: null,
+        planId: null,
+        amount: null,
+        currency: null,
         status: 'pending',
         eligibility: 'unknown',
         reason: 'Refund workflow not wired yet',
@@ -220,6 +258,10 @@ export const getMockRefundDetail = async (refundId: string) => {
       }
     : {
         id: refundId,
+        userId: null,
+        planId: null,
+        amount: null,
+        currency: null,
         status: 'pending',
         eligibility: 'unknown',
         reason: 'Refund workflow not wired yet',

@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   await requireUser()
   // TODO: replace (ui): load real support tickets for the authenticated user.
-  return NextResponse.json({ tickets: getMockTickets() })
+  return NextResponse.json({ tickets: await getMockTickets() })
 }
 
 export async function POST(request: NextRequest) {

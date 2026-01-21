@@ -10,8 +10,9 @@ export async function GET(
 ) {
   await requireAdmin()
   // TODO: replace (ui): load admin ticket detail + user context from support system.
+  const ticket = await getMockTicketDetail(params.ticketId)
   return NextResponse.json({
-    ...getMockTicketDetail(params.ticketId),
+    ...ticket,
     // TODO: replace (ui): load user context from support/billing systems.
     userContext: {
       userId: 'user_dev_1',

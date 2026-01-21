@@ -4,9 +4,9 @@ import { Input } from '@/components/app/Input'
 
 export const dynamic = 'force-dynamic'
 
-export default function SupportTicketDetailPage({ params }: { params: { ticketId: string } }) {
+export default async function SupportTicketDetailPage({ params }: { params: { ticketId: string } }) {
   // TODO: replace (ui): load support ticket detail from backend.
-  const ticket = getMockTicketDetail(params.ticketId)
+  const ticket = await getMockTicketDetail(params.ticketId)
 
   return (
     <section className="space-y-4">

@@ -4,9 +4,9 @@ import { SupportTicketCard } from '@/components/app/SupportTicketCard'
 
 export const dynamic = 'force-dynamic'
 
-export default function SupportTicketsPage() {
+export default async function SupportTicketsPage() {
   // TODO: replace (ui): load support tickets from backend.
-  const tickets = getMockTickets()
+  const tickets = await getMockTickets()
 
   return (
     <section className="space-y-4">

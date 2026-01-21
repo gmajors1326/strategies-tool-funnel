@@ -7,24 +7,25 @@ import { ensureUsageWindow } from '@/src/lib/usage/dailyUsage'
 import { getTokenBalance } from '@/src/lib/tokens/ledger'
 import { getActiveOrg, getMembership } from '@/src/lib/orgs/orgs'
 import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@/src/lib/billing/planConfig'
+import { requireUser } from '@/src/lib/auth/requireUser'
 
 type UserPlanState = {
   user: { id: string; email: string; planId: 'free' | 'pro_monthly' | 'team' | 'lifetime' }
 }
 
-export const resolveUserPlanState = (): UserPlanState => {
-  // TODO: replace (auth): derive user plan state from authenticated session + billing.
+export const resolveUserPlanState = async (): Promise<UserPlanState> => {
+  const session = await requireUser()
   return {
     user: {
-      id: 'user_dev_1',
-      email: 'dev@example.com',
-      planId: 'free',
+      id: session.id,
+      email: session.email,
+      planId: session.planId,
     },
   }
 }
 
 export const buildUiConfig = async (): Promise<UiConfig> => {
-  const { user } = resolveUserPlanState()
+  const { user } = await resolveUserPlanState()
   const activeOrg = await getActiveOrg(user.id)
   const membership = activeOrg ? await getMembership(user.id, activeOrg.id) : null
   const orgPlan = activeOrg?.plan as 'business' | 'enterprise' | undefined

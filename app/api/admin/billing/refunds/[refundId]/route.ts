@@ -10,5 +10,5 @@ export async function GET(
 ) {
   await requireAdmin()
   // TODO: replace (billing): fetch refund details from billing system.
-  return NextResponse.json(getMockRefundDetail(params.refundId))
+  return NextResponse.json(await getMockRefundDetail(params.refundId))
 }

@@ -364,7 +364,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Persist recent runs (DB-backed now)
-    await addRun(userId, response)
+    await addRun(userId, tool.id, runId, response)
 
     await recordRun({
       status: 'ok',

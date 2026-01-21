@@ -10,5 +10,5 @@ export async function GET(
 ) {
   await requireUser()
   // TODO: replace (ui): load ticket detail from support backend.
-  return NextResponse.json(getMockTicketDetail(params.ticketId))
+  return NextResponse.json(await getMockTicketDetail(params.ticketId))
 }

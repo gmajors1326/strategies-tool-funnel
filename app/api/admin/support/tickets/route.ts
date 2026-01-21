@@ -7,5 +7,5 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   await requireAdmin()
   // TODO: replace (ui): load real support queue for admins.
-  return NextResponse.json({ tickets: getMockTickets() })
+  return NextResponse.json({ tickets: await getMockTickets() })
 }

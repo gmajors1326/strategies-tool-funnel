@@ -3,9 +3,9 @@ import { Button } from '@/components/app/Button'
 
 export const dynamic = 'force-dynamic'
 
-export default function AdminRefundDetailPage({ params }: { params: { refundId: string } }) {
+export default async function AdminRefundDetailPage({ params }: { params: { refundId: string } }) {
   // TODO: replace (billing): load refund detail from billing provider.
-  const refund = getMockRefundDetail(params.refundId)
+  const refund = await getMockRefundDetail(params.refundId)
 
   return (
     <section className="space-y-4">

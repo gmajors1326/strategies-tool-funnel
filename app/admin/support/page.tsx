@@ -4,9 +4,9 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
-export default function AdminSupportPage() {
+export default async function AdminSupportPage() {
   // TODO: replace (ui): load support queue from backend.
-  const tickets = getMockTickets()
+  const tickets = await getMockTickets()
 
   return (
     <section className="space-y-4">

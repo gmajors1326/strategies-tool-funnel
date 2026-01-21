@@ -3,9 +3,9 @@ import { Button } from '@/components/app/Button'
 
 export const dynamic = 'force-dynamic'
 
-export default function AdminTicketDetailPage({ params }: { params: { ticketId: string } }) {
+export default async function AdminTicketDetailPage({ params }: { params: { ticketId: string } }) {
   // TODO: replace (ui): load ticket detail and user context from backend.
-  const ticket = getMockTicketDetail(params.ticketId)
+  const ticket = await getMockTicketDetail(params.ticketId)
 
   return (
     <section className="space-y-4">
