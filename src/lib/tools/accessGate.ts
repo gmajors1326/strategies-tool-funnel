@@ -1,5 +1,5 @@
 import type { LockState, RunLock } from '@/src/lib/tools/runTypes'
-import type { ToolMeta } from '@/src/lib/tools/toolMeta'
+import type { PlanId, ToolMeta } from '@/src/lib/tools/registry'
 
 type UsageCaps = {
   runsUsed: number
@@ -38,6 +38,5 @@ export const buildLock = (params: {
 })
 
 export const isToolAccessibleForPlan = (tool: ToolMeta, planId: string) => {
-  if (!tool.requiresPurchase) return tool.includedInPlans?.includes(planId as any)
-  return tool.includedInPlans?.includes(planId as any)
+  return (tool.dailyRunsByPlan[planId as PlanId] ?? 0) > 0
 }

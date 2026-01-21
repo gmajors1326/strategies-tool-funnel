@@ -54,7 +54,10 @@ export async function middleware(request: NextRequest) {
       let rateLimitConfig
       if (pathname.includes('/auth/')) {
         rateLimitConfig = rateLimitConfigs.authEndpoint
-      } else if (pathname.includes('/tools/') && (pathname.includes('/dm-intelligence') || pathname.includes('/run'))) {
+      } else if (
+        pathname.includes('/tools/') &&
+        (pathname.includes('/dm-intelligence-engine') || pathname.includes('/run'))
+      ) {
         rateLimitConfig = rateLimitConfigs.aiEndpoint
       } else {
         rateLimitConfig = rateLimitConfigs.apiEndpoint

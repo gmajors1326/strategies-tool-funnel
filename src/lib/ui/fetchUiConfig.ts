@@ -7,7 +7,7 @@ import { getActiveOrg } from '@/src/lib/orgs/orgs'
 import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@/src/lib/billing/planConfig'
 import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
 
-import { TOOL_REGISTRY, type ToolConfig } from '@/src/lib/tools/registry'
+import { listTools, type ToolMeta } from '@/src/lib/tools/registry'
 import { computeToolStatus, type ToolAccessStatus } from '@/src/lib/usage/limits'
 import type { ToolAiLevel, ToolUiItem, UiConfig, UiLockState } from '@/src/lib/ui/types'
 
@@ -15,20 +15,8 @@ function isProd() {
   return process.env.NODE_ENV === 'production'
 }
 
-function mapToolTypeToAiLevel(type: ToolConfig['type']): ToolAiLevel {
-  if (type === 'deterministic') return 'none'
-  if (type === 'light_ai') return 'light'
-  return 'heavy'
-}
-
-/**
- * Keep categories simple for now (we can upgrade to real categories later).
- * Cards just need something stable to badge/group on.
- */
-function mapToolTypeToCategory(type: ToolConfig['type']): string {
-  if (type === 'deterministic') return 'Workflow'
-  if (type === 'light_ai') return 'Growth'
-  return 'Strategy'
+function mapToolCategory(category: ToolMeta['category']): string {
+  return category
 }
 
 function mapStatusToLockState(status: ToolAccessStatus): UiLockState {
@@ -95,13 +83,13 @@ export async function fetchUiConfig(): Promise<UiConfig> {
     role: session.role ?? 'user',
   }
 
-  const catalogTools: ToolUiItem[] = TOOL_REGISTRY.map((tool) => {
+  const catalogTools: ToolUiItem[] = listTools().map((tool) => {
     const decision = computeToolStatus(tool, user.planId, usage)
     return {
       id: tool.id,
       name: tool.name,
-      category: mapToolTypeToCategory(tool.type),
-      aiLevel: mapToolTypeToAiLevel(tool.type),
+      category: mapToolCategory(tool.category),
+      aiLevel: tool.aiLevel,
       lockState: mapStatusToLockState(decision.status),
       reason: decision.reason,
       cta: decision.cta,
@@ -112,7 +100,7 @@ export async function fetchUiConfig(): Promise<UiConfig> {
 
   const myTools = catalogTools.filter((t) => t.lockState === 'available')
 
-  if (isProd() && TOOL_REGISTRY.length > 0 && catalogTools.length === 0) {
+  if (isProd() && catalogTools.length === 0) {
     throw new Error('UI config resolved to zero tools in production. Check tool registry export.')
   }
 

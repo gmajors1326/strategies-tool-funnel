@@ -1,5 +1,5 @@
 import type { UiConfig } from '@/src/lib/ui/types'
-import { TOOL_META } from '@/src/lib/tools/toolMeta'
+import { listTools } from '@/src/lib/tools/registry'
 import { getBonusRunsSummary } from '@/src/lib/tool/bonusRuns'
 import { getTrialState } from '@/src/lib/tool/trialLedger'
 import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
@@ -46,10 +46,10 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
   const tokenBalance = await getTokenBalance(user.id)
 
   const catalog = await Promise.all(
-    TOOL_META.map(async (tool) => {
+    listTools().map(async (tool) => {
       const trial = getTrialState(user.id, tool.id)
       const bonus = await getBonusRunsSummary({ userId: user.id, toolId: tool.id })
-      const toolCap = tool.dailyRunsByPlan?.[user.planId] ?? planRunCap
+      const toolCap = tool.dailyRunsByPlan?.[user.planId] ?? 0
       const toolRunsUsed = (usageWindow.perToolRunsUsed as Record<string, number>)?.[tool.id] ?? 0
 
       let lockState: UiConfig['catalog'][number]['lockState'] = 'available'
@@ -60,11 +60,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
         lockState = 'locked'
         reason = 'Viewer role cannot run tools'
         cta = { label: 'Upgrade seat', href: `/orgs/${activeOrg?.slug}/members` }
-      } else if (!tool.enabled) {
-        lockState = 'disabled'
-        reason = 'Temporarily offline'
-        cta = { label: 'Contact support', href: '/app/support' }
-      } else if (tool.requiresPurchase && !tool.includedInPlans?.includes(user.planId)) {
+      } else if (toolCap <= 0) {
         lockState = 'trial'
         if (trial.allowed || bonus.remainingRuns > 0) {
           reason = bonus.remainingRuns > 0 ? 'Bonus sandbox runs available' : 'Sandbox available'

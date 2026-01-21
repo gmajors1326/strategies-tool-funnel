@@ -18,7 +18,7 @@ import { logger } from '@/lib/logger'
 
 logger.info('User action', { userId: '123', action: 'tool_run' })
 logger.error('Operation failed', error, { context: 'additional info' })
-logger.apiRequest('POST', '/api/tools/dm-opener', 200, 150, { toolKey: 'dm-opener' })
+logger.apiRequest('POST', '/api/tools/run', 200, 150, { toolKey: 'hook-analyzer' })
 ```
 
 ### Sentry Integration

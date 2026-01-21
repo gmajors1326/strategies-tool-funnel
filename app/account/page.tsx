@@ -173,9 +173,7 @@ export default function AccountPage() {
                         <div className="flex items-start justify-between mb-4">
                           <div>
                             <h3 className="text-lg font-semibold text-[hsl(var(--text))] capitalize">
-                              {run.toolKey === 'dm_intelligence_engine' 
-                                ? 'DM Intelligence Engine' 
-                                : run.toolKey.replace(/-/g, ' ')}
+                              {run.toolKey.replace(/-/g, ' ')}
                             </h3>
                             <p className="text-sm text-[hsl(var(--muted))]">
                               {new Date(run.createdAt).toLocaleDateString()}
@@ -187,103 +185,9 @@ export default function AccountPage() {
                         </div>
                         {run.outputsJson && (
                           <AppPanel className="mt-4">
-                            {run.toolKey === 'engagement-diagnostic' && (
-                              <div>
-                                <p className="text-sm text-[hsl(var(--muted))] mb-2">Engagement Tier:</p>
-                                <p className="text-lg font-semibold text-[hsl(var(--primary))] mb-4">
-                                  {run.outputsJson.engagementTier}
-                                </p>
-                                <p className="text-sm text-[hsl(var(--muted))] mb-2">Insight:</p>
-                                <p className="text-[hsl(var(--text))] mb-4">{run.outputsJson.insight}</p>
-                                <p className="text-sm text-[hsl(var(--muted))] mb-2">Action:</p>
-                                <p className="text-[hsl(var(--text))]">{run.outputsJson.action}</p>
-                              </div>
-                            )}
-                            {run.toolKey === 'dm-opener' && (
-                              <div>
-                                <p className="text-sm text-[hsl(var(--muted))] mb-2">DM Opener:</p>
-                                <AppPanel variant="subtle" className="p-3">
-                                  {run.outputsJson.opener}
-                                </AppPanel>
-                              </div>
-                            )}
-                            {run.toolKey === 'hook-repurposer' && (
-                              <div>
-                                <p className="text-sm text-[hsl(var(--muted))] mb-2">Hook angles:</p>
-                                <div className="space-y-3">
-                                  {(run.outputsJson.hooks || []).slice(0, 3).map((hook: any, index: number) => (
-                                    <AppPanel key={`${hook.angle}-${index}`} variant="subtle">
-                                      <p className="text-xs uppercase tracking-[0.2em] text-[hsl(var(--muted))]">
-                                        {hook.angle}
-                                      </p>
-                                      <p className="mt-2 text-[hsl(var(--text))]">{hook.text}</p>
-                                    </AppPanel>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {run.toolKey === 'dm_intelligence_engine' && (
-                              <div className="space-y-4">
-                                <div className="flex gap-4 text-xs mb-4">
-                                  <div>
-                                    <span className="text-[hsl(var(--muted))]">Scenario: </span>
-                                    <span className="text-[hsl(var(--text))] font-medium capitalize">
-                                      {run.inputsJson?.scenario?.replace('_', ' ')}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-[hsl(var(--muted))]">Intent: </span>
-                                    <span className="text-[hsl(var(--text))] font-medium capitalize">
-                                      {run.inputsJson?.intent?.replace('_', ' ')}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="text-[hsl(var(--muted))]">Tone: </span>
-                                    <span className="text-[hsl(var(--text))] font-medium capitalize">
-                                      {run.inputsJson?.tone}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-[hsl(var(--muted))] mb-2">Recommended Reply:</p>
-                                  <AppPanel variant="subtle" className="p-3 whitespace-pre-wrap">
-                                    {run.outputsJson?.recommendedReply}
-                                  </AppPanel>
-                                </div>
-                                {run.outputsJson?.alternateReply && (
-                                  <div>
-                                    <p className="text-sm text-[hsl(var(--muted))] mb-2">Alternate Reply:</p>
-                                    <AppPanel variant="subtle" className="p-3 whitespace-pre-wrap">
-                                      {run.outputsJson.alternateReply}
-                                    </AppPanel>
-                                  </div>
-                                )}
-                                {run.outputsJson?.nextStep && (
-                                  <div>
-                                    <p className="text-sm text-[hsl(var(--muted))] mb-2">Next Step:</p>
-                                    <p className="text-[hsl(var(--text))]">{run.outputsJson.nextStep}</p>
-                                  </div>
-                                )}
-                                {run.outputsJson?.riskNote && (
-                                  <AppPanel className="border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10">
-                                    <p className="text-sm text-[hsl(var(--destructive))] font-medium mb-1">Risk Note:</p>
-                                    <p className="text-sm text-[hsl(var(--destructive))]">{run.outputsJson.riskNote}</p>
-                                  </AppPanel>
-                                )}
-                                <div className="flex gap-4 text-xs">
-                                  <div>
-                                    <span className="text-[hsl(var(--muted))]">Warmth: </span>
-                                    <span className="text-[hsl(var(--text))] font-medium">{run.outputsJson?.detectedWarmth}</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-[hsl(var(--muted))]">Pitch Readiness: </span>
-                                    <span className="text-[hsl(var(--text))] font-medium capitalize">
-                                      {run.outputsJson?.pitchReadiness?.replace('_', ' ')}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
+                            <pre className="whitespace-pre-wrap text-xs text-[hsl(var(--text))]">
+                              {JSON.stringify(run.outputsJson, null, 2)}
+                            </pre>
                           </AppPanel>
                         )}
                       </AppCardContent>

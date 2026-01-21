@@ -46,7 +46,7 @@ export type RunError = {
 export type RunResponse = {
   status: 'ok' | 'locked' | 'error'
   lock?: RunLock
-  data?: any
+  output?: any
   metering?: {
     chargedTokens: number
     remainingTokens: number

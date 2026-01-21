@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/src/lib/auth/requireAdmin'
-import { TOOL_REGISTRY } from '@/src/lib/tools/registry'
+import { listTools } from '@/src/lib/tools/registry'
 
 // TODO: replace (tool-registry): persist tool config to database.
-let mockToolConfig = TOOL_REGISTRY.map((tool) => ({
+let mockToolConfig = listTools().map((tool) => ({
   id: tool.id,
   name: tool.name,
   tokensPerRun: tool.tokensPerRun,
   dailyRunsByPlan: tool.dailyRunsByPlan,
-  enabled: tool.enabled,
 }))
 
 export const dynamic = 'force-dynamic'

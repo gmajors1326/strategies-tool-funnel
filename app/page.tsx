@@ -4,11 +4,9 @@ import { useState, useMemo, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { AppCard } from '@/components/ui/AppCard'
-import { ToolShell } from '@/components/tools/ToolShell'
 import { ToolSearch } from '@/components/tools/ToolSearch'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { getToolConfig, getAllToolIds } from '@/lib/ai/toolRegistry'
-import { toolCategories } from '@/config/toolCategories'
+import { listTools } from '@/src/lib/tools/registry'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -18,34 +16,35 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const searchInputRef = useRef<HTMLInputElement>(null)
   
-  // Get all tool configs
-  const allToolIds = getAllToolIds()
-  const allToolConfigs = allToolIds.map(id => getToolConfig(id))
+  const allTools = useMemo(() => listTools(), [])
+  const categoryOrder = useMemo(
+    () => ['Hooks', 'Reels', 'DMs', 'Content', 'Offers', 'Analytics', 'Positioning', 'Operations'],
+    []
+  )
+  const categories = useMemo(
+    () => categoryOrder.filter((category) => allTools.some((tool) => tool.category === category)),
+    [allTools, categoryOrder]
+  )
   
   // Filter tools based on search query and category
-  const filteredToolConfigs = useMemo(() => {
-    let filtered = allToolConfigs
-    
-    // Filter by category
+  const filteredTools = useMemo(() => {
+    let filtered = allTools
+
     if (selectedCategory !== 'all') {
-      const category = toolCategories.find(cat => cat.id === selectedCategory)
-      if (category) {
-        filtered = filtered.filter(config => category.toolIds.includes(config.toolId))
-      }
+      filtered = filtered.filter((tool) => tool.category === selectedCategory)
     }
-    
-    // Filter by search query
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim()
-      filtered = filtered.filter(config => {
-        const titleMatch = config.title.toLowerCase().includes(query)
-        const descMatch = config.description.toLowerCase().includes(query)
+      filtered = filtered.filter((tool) => {
+        const titleMatch = tool.name.toLowerCase().includes(query)
+        const descMatch = tool.description.toLowerCase().includes(query)
         return titleMatch || descMatch
       })
     }
     
     return filtered
-  }, [searchQuery, selectedCategory, allToolConfigs])
+  }, [searchQuery, selectedCategory, allTools])
   
 
   return (
@@ -92,22 +91,22 @@ export default function HomePage() {
           </div>
           
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mb-8 no-print">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 no-print">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 no-print">
               <TabsTrigger value="all">All Tools</TabsTrigger>
-              {toolCategories.map(category => (
-                <TabsTrigger key={category.id} value={category.id}>
-                  {category.name}
+              {categories.map((category) => (
+                <TabsTrigger key={category} value={category}>
+                  {category}
                 </TabsTrigger>
               ))}
             </TabsList>
           </Tabs>
-          
-          {filteredToolConfigs.length === 0 ? (
+
+          {filteredTools.length === 0 ? (
             <div className="text-center py-12 no-print">
               <p className="text-lg text-[hsl(var(--muted))]">
                 {searchQuery 
                   ? `No tools found matching "${searchQuery}"`
-                  : `No tools in "${toolCategories.find(c => c.id === selectedCategory)?.name || 'this category'}"`}
+                  : `No tools in "${selectedCategory === 'all' ? 'this category' : selectedCategory}".`}
               </p>
               <div className="flex gap-2 justify-center mt-4">
                 {searchQuery && (
@@ -119,20 +118,32 @@ export default function HomePage() {
                   </Button>
                 )}
                 {selectedCategory !== 'all' && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedCategory('all')}
-                  >
+                  <Button variant="outline" onClick={() => setSelectedCategory('all')}>
                     Show All Tools
                   </Button>
                 )}
               </div>
             </div>
           ) : (
-            <div className="space-y-12">
-              {filteredToolConfigs.map(config => (
-                <ErrorBoundary key={config.toolId}>
-                  <ToolShell config={config} />
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredTools.map((tool) => (
+                <ErrorBoundary key={tool.id}>
+                  <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-5 space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">{tool.name}</p>
+                      <p className="text-xs text-[hsl(var(--muted))]">{tool.description}</p>
+                    </div>
+                    <div className="text-[11px] uppercase tracking-wide text-[hsl(var(--muted))]">
+                      {tool.category} · {tool.aiLevel === 'none' ? 'No AI' : tool.aiLevel === 'light' ? 'Light AI' : 'Heavy AI'}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-[hsl(var(--muted))]">
+                      <span>{tool.tokensPerRun} tokens/run</span>
+                      <span>{tool.dailyRunsByPlan.free} runs/day (free)</span>
+                    </div>
+                    <Link href={`/app/tools/${tool.id}`} className="block">
+                      <Button className="w-full">Open tool</Button>
+                    </Link>
+                  </div>
                 </ErrorBoundary>
               ))}
             </div>

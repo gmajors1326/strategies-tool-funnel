@@ -23,7 +23,7 @@ This implementation adds comprehensive monitoring, rate limiting, and security f
 import { logger } from '@/lib/logger'
 logger.info('User action', { userId: '123' })
 logger.error('Operation failed', error, { context: 'info' })
-logger.apiRequest('POST', '/api/tools/dm-opener', 200, 150)
+logger.apiRequest('POST', '/api/tools/run', 200, 150)
 ```
 
 ### 2. Sentry Error Tracking (`lib/sentry.ts`)
@@ -161,7 +161,7 @@ export const POST = withAuth(async (request, session) => {
 3. `package.json` - Added `@sentry/nextjs` dependency
 4. `ENV_TEMPLATE.txt` - Added new environment variables
 5. `README.md` - Updated with new features
-6. `app/api/tools/dm-opener/route.ts` - Example of using new logging
+6. `app/api/tools/run/route.ts` - Example of using new logging
 
 ## 🔧 Environment Variables Added
 

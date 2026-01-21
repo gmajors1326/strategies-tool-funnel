@@ -1,6 +1,6 @@
 import type { PlanId } from '@/src/lib/plans'
 import { getPlanConfig } from '@/src/lib/plans'
-import type { ToolConfig } from '@/src/lib/tools/registry'
+import type { ToolMeta } from '@/src/lib/tools/registry'
 
 export type ToolAccessStatus =
   | 'available'
@@ -41,15 +41,10 @@ const CTA = {
 }
 
 export const computeToolStatus = (
-  tool: ToolConfig,
+  tool: ToolMeta,
   planId: PlanId,
   usage: UsageSnapshot
 ): ToolAccessDecision => {
-  // Offline tool
-  if (!tool.enabled) {
-    return { status: 'disabled', reason: 'Temporarily offline' }
-  }
-
   const planConfig = getPlanConfig(planId)
   const toolDailyCap = tool.dailyRunsByPlan[planId] ?? 0
 
@@ -89,7 +84,7 @@ export const computeToolStatus = (
   // 3) Daily AI token cap (metering)
   // Deterministic tools still have tokensPerRun in the registry, but you might choose to
   // not count them toward AI caps. If you want deterministic to count, remove this guard.
-  const countsTowardAiCap = tool.type !== 'deterministic'
+  const countsTowardAiCap = tool.aiLevel !== 'none'
   const wouldExceedDailyAiCap =
     countsTowardAiCap && usage.aiTokensUsed + tool.tokensPerRun > usage.aiTokenCap
 
@@ -128,7 +123,7 @@ export const computeToolStatus = (
 }
 
 export const canRunTool = (
-  tool: ToolConfig,
+  tool: ToolMeta,
   planId: PlanId,
   usage: UsageSnapshot
 ): ToolAccessDecision => {

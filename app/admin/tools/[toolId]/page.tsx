@@ -1,13 +1,15 @@
 import { notFound } from 'next/navigation'
-import { TOOL_REGISTRY } from '@/src/lib/tools/registry'
+import { getToolMeta } from '@/src/lib/tools/registry'
 import { Button } from '@/components/app/Button'
 import { Input } from '@/components/app/Input'
 
 export const dynamic = 'force-dynamic'
 
 export default function AdminToolConfigPage({ params }: { params: { toolId: string } }) {
-  const tool = TOOL_REGISTRY.find((item) => item.id === params.toolId)
-  if (!tool) {
+  let tool
+  try {
+    tool = getToolMeta(params.toolId)
+  } catch {
     return notFound()
   }
 
@@ -26,8 +28,6 @@ export default function AdminToolConfigPage({ params }: { params: { toolId: stri
             <Input key={plan} defaultValue={`${plan}: ${runs}`} />
           ))}
         </div>
-        <label className="text-xs text-[hsl(var(--muted))]">Kill Switch</label>
-        <Input defaultValue={tool.enabled ? 'enabled' : 'disabled'} />
         <Button>Save Config</Button>
       </div>
     </section>

@@ -41,7 +41,7 @@
    - `Accordion`: Updated to use semantic tokens
 
 6. **Tool Components Migrated**
-   - `ToolShell`: Uses `AppCard` and `AppPanel`
+   - `ToolRunner`: Uses `AppCard` and `AppPanel`
    - `OutputSection`: Uses `AppPanel` for nested content
    - All text uses semantic color tokens
 
@@ -49,7 +49,7 @@
    - Homepage: FAQ accordion items use `AppCard`
    - Account page: All cards migrated to `AppCard`
    - Verify page: Uses `AppCard` and `AppPanel`
-   - All tool pages: Use `ToolShell` which uses `AppCard`
+   - Tool pages: Use `ToolRunner` which uses `AppCard`
 
 ### Style Rules Applied
 
@@ -91,7 +91,7 @@ These can be migrated later if needed, but they're not part of the core tool exp
 - [x] Update Button component
 - [x] Update Input/Select/Label components
 - [x] Update Accordion component
-- [x] Migrate ToolShell to AppCard
+- [x] Migrate ToolRunner to AppCard
 - [x] Migrate OutputSection to AppPanel
 - [x] Migrate homepage FAQ to AppCard
 - [x] Migrate account page to AppCard

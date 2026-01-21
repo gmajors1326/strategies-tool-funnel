@@ -1,40 +1,47 @@
 import type { RunError } from '@/src/lib/tools/runTypes'
+import { getToolMeta, type ToolField } from '@/src/lib/tools/registry'
 
 type ValidationResult = {
   valid: boolean
   errors?: RunError
 }
 
-const minLen = (value?: string, length = 3) =>
-  typeof value === 'string' && value.trim().length >= length
+const isEmpty = (field: ToolField, value: any) => {
+  if (field.type === 'number') {
+    if (value === '' || value === null || value === undefined) return true
+    const n = Number(value)
+    return !Number.isFinite(n)
+  }
+  if (field.type === 'toggle') {
+    return value === null || value === undefined
+  }
+  if (field.type === 'multiSelect') {
+    return !Array.isArray(value) || value.length === 0
+  }
+  return typeof value !== 'string' || value.trim().length === 0
+}
 
 export const validateInput = (toolId: string, input: Record<string, any>): ValidationResult => {
   const errors: Record<string, string> = {}
+  let tool
 
-  if (toolId === 'hook-analyzer') {
-    if (!minLen(input.hook, 6) && !minLen(input.topic, 4)) {
-      errors.hook = 'Provide a hook or topic.'
+  try {
+    tool = getToolMeta(toolId)
+  } catch {
+    return {
+      valid: false,
+      errors: {
+        code: 'VALIDATION_ERROR',
+        message: `Unknown toolId: ${toolId}`,
+        details: { toolId: 'Unknown toolId.' },
+      },
     }
   }
 
-  if (toolId === 'cta-match-analyzer') {
-    if (!minLen(input.offer, 4)) {
-      errors.offer = 'Offer is required.'
-    }
-    if (!minLen(input.cta, 4)) {
-      errors.cta = 'CTA is required.'
-    }
-  }
-
-  if (toolId === 'ig-post-intelligence') {
-    if (!minLen(input.caption, 8) && !minLen(input.postText, 8)) {
-      errors.caption = 'Provide a caption or post text.'
-    }
-  }
-
-  if (toolId === 'yt-video-intelligence') {
-    if (!minLen(input.title, 4) && !minLen(input.transcriptSnippet, 12)) {
-      errors.title = 'Provide a title or transcript snippet.'
+  for (const field of tool.fields) {
+    if (!field.required) continue
+    if (isEmpty(field, input[field.key])) {
+      errors[field.key] = `${field.label} is required.`
     }
   }
 

@@ -1,7 +1,7 @@
 // src/lib/mock/data.ts
 import { getPlanConfig, type PlanId } from '@/src/lib/plans'
 import { computeToolStatus } from '@/src/lib/usage/limits'
-import { TOOL_REGISTRY, type ToolConfig } from '@/src/lib/tools/registry'
+import { listTools, type ToolMeta } from '@/src/lib/tools/registry'
 
 import { requireUser } from '@/src/lib/auth/requireUser'
 import { ensureUsageWindow } from '@/src/lib/usage/dailyUsage'
@@ -14,7 +14,7 @@ import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
 export type UiConfigTool = {
   id: string
   name: string
-  type: ToolConfig['type']
+  aiLevel: ToolMeta['aiLevel']
   status: ReturnType<typeof computeToolStatus>['status']
   reason?: string
   cta?: { label: string; href: string }
@@ -114,12 +114,12 @@ export const getUiConfig = async (): Promise<UiConfig> => {
     role: session.role ?? 'user',
   }
 
-  const toolsCatalog: UiConfigTool[] = TOOL_REGISTRY.map((tool) => {
+  const toolsCatalog: UiConfigTool[] = listTools().map((tool) => {
     const decision = computeToolStatus(tool, user.planId, usage)
     return {
       id: tool.id,
       name: tool.name,
-      type: tool.type,
+      aiLevel: tool.aiLevel,
       status: decision.status,
       reason: decision.reason,
       cta: decision.cta,

@@ -116,7 +116,7 @@ async function main() {
     },
     // DM Tools
     {
-      key: 'dm-opener-principles',
+      key: 'dm-intelligence-engine-principles',
       category: 'dm',
       tags: ['opener', 'principles', 'conversation'],
       content: `Effective DM openers:
@@ -651,10 +651,10 @@ If pitchReadiness=not_ready, focus on building trust first.`,
   console.log('📋 Creating Prompt Rubrics...')
 
   await prisma.promptRubric.upsert({
-    where: { toolKey: 'engagement-diagnostic' },
+    where: { toolKey: 'analytics-signal-reader' },
     update: {},
     create: {
-      toolKey: 'engagement-diagnostic',
+      toolKey: 'analytics-signal-reader',
       inputHints: `User provides:
 - Follower range
 - Posting frequency
@@ -684,10 +684,10 @@ These inputs determine engagement tier and friction points.`,
   })
 
   await prisma.promptRubric.upsert({
-    where: { toolKey: 'dm-opener' },
+    where: { toolKey: 'dm-intelligence-engine' },
     update: {},
     create: {
-      toolKey: 'dm-opener',
+      toolKey: 'dm-intelligence-engine',
       inputHints: `User provides:
 - Scenario (cold outreach, warm follow-up, etc.)
 - Tone (professional, casual, friendly)
@@ -715,10 +715,10 @@ May include user-provided text (their bio, a post, or existing DM context).`,
   })
 
   await prisma.promptRubric.upsert({
-    where: { toolKey: 'hook-repurposer' },
+    where: { toolKey: 'content-repurpose-machine' },
     update: {},
     create: {
-      toolKey: 'hook-repurposer',
+      toolKey: 'content-repurpose-machine',
       inputHints: `User provides:
 - Original hook text
 - Optional context (niche, goal, platform)
@@ -740,10 +740,10 @@ Tool generates multiple angles from one hook.`,
   })
 
   await prisma.promptRubric.upsert({
-    where: { toolKey: 'dm_intelligence_engine' },
+    where: { toolKey: 'dm-intelligence-engine' },
     update: {},
     create: {
-      toolKey: 'dm_intelligence_engine',
+      toolKey: 'dm-intelligence-engine',
       inputHints: `User provides:
 - scenario: commenter | story_reply | inbound_dm | warm_lead | coldish_lead
 - intent: continue_convo | qualify | soft_invite | book_call

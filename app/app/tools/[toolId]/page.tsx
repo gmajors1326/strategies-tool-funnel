@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
-import ToolDetailForm from '@/src/components/tools/ToolDetailForm'
-import { findToolById } from '@/src/lib/tools/registry'
-import { getToolSchema } from '@/src/lib/tools/toolSchemas'
+import ToolRunner from '@/components/app/ToolRunner'
+import { getToolMeta } from '@/src/lib/tools/registry'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,21 +16,20 @@ function readParam(searchParams: PageProps['searchParams'], key: string) {
 }
 
 export default async function ToolDetailPage({ params, searchParams }: PageProps) {
-  const tool = findToolById(params.toolId)
-  if (!tool) return notFound()
-
-  const schemaDef = getToolSchema(tool.id)
+  let tool
+  try {
+    tool = getToolMeta(params.toolId)
+  } catch {
+    return notFound()
+  }
 
   const mode = readParam(searchParams, 'mode')
   const trialMode = readParam(searchParams, 'trialMode')
 
   return (
     <section className="space-y-4">
-      <ToolDetailForm
+      <ToolRunner
         toolId={tool.id}
-        toolName={tool.name}
-        description={schemaDef?.description}
-        schemaDef={schemaDef}
         defaultMode={mode === 'trial' ? 'trial' : 'paid'}
         defaultTrialMode={trialMode === 'preview' ? 'preview' : trialMode === 'live' ? 'live' : 'sandbox'}
       />

@@ -1,7 +1,7 @@
 // app/api/tools/run/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { TOOL_META } from '@/src/lib/tools/toolMeta'
+import { getToolMeta } from '@/src/lib/tools/registry'
 import { runnerRegistry } from '@/src/lib/tools/runnerRegistry'
 import { addRun } from '@/src/lib/tools/runStore'
 import { getBonusRunsRemainingForTool, consumeOneBonusRun } from '@/src/lib/tool/bonusRuns'
@@ -41,7 +41,12 @@ export async function POST(request: NextRequest) {
   const personalPlan = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
   const personalPlanKey = getPlanKeyFromEntitlement(personalPlan)
 
-  const tool = TOOL_META.find((item) => item.id === data.toolId)
+  let tool: ReturnType<typeof getToolMeta> | null = null
+  try {
+    tool = getToolMeta(data.toolId)
+  } catch {
+    tool = null
+  }
 
   const activeOrg = await getActiveOrg(userId)
   const membership = activeOrg ? await getMembership(userId, activeOrg.id) : null
@@ -156,7 +161,9 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (data.mode === 'paid' && tool.requiresPurchase && !orgPlan && !tool.includedInPlans?.includes(personalPlan)) {
+  const toolCapForPlan = tool.dailyRunsByPlan?.[personalPlan] ?? 0
+
+  if (data.mode === 'paid' && toolCapForPlan <= 0) {
     await recordRun({ status: 'locked', lockCode: 'locked_plan' })
     return NextResponse.json<RunResponse>(
       {
@@ -172,7 +179,7 @@ export async function POST(request: NextRequest) {
   }
 
   const usage = await ensureUsageWindow(userId)
-  const toolCap = tool.dailyRunsByPlan?.[personalPlan] ?? planRunCap
+  const toolCap = data.mode === 'trial' && toolCapForPlan <= 0 ? 1 : toolCapForPlan || planRunCap
   const toolRunsUsed = (usage.perToolRunsUsed as Record<string, number>)?.[tool.id] ?? 0
 
   if (usage.runsUsed >= planRunCap) {
@@ -347,7 +354,7 @@ export async function POST(request: NextRequest) {
 
     const response: RunResponse = {
       status: 'ok',
-      data: output.output,
+      output: output.output,
       runId,
       metering: {
         chargedTokens,

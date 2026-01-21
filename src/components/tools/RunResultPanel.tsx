@@ -5,7 +5,7 @@ type RunResultPanelProps = {
 }
 
 export function RunResultPanel({ result }: RunResultPanelProps) {
-  if (!result || !result.data) {
+  if (!result || !result.output) {
     return (
       <div className="rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] p-4 text-xs text-[hsl(var(--muted))]">
         Results will appear here after a successful run.
@@ -17,7 +17,7 @@ export function RunResultPanel({ result }: RunResultPanelProps) {
     <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
       <p className="text-xs uppercase text-[hsl(var(--muted))]">Result</p>
       <pre className="whitespace-pre-wrap text-xs text-[hsl(var(--text))]">
-        {JSON.stringify(result.data, null, 2)}
+        {JSON.stringify(result.output, null, 2)}
       </pre>
     </div>
   )

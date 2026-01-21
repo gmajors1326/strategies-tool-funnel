@@ -1,203 +1,56 @@
 # AI Tool Architecture
 
 ## Overview
+Tools use a single, canonical registry and a single OpenAI runner pipeline:
 
-All tools in the Strategy Funnel app use a unified AI reasoning engine pattern. Every tool follows the same pipeline:
-
-**Inputs → AI call → Strict JSON schema validation → UI renderer**
+**Registry (fields + caps) → Tool Runner UI → /api/tools/run → OpenAI Structured Outputs**
 
 ## Core Components
 
-### 1. AI Client (`lib/ai/client.ts`)
-- Wraps OpenAI (or other providers)
-- Handles API calls with configurable temperature, max tokens
-- Enforces JSON response format
+### 1) OpenAI Client
+`src/lib/ai/openaiClient.ts`
+- Creates a single OpenAI client
+- Selects model per tool (`OPENAI_MODEL_LIGHT` / `OPENAI_MODEL_HEAVY`)
+- Provides a stable safety identifier
 
-### 2. Tool Runner (`lib/ai/runTool.ts`)
-- Generic runner for all tools
-- Validates outputs against Zod schemas
-- Auto-retries with repair prompts on invalid JSON
-- Returns safe fallback outputs on failure
+### 2) Tool Registry (Single Source of Truth)
+`src/lib/tools/registry.ts`
+- Canonical list of 20 tool IDs (`EXPECTED_TOOL_IDS`)
+- All tool metadata: name, description, category, caps, fields
+- Fails fast if IDs mismatch or are duplicated
 
-### 3. Tool Registry (`lib/ai/toolRegistry.ts`)
-- Maps `toolId` → tool configuration
-- Defines input fields and output sections
-- Single source of truth for tool metadata
+### 3) Tool Runner (OpenAI Structured Outputs)
+`src/lib/tools/runnerRegistry.ts`
+- Zod schemas for each tool output
+- `TOOL_SPECS` keyed by toolId
+- Hard error if specs don’t match `EXPECTED_TOOL_IDS`
 
-### 4. Schemas (`lib/ai/schemas.ts`)
-- Zod schemas for each tool's output
-- Ensures type safety and validation
-- All schemas include `confidence_level` and `evidence`
+### 4) API Route
+`app/api/tools/run/route.ts`
+- Validates usage caps and tokens
+- Calls runner by `toolId`
+- Persists runs and metering
 
-### 5. Prompts (`lib/ai/prompts.ts`)
-- Tool-specific system prompts
-- Combined with global system prompt
-- Defines output requirements and constraints
+### 5) UI Runner
+`components/app/ToolRunner.tsx`
+- Renders inputs from registry fields
+- Posts `{ toolId, mode, trialMode?, input }`
 
-### 6. UI Components
-- `ToolShell`: Layout wrapper (inputs left, outputs right)
-- `OutputSection`: Reusable output display with copy buttons
-- `SaveToPlanButton`: Saves outputs to localStorage
+## How to Add a New Tool
 
-## How to Add a New Tool (5 Steps)
-
-### Step 1: Define the Schema
-Add a Zod schema in `lib/ai/schemas.ts`:
-
-```typescript
-export const myNewToolSchema = baseOutputSchema.extend({
-  // Your tool-specific fields
-  recommendation: z.string(),
-  reasons: z.array(z.string()),
-  // ... more fields
-})
-
-// Add to toolSchemas object
-export const toolSchemas = {
-  // ... existing tools
-  my_new_tool: myNewToolSchema,
-} as const
-```
-
-### Step 2: Create the Prompt
-Add a prompt in `lib/ai/prompts.ts`:
-
-```typescript
-export const toolPrompts: Record<ToolId, string> = {
-  // ... existing prompts
-  my_new_tool: `You are analyzing [context]...
-
-INPUTS:
-- field1: Description
-- field2: Description
-
-OUTPUT REQUIREMENTS:
-- recommendation: What to recommend
-- reasons: Why this recommendation
-...
-`,
-}
-```
-
-### Step 3: Register the Tool
-Add tool config in `lib/ai/toolRegistry.ts`:
-
-```typescript
-export const toolRegistry: Record<ToolId, ToolConfig> = {
-  // ... existing tools
-  my_new_tool: {
-    toolId: 'my_new_tool',
-    title: 'My New Tool',
-    description: 'What this tool does',
-    inputFields: [
-      {
-        key: 'field1',
-        label: 'Field 1',
-        type: 'text',
-        required: true,
-        placeholder: 'Enter...',
-      },
-      // ... more fields
-    ],
-    outputSections: [
-      { key: 'recommendation', title: 'Recommendation', type: 'text', copyable: true },
-      { key: 'reasons', title: 'Reasons', type: 'list', copyable: true },
-      // ... more sections
-    ],
-  },
-}
-```
-
-### Step 4: Create the Page
-Create `app/tools/my-new-tool/page.tsx`:
-
-```typescript
-import { ToolShell } from '@/components/tools/ToolShell'
-import { getToolConfig } from '@/lib/ai/toolRegistry'
-
-export default function MyNewToolPage() {
-  const config = getToolConfig('my_new_tool')
-  return (
-    <div className="min-h-screen bg-[#7d9b76] py-8">
-      <ToolShell config={config} />
-    </div>
-  )
-}
-```
-
-### Step 5: Add Fallback Output
-Add fallback in `lib/ai/runTool.ts` `createFallbackOutput` function:
-
-```typescript
-case 'my_new_tool':
-  return {
-    ...base,
-    recommendation: 'Insufficient signal',
-    reasons: ['Need more data'],
-    // ... other fields
-  }
-```
-
-## Prompt/Schema Design Checklist
-
-### ✅ Prompt Design
-- [ ] Clear input descriptions (what each field means)
-- [ ] Explicit output requirements (what each field should contain)
-- [ ] Constraints and rules (what to avoid, what to prioritize)
-- [ ] Examples or patterns (if helpful)
-- [ ] Tone and style guidance
-
-### ✅ Schema Design
-- [ ] Includes `confidence_level` and `evidence` (from base schema)
-- [ ] All required fields are marked as required
-- [ ] Array lengths are constrained (min/max)
-- [ ] String lengths are constrained (maxLength) where appropriate
-- [ ] Enums are used for categorical values
-- [ ] Nested objects are properly typed
-- [ ] Optional fields are marked optional
-
-### ✅ Output Section Types
-- `text`: Single string value
-- `list`: Array of strings (rendered as bullet list)
-- `object`: Key-value pairs (rendered as labeled fields)
-- `score`: Number 1-10 (rendered as score bar)
-
-### ✅ Testing Checklist
-- [ ] Tool runs without errors
-- [ ] All required inputs are validated
-- [ ] Output matches schema
-- [ ] Copy buttons work for copyable sections
-- [ ] Save to Plan works
-- [ ] Fallback output displays correctly on failure
-- [ ] Responsive layout works on mobile
-- [ ] Error messages are clear
+1. **Add the tool ID** to `EXPECTED_TOOL_IDS` in `src/lib/tools/registry.ts`
+2. **Create the ToolMeta** entry in `TOOL_REGISTRY` with `fields`, caps, and AI level
+3. **Add a ToolSpec** in `src/lib/tools/runnerRegistry.ts` with a Zod schema + prompt
+4. **Confirm alignment** (app fails fast if anything is missing or extra)
 
 ## Environment Variables
 
 ```env
-# Required
 OPENAI_API_KEY="sk-..."
-AI_MODEL="gpt-4-turbo-preview"
-
-# Optional
-AI_PROVIDER="openai" # default: openai
-AI_TEMPERATURE="0.2" # default: 0.2 (deterministic)
-AI_MAX_TOKENS="800" # default: 800
+OPENAI_MODEL_LIGHT="gpt-5.2"
+OPENAI_MODEL_HEAVY="gpt-5.2"
 ```
 
-## Architecture Benefits
-
-1. **Consistency**: All tools follow the same pattern
-2. **Type Safety**: Zod schemas ensure valid outputs
-3. **Maintainability**: Single place to update AI logic
-4. **Extensibility**: Easy to add new tools
-5. **Reliability**: Auto-retry and fallback handling
-6. **User Experience**: Unified UI across all tools
-
-## Current Tools
-
-- `post_types_to_outperform`: Map goals to post types
-- `why_post_failed`: Diagnose post failures
-- `hook_pressure_test`: Test hook effectiveness
-- `retention_leak_finder`: Find retention issues
-- `algorithm_training_mode`: Analyze algorithm signals
+## Notes
+- Do not duplicate tool IDs anywhere else.
+- Cards, Explore, and the Runner UI read from the registry only.
