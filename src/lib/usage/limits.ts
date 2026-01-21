@@ -23,13 +23,13 @@ export type ToolAccessDecision = {
  * - dailyRunsUsed is total runs today
  * - perToolRunsUsed is per-tool runs today (optional but preferred)
  * - purchasedTokensRemaining is the user's current token wallet balance
- * - dailyAiTokensUsed / dailyAiTokenCap are the daily metering caps (AI spend limit)
+ * - aiTokensUsed / aiTokenCap are the daily metering caps (AI spend limit)
  */
 export type UsageSnapshot = {
   dailyRunsUsed: number
   dailyRunCap: number
-  dailyAiTokensUsed: number
-  dailyAiTokenCap: number
+  aiTokensUsed: number
+  aiTokenCap: number
   purchasedTokensRemaining: number
   perToolRunsUsed?: Record<string, number>
 }
@@ -91,7 +91,7 @@ export const computeToolStatus = (
   // not count them toward AI caps. If you want deterministic to count, remove this guard.
   const countsTowardAiCap = tool.type !== 'deterministic'
   const wouldExceedDailyAiCap =
-    countsTowardAiCap && usage.dailyAiTokensUsed + tool.tokensPerRun > usage.dailyAiTokenCap
+    countsTowardAiCap && usage.aiTokensUsed + tool.tokensPerRun > usage.aiTokenCap
 
   if (wouldExceedDailyAiCap) {
     return {

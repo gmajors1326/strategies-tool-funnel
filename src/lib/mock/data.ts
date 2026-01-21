@@ -27,8 +27,8 @@ export type UiConfig = {
   usage: {
     dailyRunsUsed: number
     dailyRunCap: number
-    dailyAiTokensUsed: number
-    dailyAiTokenCap: number
+    aiTokensUsed: number
+    aiTokenCap: number
     purchasedTokensRemaining: number
     resetsAtISO: string
   }
@@ -85,8 +85,8 @@ export const getUsage = async () => {
   return {
     dailyRunsUsed: usage.runsUsed,
     dailyRunCap,
-    dailyAiTokensUsed: usage.aiTokensUsed,
-    dailyAiTokenCap,
+    aiTokensUsed: usage.aiTokensUsed,
+    aiTokenCap: dailyAiTokenCap,
     purchasedTokensRemaining: tokenBalance,
     resetsAtISO: usage.resetsAt.toISOString(),
   }
@@ -151,8 +151,8 @@ export const getMockUsage = (planId: PlanId) => {
   return {
     dailyRunsUsed: 0,
     dailyRunCap: (plan as any).dailyRunCap ?? 0,
-    dailyAiTokensUsed: 0,
-    dailyAiTokenCap: (plan as any).dailyAiTokenCap ?? 0,
+    aiTokensUsed: 0,
+    aiTokenCap: (plan as any).dailyAiTokenCap ?? 0,
     purchasedTokensRemaining: 0,
     resetsAtISO: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
   }

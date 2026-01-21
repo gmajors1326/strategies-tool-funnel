@@ -26,7 +26,7 @@ export function ToolPageClient({ tool, mode, trialMode }: ToolPageClientProps) {
   const runMode = (mode === 'trial' ? 'trial' : 'paid') as 'trial' | 'paid'
   const canRun = useMemo(() => {
     if (runMode !== 'trial') return true
-    if (tool.lockState === 'locked_trial' && bonusRemaining <= 0) return false
+    if (tool.lockState === 'trial' && bonusRemaining <= 0) return false
     return true
   }, [bonusRemaining, runMode, tool.lockState])
 
@@ -59,7 +59,7 @@ export function ToolPageClient({ tool, mode, trialMode }: ToolPageClientProps) {
       }
 
       if (data.status === 'locked') {
-        setLock(data.lock)
+        setLock(data.lock ?? null)
         return
       }
       if (data.status === 'error') {
@@ -115,7 +115,7 @@ export function ToolPageClient({ tool, mode, trialMode }: ToolPageClientProps) {
 
       <ToolFeedbackPanel
         toolId={tool.id}
-        eligible={tool.lockState === 'locked_trial' && bonusRemaining <= 0}
+        eligible={tool.lockState === 'trial' && bonusRemaining <= 0}
         onGranted={setBonusRemaining}
       />
 

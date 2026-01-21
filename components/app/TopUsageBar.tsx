@@ -7,7 +7,7 @@ type TopUsageBarProps = {
 
 export function TopUsageBar({ usage }: TopUsageBarProps) {
   const runPct = Math.min((usage.dailyRunsUsed / usage.dailyRunCap) * 100, 100)
-  const tokenPct = Math.min((usage.dailyAiTokensUsed / usage.dailyAiTokenCap) * 100, 100)
+  const tokenPct = Math.min((usage.aiTokensUsed / usage.aiTokenCap) * 100, 100)
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
@@ -21,7 +21,7 @@ export function TopUsageBar({ usage }: TopUsageBarProps) {
         <div>
           <p className="text-xs text-[hsl(var(--muted))]">AI Tokens</p>
           <p className="text-sm text-[hsl(var(--text))]">
-            {usage.dailyAiTokensUsed} / {usage.dailyAiTokenCap}
+            {usage.aiTokensUsed} / {usage.aiTokenCap}
           </p>
         </div>
         <div>

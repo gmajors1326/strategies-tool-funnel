@@ -52,37 +52,38 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
       const toolCap = tool.dailyRunsByPlan?.[user.planId] ?? planRunCap
       const toolRunsUsed = (usageWindow.perToolRunsUsed as Record<string, number>)?.[tool.id] ?? 0
 
-      let lockState: UiConfig['catalog'][number]['lockState'] = 'ok'
+      let lockState: UiConfig['catalog'][number]['lockState'] = 'available'
       let reason: string | undefined
       let cta = { label: 'Run tool', href: `/app/tools/${tool.id}` }
 
       if (membership?.role === 'viewer') {
-        lockState = 'locked_role'
+        lockState = 'locked'
         reason = 'Viewer role cannot run tools'
         cta = { label: 'Upgrade seat', href: `/orgs/${activeOrg?.slug}/members` }
       } else if (!tool.enabled) {
-        lockState = 'locked_plan'
+        lockState = 'disabled'
         reason = 'Temporarily offline'
         cta = { label: 'Contact support', href: '/app/support' }
       } else if (tool.requiresPurchase && !tool.includedInPlans?.includes(user.planId)) {
-        lockState = 'locked_trial'
+        lockState = 'trial'
         if (trial.allowed || bonus.remainingRuns > 0) {
           reason = bonus.remainingRuns > 0 ? 'Bonus sandbox runs available' : 'Sandbox available'
           cta = { label: 'Run guided example', href: `/app/tools/${tool.id}?mode=trial&trialMode=sandbox` }
         } else {
           reason = 'Trial used'
           cta = { label: 'Unlock tool', href: '/pricing' }
+          lockState = 'locked'
         }
       } else if (usageWindow.runsUsed >= planRunCap) {
-        lockState = 'locked_usage_daily'
+        lockState = 'limited'
         reason = 'Daily run cap reached'
         cta = { label: 'Wait for reset', href: '/app/usage' }
       } else if (toolRunsUsed >= toolCap) {
-        lockState = 'locked_tool_daily'
+        lockState = 'limited'
         reason = 'Daily tool cap reached'
         cta = { label: 'Wait for reset', href: '/app/usage' }
       } else if (tool.aiLevel !== 'none' && usageWindow.aiTokensUsed >= planTokenCap) {
-        lockState = 'locked_tokens'
+        lockState = 'locked'
         reason = 'Daily token cap reached'
         cta = { label: 'Buy tokens', href: '/pricing' }
       }
@@ -102,7 +103,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
     })
   )
 
-  const myTools = catalog.filter((tool) => tool.lockState === 'ok')
+  const myTools = catalog.filter((tool) => tool.lockState === 'available')
 
   return {
     user,

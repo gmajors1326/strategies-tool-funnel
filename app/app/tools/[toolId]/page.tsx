@@ -1,38 +1,40 @@
 import { notFound } from 'next/navigation'
-import { fetchUiConfig } from '@/src/lib/ui/fetchUiConfig'
-import { ToolPageClient } from '@/src/components/tools/ToolPageClient'
+import ToolDetailForm from '@/src/components/tools/ToolDetailForm'
+import { findToolById } from '@/src/lib/tools/registry'
+import { getToolSchema } from '@/src/lib/tools/toolSchemas'
 
 export const dynamic = 'force-dynamic'
 
-type ToolPageProps = {
+type PageProps = {
   params: { toolId: string }
-  searchParams?: { mode?: string; trialMode?: string }
+  searchParams?: Record<string, string | string[] | undefined>
 }
 
-const toTitle = (toolId: string) =>
-  toolId
-    .split('-')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
+function readParam(searchParams: PageProps['searchParams'], key: string) {
+  const v = searchParams?.[key]
+  if (!v) return undefined
+  return Array.isArray(v) ? v[0] : v
+}
 
-export default async function ToolPage({ params, searchParams }: ToolPageProps) {
-  const uiConfig = await fetchUiConfig()
-  const tool = uiConfig.catalog.find((item) => item.id === params.toolId)
+export default async function ToolDetailPage({ params, searchParams }: PageProps) {
+  const tool = findToolById(params.toolId)
+  if (!tool) return notFound()
 
-  if (!tool) {
-    return notFound()
-  }
+  const schemaDef = getToolSchema(tool.id)
+
+  const mode = readParam(searchParams, 'mode')
+  const trialMode = readParam(searchParams, 'trialMode')
 
   return (
     <section className="space-y-4">
-      <div>
-        <h1 className="text-lg font-semibold">{toTitle(params.toolId)}</h1>
-        <p className="text-sm text-[hsl(var(--muted))]">
-          Mode: {searchParams?.mode ?? 'paid'} {searchParams?.trialMode ? `(${searchParams?.trialMode})` : ''}
-        </p>
-      </div>
-
-      <ToolPageClient tool={tool} mode={searchParams?.mode} trialMode={searchParams?.trialMode} />
+      <ToolDetailForm
+        toolId={tool.id}
+        toolName={tool.name}
+        description={schemaDef?.description}
+        schemaDef={schemaDef}
+        defaultMode={mode === 'trial' ? 'trial' : 'paid'}
+        defaultTrialMode={trialMode === 'preview' ? 'preview' : trialMode === 'live' ? 'live' : 'sandbox'}
+      />
     </section>
   )
 }

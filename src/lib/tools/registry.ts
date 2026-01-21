@@ -12,7 +12,7 @@ export type ToolConfig = {
 }
 
 export const TOOL_REGISTRY: ToolConfig[] = [
-  // 1) DM / Conversation (money zone)
+  // 1) DM / Conversation
   {
     id: 'dm-opener',
     name: 'DM Opener',
@@ -113,6 +113,14 @@ export const TOOL_REGISTRY: ToolConfig[] = [
     dailyRunsByPlan: { free: 1, pro_monthly: 4, lifetime: 10, team: 20 },
     enabled: true,
   },
+  {
+    id: 'bio-optimizer',
+    name: 'Bio Optimizer',
+    type: 'light_ai',
+    tokensPerRun: 420,
+    dailyRunsByPlan: { free: 1, pro_monthly: 5, lifetime: 12, team: 24 },
+    enabled: true,
+  },
 
   // 4) Offers / conversion sanity
   {
@@ -155,6 +163,14 @@ export const TOOL_REGISTRY: ToolConfig[] = [
     type: 'light_ai',
     tokensPerRun: 480,
     dailyRunsByPlan: { free: 1, pro_monthly: 5, lifetime: 12, team: 24 },
+    enabled: true,
+  },
+  {
+    id: 'carousel-outline-builder',
+    name: 'Carousel Outline Builder',
+    type: 'light_ai',
+    tokensPerRun: 520,
+    dailyRunsByPlan: { free: 1, pro_monthly: 4, lifetime: 10, team: 20 },
     enabled: true,
   },
 
