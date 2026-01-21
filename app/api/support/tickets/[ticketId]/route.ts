@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireUser } from '@/src/lib/auth/requireUser'
-import { getMockTicketDetail } from '@/src/lib/mock/data'
+import { getTicketDetailForUser } from '@/src/lib/support/tickets'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,7 +8,10 @@ export async function GET(
   _request: Request,
   { params }: { params: { ticketId: string } }
 ) {
-  await requireUser()
-  // TODO: replace (ui): load ticket detail from support backend.
-  return NextResponse.json(await getMockTicketDetail(params.ticketId))
+  const session = await requireUser()
+  const ticket = await getTicketDetailForUser(session.id, params.ticketId)
+  if (!ticket) {
+    return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
+  }
+  return NextResponse.json(ticket)
 }

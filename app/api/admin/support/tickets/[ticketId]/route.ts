@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/src/lib/auth/requireAdmin'
-import { getMockTicketDetail } from '@/src/lib/mock/data'
+import { getTicketDetailForAdmin } from '@/src/lib/support/tickets'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,16 +9,9 @@ export async function GET(
   { params }: { params: { ticketId: string } }
 ) {
   await requireAdmin()
-  // TODO: replace (ui): load admin ticket detail + user context from support system.
-  const ticket = await getMockTicketDetail(params.ticketId)
-  return NextResponse.json({
-    ...ticket,
-    // TODO: replace (ui): load user context from support/billing systems.
-    userContext: {
-      userId: 'user_dev_1',
-      email: 'dev@example.com',
-      planId: 'pro_monthly',
-      lifetimeValue: 129,
-    },
-  })
+  const detail = await getTicketDetailForAdmin(params.ticketId)
+  if (!detail) {
+    return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
+  }
+  return NextResponse.json(detail)
 }

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/src/lib/auth/requireAdmin'
-import { getMockTickets } from '@/src/lib/mock/data'
+import { listTicketsForAdmin } from '@/src/lib/support/tickets'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   await requireAdmin()
-  // TODO: replace (ui): load real support queue for admins.
-  return NextResponse.json({ tickets: await getMockTickets() })
+  const tickets = await listTicketsForAdmin()
+  return NextResponse.json({ tickets })
 }

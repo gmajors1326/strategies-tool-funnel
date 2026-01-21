@@ -1,12 +1,13 @@
-import { getMockTickets } from '@/src/lib/mock/data'
+import { requireUser } from '@/src/lib/auth/requireUser'
+import { listTicketsForUser } from '@/src/lib/support/tickets'
 import { Button } from '@/components/app/Button'
 import { SupportTicketCard } from '@/components/app/SupportTicketCard'
 
 export const dynamic = 'force-dynamic'
 
 export default async function SupportTicketsPage() {
-  // TODO: replace (ui): load support tickets from backend.
-  const tickets = await getMockTickets()
+  const session = await requireUser()
+  const tickets = await listTicketsForUser(session.id)
 
   return (
     <section className="space-y-4">

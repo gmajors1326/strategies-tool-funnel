@@ -35,29 +35,50 @@ export function ToolPageClient({ tool, mode, trialMode }: ToolPageClientProps) {
     setError(null)
     setLock(null)
     setValidationErrors({})
-    const res = await fetch('/api/tools/run', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toolId: tool.id, mode: runMode, trialMode, input }),
-    })
-    const data = await res.json()
-    setLoading(false)
+    try {
+      const res = await fetch('/api/tools/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toolId: tool.id, mode: runMode, trialMode, input }),
+      })
+      const rawBody = await res.text()
+      const isJson = res.headers.get('content-type')?.includes('application/json')
+      let data: RunResponse | undefined
 
-    if (data.status === 'locked') {
-      setLock(data.lock)
-      return
-    }
-    if (data.status === 'error') {
-      if (data.error?.code === 'VALIDATION_ERROR') {
-        setValidationErrors(data.error.details || {})
+      if (rawBody && isJson) {
+        try {
+          data = JSON.parse(rawBody) as RunResponse
+        } catch (parseError) {
+          console.error('[ToolPageClient] Failed to parse run response:', parseError)
+        }
       }
-      setError({ message: data.error?.message || 'Run failed' })
-      return
-    }
 
-    setResult(data)
-    if (typeof data.metering?.remainingBonusRuns === 'number') {
-      setBonusRemaining(data.metering.remainingBonusRuns)
+      if (!data) {
+        setError({ message: 'Request failed with empty response.' })
+        return
+      }
+
+      if (data.status === 'locked') {
+        setLock(data.lock)
+        return
+      }
+      if (data.status === 'error') {
+        if (data.error?.code === 'VALIDATION_ERROR') {
+          setValidationErrors(data.error.details || {})
+        }
+        setError({ message: data.error?.message || 'Run failed' })
+        return
+      }
+
+      setResult(data)
+      if (typeof data.metering?.remainingBonusRuns === 'number') {
+        setBonusRemaining(data.metering.remainingBonusRuns)
+      }
+    } catch (err: any) {
+      console.error('[ToolPageClient] Run failed:', err)
+      setError({ message: err?.message || 'Run failed' })
+    } finally {
+      setLoading(false)
     }
   }
 

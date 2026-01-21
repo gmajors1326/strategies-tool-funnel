@@ -130,7 +130,26 @@ export function ToolRunner({ toolId }: ToolRunnerProps) {
         body: JSON.stringify(payload),
       })
 
-      const data = (await res.json()) as RunResponse
+      const rawBody = await res.text()
+      const isJson = res.headers.get('content-type')?.includes('application/json')
+      let data: RunResponse | undefined
+
+      if (rawBody && isJson) {
+        try {
+          data = JSON.parse(rawBody) as RunResponse
+        } catch (parseError) {
+          console.error('[ToolRunner] Failed to parse run response:', parseError)
+        }
+      }
+
+      if (!data) {
+        setResult({
+          status: 'error',
+          error: { message: 'Request failed with empty response.', code: 'EMPTY_RESPONSE' },
+        })
+        return
+      }
+
       setResult(data)
     } catch (e: any) {
       setResult({

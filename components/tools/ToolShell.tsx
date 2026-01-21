@@ -165,13 +165,28 @@ export function ToolShell({ config, onResult }: ToolShellProps) {
         }),
       })
 
-      const data = (await result.json()) as RunResponse
+      const rawBody = await result.text()
+      const isJson = result.headers.get('content-type')?.includes('application/json')
+      let data: RunResponse | undefined
 
-      if (!result.ok || data.status !== 'ok') {
-        const errorMessage =
-          data.status === 'locked'
+      if (rawBody && isJson) {
+        try {
+          data = JSON.parse(rawBody) as RunResponse
+        } catch (parseError) {
+          console.error('[ToolShell] Failed to parse run response:', parseError)
+        }
+      }
+
+      if (!result.ok || !data || data.status !== 'ok') {
+        const fallbackMessage =
+          rawBody?.trim()?.length
+            ? `Request failed (${result.status}).`
+            : 'Request failed with empty response.'
+        const errorMessage = data
+          ? data.status === 'locked'
             ? data.lock?.message || 'Tool is locked.'
             : data.error?.message || 'Failed to run tool'
+          : fallbackMessage
         const formattedError = formatErrorMessage(errorMessage)
         const validationErrs = extractValidationErrors(errorMessage)
         setError(formattedError)

@@ -1,11 +1,23 @@
-import { getMockTicketDetail } from '@/src/lib/mock/data'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+import { getTicketDetailForAdmin } from '@/src/lib/support/tickets'
 import { Button } from '@/components/app/Button'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminTicketDetailPage({ params }: { params: { ticketId: string } }) {
-  // TODO: replace (ui): load ticket detail and user context from backend.
-  const ticket = await getMockTicketDetail(params.ticketId)
+  await requireAdmin()
+  const detail = await getTicketDetailForAdmin(params.ticketId)
+
+  if (!detail) {
+    return (
+      <section className="space-y-4">
+        <h1 className="text-lg font-semibold">Ticket not found</h1>
+        <p className="text-sm text-[hsl(var(--muted))]">The support ticket could not be located.</p>
+      </section>
+    )
+  }
+
+  const { ticket, userContext } = detail
 
   return (
     <section className="space-y-4">
@@ -25,9 +37,9 @@ export default async function AdminTicketDetailPage({ params }: { params: { tick
         <div className="space-y-3">
           <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
             <p className="text-sm font-semibold">User Context</p>
-            {/* TODO: replace (ui): render real user context from backend. */}
-            <p className="text-xs text-[hsl(var(--muted))]">User ID: user_dev_1</p>
-            <p className="text-xs text-[hsl(var(--muted))]">Plan: pro_monthly</p>
+            <p className="text-xs text-[hsl(var(--muted))]">User ID: {userContext.userId}</p>
+            <p className="text-xs text-[hsl(var(--muted))]">Email: {userContext.email ?? 'unknown'}</p>
+            <p className="text-xs text-[hsl(var(--muted))]">Plan: {userContext.planId ?? 'unknown'}</p>
           </div>
           <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
             <p className="text-sm font-semibold">Admin Actions</p>

@@ -1,12 +1,22 @@
-import { getMockTicketDetail } from '@/src/lib/mock/data'
+import { requireUser } from '@/src/lib/auth/requireUser'
+import { getTicketDetailForUser } from '@/src/lib/support/tickets'
 import { Button } from '@/components/app/Button'
 import { Input } from '@/components/app/Input'
 
 export const dynamic = 'force-dynamic'
 
 export default async function SupportTicketDetailPage({ params }: { params: { ticketId: string } }) {
-  // TODO: replace (ui): load support ticket detail from backend.
-  const ticket = await getMockTicketDetail(params.ticketId)
+  const session = await requireUser()
+  const ticket = await getTicketDetailForUser(session.id, params.ticketId)
+
+  if (!ticket) {
+    return (
+      <section className="space-y-4">
+        <h1 className="text-lg font-semibold">Ticket not found</h1>
+        <p className="text-sm text-[hsl(var(--muted))]">This ticket may have been removed or you do not have access.</p>
+      </section>
+    )
+  }
 
   return (
     <section className="space-y-4">

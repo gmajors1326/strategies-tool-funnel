@@ -1,12 +1,13 @@
-import { getMockTickets } from '@/src/lib/mock/data'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+import { listTicketsForAdmin } from '@/src/lib/support/tickets'
 import { Table } from '@/components/app/Table'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminSupportPage() {
-  // TODO: replace (ui): load support queue from backend.
-  const tickets = await getMockTickets()
+  await requireAdmin()
+  const tickets = await listTicketsForAdmin()
 
   return (
     <section className="space-y-4">
