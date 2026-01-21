@@ -12,16 +12,21 @@ function resolveCta(tool: ToolUiItem) {
   if (tool.cta) return tool.cta
 
   switch (tool.lockState) {
-    case 'available':
+    case 'ok':
       return { label: 'Run tool', href: `/app/tools/${tool.id}` }
 
-    case 'trial':
+    case 'locked_trial':
       return { label: 'Start trial', href: `/app/tools/${tool.id}?mode=trial` }
 
-    case 'limited':
+    case 'locked_usage_daily':
+    case 'locked_tool_daily':
       return { label: 'View usage', href: '/app/usage' }
 
-    case 'locked':
+    case 'locked_tokens':
+      return { label: 'Buy tokens', href: '/pricing' }
+
+    case 'locked_plan':
+    case 'locked_role':
     default:
       return { label: 'Upgrade', href: '/pricing' }
   }
@@ -55,10 +60,7 @@ export function ToolCard({ tool }: ToolCardProps) {
 
       {/* CTA */}
       <Link href={cta.href} className="block">
-        <Button
-          className="w-full"
-          variant={tool.lockState === 'available' || tool.lockState === 'trial' ? 'default' : 'outline'}
-        >
+        <Button className="w-full" variant={tool.lockState === 'ok' || tool.lockState === 'locked_trial' ? 'default' : 'outline'}>
           {cta.label}
         </Button>
       </Link>
