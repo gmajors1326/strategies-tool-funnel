@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getToolMeta } from '@/src/lib/tools/registry'
 import { getToolBySlug } from '@/src/lib/tools/getToolBySlug'
-import ToolRunner from '@/src/components/tools/ToolRunner'
+import { ToolRunner } from '@/src/components/tools/ToolRunner'
 
 export const dynamic = 'force-dynamic'
 
