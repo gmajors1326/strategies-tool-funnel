@@ -11,9 +11,11 @@ const STORAGE_KEY = 'strategy_tools_recent_runs'
 const PINNED_KEY = 'strategy_tools_pinned_runs'
 const MAX_RUNS_PER_TOOL = 10
 const MAX_TOTAL_RUNS = 100
+const canUseStorage = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
 
 export function saveRecentRun(run: Omit<RecentRun, 'id' | 'timestamp'>): void {
   try {
+    if (!canUseStorage()) return
     const existing = getRecentRuns()
     
     // Remove old runs for this tool if we're at the limit
@@ -44,6 +46,7 @@ export function saveRecentRun(run: Omit<RecentRun, 'id' | 'timestamp'>): void {
 
 export function getRecentRuns(): RecentRun[] {
   try {
+    if (!canUseStorage()) return []
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) return []
     return JSON.parse(stored) as RecentRun[]
@@ -62,6 +65,7 @@ export function getRecentRunsByTool(toolId: string): RecentRun[] {
 
 export function clearRecentRuns(): void {
   try {
+    if (!canUseStorage()) return
     localStorage.removeItem(STORAGE_KEY)
   } catch (err) {
     console.error('Failed to clear recent runs:', err)
@@ -70,6 +74,7 @@ export function clearRecentRuns(): void {
 
 export function removeRecentRun(id: string): void {
   try {
+    if (!canUseStorage()) return
     const existing = getRecentRuns()
     const updated = existing.filter(run => run.id !== id)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
@@ -82,6 +87,7 @@ export function removeRecentRun(id: string): void {
 
 export function getPinnedRunIds(): string[] {
   try {
+    if (!canUseStorage()) return []
     const stored = localStorage.getItem(PINNED_KEY)
     if (!stored) return []
     return JSON.parse(stored) as string[]
@@ -97,6 +103,7 @@ export function isPinnedRun(runId: string): boolean {
 
 export function togglePinnedRun(runId: string): void {
   try {
+    if (!canUseStorage()) return
     const pinned = getPinnedRunIds()
     const index = pinned.indexOf(runId)
     if (index > -1) {

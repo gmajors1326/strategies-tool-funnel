@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { deriveCategoryFromTags } from '@/src/lib/tools/registry'
 import type { ToolMeta, Difficulty } from '@/src/lib/tools/registry'
 
 type Props = { tools: ToolMeta[] }
@@ -44,66 +45,10 @@ const CATEGORIES: ToolCategory[] = [
   'Competitive',
 ]
 
-const TAG_CATEGORY_RULES: Record<string, Exclude<ToolCategory, 'All'>> = {
-  hook: 'Hooks',
-  hooks: 'Hooks',
-  opener: 'Hooks',
-
-  caption: 'Content',
-  captions: 'Content',
-  reel: 'Content',
-  reels: 'Content',
-  script: 'Content',
-  scripts: 'Content',
-  carousel: 'Content',
-  story: 'Content',
-  stories: 'Content',
-  hashtag: 'Content',
-  hashtags: 'Content',
-  repurpose: 'Content',
-  content: 'Content',
-
-  dm: 'DMs',
-  dms: 'DMs',
-  outreach: 'DMs',
-  conversation: 'DMs',
-  sales: 'DMs',
-
-  offer: 'Offers',
-  offers: 'Offers',
-  cta: 'Offers',
-  conversion: 'Offers',
-  pricing: 'Offers',
-  positioning: 'Offers',
-
-  retention: 'Analytics',
-  engagement: 'Analytics',
-  performance: 'Analytics',
-  analytics: 'Analytics',
-  diagnostic: 'Analytics',
-
-  audience: 'Audience',
-  niche: 'Audience',
-  persona: 'Audience',
-  copy: 'Audience',
-
-  competitor: 'Competitive',
-  competitors: 'Competitive',
-  angle: 'Competitive',
-  angles: 'Competitive',
-  strategy: 'Competitive',
-}
-
-function deriveCategoryFromTags(tags: string[] | undefined): Exclude<ToolCategory, 'All'> {
-  const safe = (tags ?? [])
-    .map((t) => String(t).trim().toLowerCase())
-    .filter(Boolean)
-  for (const t of safe) {
-    const hit = TAG_CATEGORY_RULES[t]
-    if (hit) return hit
-  }
-  return 'Content'
-}
+const PREFLIGHT_TTL_KEY = 'tools_preflight_ttl_ts'
+const PREFLIGHT_TTL_MS = 75_000
+const canUseSessionStorage = () =>
+  typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined'
 
 function normalizeText(s: string) {
   return String(s ?? '')
@@ -142,28 +87,47 @@ function badgeForPreflight(p?: ToolPreflightResult) {
   }
 }
 
-function getWorstLockBanner(preflightMap: Record<string, ToolPreflightResult>) {
+type WorstLockBanner =
+  | { kind: 'tokens'; remainingTokens?: number; requiredTokens?: number }
+  | { kind: 'plan' }
+  | { kind: 'resets'; resetsAtISO?: string }
+  | { kind: 'role' }
+
+function getWorstLockBanner(preflightMap: Record<string, ToolPreflightResult>): WorstLockBanner | null {
   const locked = Object.values(preflightMap).filter((r) => r.status === 'locked')
   if (!locked.length) return null
 
-  if (locked.some((r) => r.lockCode === 'locked_tokens')) {
-    return { kind: 'tokens' as const }
+  const tokensLock = locked.find((r) => r.lockCode === 'locked_tokens')
+  if (tokensLock) {
+    return {
+      kind: 'tokens',
+      remainingTokens: tokensLock.remainingTokens,
+      requiredTokens: tokensLock.requiredTokens,
+    }
   }
+
+  const planLock = locked.find((r) => r.lockCode === 'locked_plan')
+  if (planLock) return { kind: 'plan' }
 
   const resetLocks = locked.filter(
     (r) => r.lockCode === 'locked_usage_daily' || r.lockCode === 'locked_tool_daily'
   )
-  if (!resetLocks.length) return null
+  if (resetLocks.length) {
+    const resetTimes = resetLocks
+      .map((r) => r.usage?.resetsAtISO)
+      .filter(Boolean)
+      .map((iso) => new Date(iso as string).getTime())
 
-  const resetTimes = resetLocks
-    .map((r) => r.usage?.resetsAtISO)
-    .filter(Boolean)
-    .map((iso) => new Date(iso as string).getTime())
+    const worstReset =
+      resetTimes.length > 0 ? new Date(Math.max(...resetTimes)).toISOString() : resetLocks[0].usage?.resetsAtISO
 
-  const worstReset =
-    resetTimes.length > 0 ? new Date(Math.max(...resetTimes)).toISOString() : resetLocks[0].usage?.resetsAtISO
+    return { kind: 'resets', resetsAtISO: worstReset }
+  }
 
-  return { kind: 'resets' as const, resetsAtISO: worstReset }
+  const roleLock = locked.find((r) => r.lockCode === 'locked_role')
+  if (roleLock) return { kind: 'role' }
+
+  return null
 }
 
 export default function ExploreTools({ tools }: Props) {
@@ -171,15 +135,17 @@ export default function ExploreTools({ tools }: Props) {
   const [difficulty, setDifficulty] = React.useState<Difficulty | 'all'>('all')
   const [query, setQuery] = React.useState('')
   const [selectedTags, setSelectedTags] = React.useState<string[]>([])
+  const [availableOnly, setAvailableOnly] = React.useState(false)
 
   const [preflightMap, setPreflightMap] = React.useState<Record<string, ToolPreflightResult>>({})
   const [preflightReqId, setPreflightReqId] = React.useState<string | null>(null)
   const [preflightLoading, setPreflightLoading] = React.useState(false)
+  const [preflightError, setPreflightError] = React.useState<string | null>(null)
 
   const toolsWithCategory = React.useMemo(() => {
     return tools.map((t) => ({
       ...t,
-      __category: (t as any).category || deriveCategoryFromTags(t.tags),
+      __category: t.category || deriveCategoryFromTags(t.tags ?? []),
     }))
   }, [tools])
 
@@ -188,11 +154,18 @@ export default function ExploreTools({ tools }: Props) {
     return uniqSorted(tags.map((t) => String(t).trim()).filter(Boolean))
   }, [tools])
 
-  React.useEffect(() => {
-    let cancelled = false
+  const runPreflight = React.useCallback(
+    async ({ force = false }: { force?: boolean } = {}) => {
+      if (!tools.length) return
 
-    async function runPreflight() {
+      if (!force && canUseSessionStorage()) {
+        const last = Number(window.sessionStorage.getItem(PREFLIGHT_TTL_KEY) ?? 0)
+        if (last && Date.now() - last < PREFLIGHT_TTL_MS) return
+      }
+
       setPreflightLoading(true)
+      setPreflightError(null)
+
       try {
         const res = await fetch('/api/tools/preflight', {
           method: 'POST',
@@ -201,7 +174,12 @@ export default function ExploreTools({ tools }: Props) {
         })
 
         const rid = res.headers.get('x-request-id')
-        if (!cancelled) setPreflightReqId(rid)
+        setPreflightReqId(rid)
+
+        if (!res.ok) {
+          const errText = await res.text()
+          throw new Error(errText || 'Preflight failed.')
+        }
 
         const json = await res.json()
         const results: ToolPreflightResult[] = json?.results ?? []
@@ -209,25 +187,44 @@ export default function ExploreTools({ tools }: Props) {
         const map: Record<string, ToolPreflightResult> = {}
         for (const r of results) map[r.toolId] = r
 
-        if (!cancelled) setPreflightMap(map)
-      } catch {
-        if (!cancelled) {
-          setPreflightMap({})
-          setPreflightReqId(null)
+        setPreflightMap(map)
+
+        if (canUseSessionStorage()) {
+          window.sessionStorage.setItem(PREFLIGHT_TTL_KEY, String(Date.now()))
         }
+      } catch (err) {
+        setPreflightMap({})
+        setPreflightReqId(null)
+        setPreflightError(err instanceof Error ? err.message : 'Preflight failed.')
       } finally {
-        if (!cancelled) setPreflightLoading(false)
+        setPreflightLoading(false)
       }
+    },
+    [tools]
+  )
+
+  React.useEffect(() => {
+    void runPreflight()
+  }, [runPreflight])
+
+  React.useEffect(() => {
+    function handleFocus() {
+      void runPreflight()
     }
 
-    if (tools.length) void runPreflight()
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleFocus)
 
     return () => {
-      cancelled = true
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleFocus)
     }
-  }, [tools])
+  }, [runPreflight])
 
-  const worstLockBanner = React.useMemo(() => getWorstLockBanner(preflightMap), [preflightMap])
+  const worstLockBanner = React.useMemo(
+    () => (preflightError ? null : getWorstLockBanner(preflightMap)),
+    [preflightError, preflightMap]
+  )
 
   const filtered = React.useMemo(() => {
     const q = normalizeText(query)
@@ -236,6 +233,7 @@ export default function ExploreTools({ tools }: Props) {
       .filter((t) => {
         if (category !== 'All' && t.__category !== category) return false
         if (difficulty !== 'all' && t.difficulty !== difficulty) return false
+        if (availableOnly && preflightMap[t.id]?.status === 'locked') return false
 
         if (selectedTags.length) {
           const set = new Set((t.tags ?? []).map((x) => String(x)))
@@ -266,15 +264,35 @@ export default function ExploreTools({ tools }: Props) {
     setDifficulty('all')
     setQuery('')
     setSelectedTags([])
+    setAvailableOnly(false)
   }
 
   return (
     <div className="space-y-4">
+      {preflightError ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-100">
+          <div>Couldn’t check availability. {preflightError}</div>
+          <button
+            type="button"
+            onClick={() => runPreflight({ force: true })}
+            className="rounded-md border border-red-500/60 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
+
       {worstLockBanner ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-800 bg-neutral-950 px-4 py-3 text-sm text-neutral-200">
           {worstLockBanner.kind === 'tokens' ? (
             <>
-              <div>You're locked by tokens → Buy tokens</div>
+              <div>
+                You're locked by tokens{' '}
+                <span className="text-neutral-400">
+                  ({worstLockBanner.remainingTokens ?? 0}/{worstLockBanner.requiredTokens ?? '—'} tokens)
+                </span>{' '}
+                → Buy tokens
+              </div>
               <a
                 href="/pricing"
                 className="rounded-md border border-red-500/60 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500"
@@ -282,6 +300,18 @@ export default function ExploreTools({ tools }: Props) {
                 Buy tokens
               </a>
             </>
+          ) : worstLockBanner.kind === 'plan' ? (
+            <>
+              <div>Locked by plan → Upgrade</div>
+              <a
+                href="/pricing"
+                className="rounded-md border border-red-500/60 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500"
+              >
+                Upgrade
+              </a>
+            </>
+          ) : worstLockBanner.kind === 'role' ? (
+            <div>Viewer seats can’t run tools → Ask an admin to upgrade your role</div>
           ) : (
             <div>
               Resets at{' '}
@@ -313,6 +343,16 @@ export default function ExploreTools({ tools }: Props) {
                 <option value="hard">Hard</option>
               </select>
 
+              <label className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs text-neutral-200">
+                <input
+                  type="checkbox"
+                  checked={availableOnly}
+                  onChange={(e) => setAvailableOnly(e.target.checked)}
+                  className="accent-red-500"
+                />
+                Available only
+              </label>
+
               <button
                 type="button"
                 onClick={clearFilters}
@@ -333,7 +373,7 @@ export default function ExploreTools({ tools }: Props) {
 
             <button
               type="button"
-              onClick={() => window.location.reload()}
+              onClick={() => runPreflight({ force: true })}
               className="rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-200 hover:bg-neutral-900"
               title="Refresh preflight"
             >
@@ -399,6 +439,11 @@ export default function ExploreTools({ tools }: Props) {
               </span>
             </div>
             <div className="text-neutral-500">Badges reflect plan + caps + token balance.</div>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-neutral-400">
+            <span className="rounded-md border border-neutral-700 bg-neutral-950 px-2 py-0.5">Plan</span>
+            <span className="rounded-md border border-neutral-700 bg-neutral-950 px-2 py-0.5">Tokens</span>
+            <span className="rounded-md border border-neutral-700 bg-neutral-950 px-2 py-0.5">Cap</span>
           </div>
         </div>
       </div>
