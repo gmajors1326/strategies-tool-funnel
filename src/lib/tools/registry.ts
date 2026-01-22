@@ -35,6 +35,14 @@ export type ToolExample = {
   input: Record<string, any>
 }
 
+export type ToolMicrocopy = {
+  oneLiner?: string
+  whoFor?: string[]
+  youInput?: string[]
+  youGet?: string[]
+  notes?: string[]
+}
+
 export type ToolMeta = {
   id: string
   name: string
@@ -63,6 +71,7 @@ export type ToolMeta = {
   // Optional (nice to have, not required)
   outputSchemaLabel?: string
   outputHints?: string[]
+  microcopy?: ToolMicrocopy
 }
 
 export const EXPECTED_TOOL_IDS = [
@@ -849,11 +858,135 @@ const TOOL_REGISTRY_SEED: Record<ToolId, ToolMetaSeed> = {
   },
 }
 
+const TOOL_MICROCOPY: Record<ToolId, ToolMicrocopy> = {
+  'hook-analyzer': {
+    oneLiner: "Stop posting hooks that look good but don't hold attention.",
+    whoFor: ['Creators stuck under 1k views', 'Marketers testing daily', 'People tired of guessing'],
+    youInput: ['Your hook', 'Audience + format'],
+    youGet: ['Hook score + type', '3 stronger variants', 'Why it fails in 1 line'],
+  },
+  'cta-match-analyzer': {
+    oneLiner: 'Fix CTAs that don’t match the content promise.',
+    whoFor: ['Creators with low saves', 'Offer owners testing CTAs', 'Content teams'],
+    youInput: ['Post context', 'Current CTA'],
+    youGet: ['CTA alignment score', 'Better CTA options', 'Mismatch reason'],
+  },
+  'dm-intelligence-engine': {
+    oneLiner: 'Turn cold DMs into warm conversations fast.',
+    whoFor: ['Closers doing daily outreach', 'Founders selling services', 'Teams booking calls'],
+    youInput: ['Prospect context', 'Goal of the DM'],
+    youGet: ['Opening message', 'Follow-up angles', 'Tone guidance'],
+  },
+  'retention-leak-finder': {
+    oneLiner: 'Spot exactly where viewers drop off.',
+    whoFor: ['Reel creators', 'Video marketers', 'Growth leads'],
+    youInput: ['Video summary', 'Audience + length'],
+    youGet: ['Drop-off checkpoints', 'Retention fixes', 'Re-hook ideas'],
+  },
+  'reel-script-builder': {
+    oneLiner: 'Write reels that hold attention start to finish.',
+    whoFor: ['Creators posting daily', 'Agencies shipping reels', 'Founders building authority'],
+    youInput: ['Topic', 'Audience pain'],
+    youGet: ['Script beats', 'On-screen hook', 'CTA line'],
+  },
+  'offer-clarity-check': {
+    oneLiner: 'Make your offer obvious in 10 seconds.',
+    whoFor: ['Service sellers', 'Course creators', 'Landing page owners'],
+    youInput: ['Offer statement', 'Target buyer'],
+    youGet: ['Clarity score', 'Tighter offer copy', 'Confusion points'],
+  },
+  'positioning-knife': {
+    oneLiner: 'Slice vague positioning into a sharp angle.',
+    whoFor: ['New brands', 'Freelancers who blend in', 'Teams rebranding'],
+    youInput: ['Who you serve', 'What you do'],
+    youGet: ['Positioning angle', 'Differentiator line', 'Competitor contrast'],
+  },
+  'content-repurpose-machine': {
+    oneLiner: 'Turn one idea into a week of content.',
+    whoFor: ['Solo creators', 'Busy founders', 'Small teams'],
+    youInput: ['Source idea', 'Platform focus'],
+    youGet: ['Repurpose angles', 'Format map', 'Posting order'],
+  },
+  'comment-magnet': {
+    oneLiner: 'Engineer comments that kickstart reach.',
+    whoFor: ['Creators with low engagement', 'Community builders', 'Brands launching posts'],
+    youInput: ['Post topic', 'Audience vibe'],
+    youGet: ['Comment bait lines', 'Pinned comment idea', 'Engagement prompts'],
+  },
+  'profile-clarity-scan': {
+    oneLiner: 'Make your profile convert in one glance.',
+    whoFor: ['Creators reworking bios', 'Coaches selling high-ticket', 'Founders fixing conversion'],
+    youInput: ['Bio text', 'Audience goal'],
+    youGet: ['Clarity score', 'Bio rewrite', 'Top 3 fixes'],
+  },
+  'bio-to-cta': {
+    oneLiner: 'Turn your bio into a clear next step.',
+    whoFor: ['Creators with low clicks', 'Lead-gen accounts', 'Service providers'],
+    youInput: ['Bio + offer', 'Desired action'],
+    youGet: ['CTA options', 'Bio rewrite', 'Best action line'],
+  },
+  'carousel-blueprint': {
+    oneLiner: 'Plan carousels that hold attention.',
+    whoFor: ['Educators', 'B2B creators', 'Storytellers'],
+    youInput: ['Topic', 'Main takeaway'],
+    youGet: ['Slide-by-slide outline', 'Hook slide', 'CTA slide'],
+  },
+  'story-sequence-planner': {
+    oneLiner: 'Build story sequences that drive replies.',
+    whoFor: ['IG storytellers', 'Launch weeks', 'Daily story posters'],
+    youInput: ['Goal', 'Audience context'],
+    youGet: ['Story flow', 'Frames + prompts', 'CTA moment'],
+  },
+  'hashtag-support-pack': {
+    oneLiner: 'Use hashtags for reach without looking spammy.',
+    whoFor: ['Reel creators', 'Niche accounts', 'Growth experiments'],
+    youInput: ['Topic', 'Audience'],
+    youGet: ['Hashtag set', 'Mix ratio', 'Placement tip'],
+  },
+  'competitor-lunch-money': {
+    oneLiner: 'Steal share of attention with smarter angles.',
+    whoFor: ['Challengers', 'New entrants', 'Positioning refresh'],
+    youInput: ['Competitor list', 'Your offer'],
+    youGet: ['Angle gaps', 'Differentiation hooks', 'Counter-position'],
+  },
+  'analytics-signal-reader': {
+    oneLiner: 'Turn messy analytics into clear next moves.',
+    whoFor: ['Data-averse creators', 'Growth leads', 'Teams reporting weekly'],
+    youInput: ['Key metrics', 'Goal'],
+    youGet: ['Signal summary', 'Priority actions', 'Metrics to watch'],
+  },
+  'audience-mirror': {
+    oneLiner: 'Hear your audience back to you.',
+    whoFor: ['Creators unsure of niche', 'Offer builders', 'Copywriters'],
+    youInput: ['Audience description', 'Pain points'],
+    youGet: ['Audience narrative', 'Language to use', 'Objections list'],
+  },
+  'objection-crusher': {
+    oneLiner: 'Neutralize the top 3 buying objections.',
+    whoFor: ['Sales pages', 'DM closers', 'Launch writers'],
+    youInput: ['Offer + price', 'Common objections'],
+    youGet: ['Rebuttal copy', 'Proof ideas', 'CTA tie-in'],
+  },
+  'launch-plan-sprinter': {
+    oneLiner: 'Ship a launch plan in minutes.',
+    whoFor: ['Course launches', 'Service launches', 'Small teams'],
+    youInput: ['Offer', 'Timeframe'],
+    youGet: ['Launch timeline', 'Daily content', 'DM plan'],
+  },
+  'content-calendar-minimal': {
+    oneLiner: "A simple calendar you'll actually follow.",
+    whoFor: ['Creators who overplan', 'Busy founders', 'Teams shipping weekly'],
+    youInput: ['Topic pillars', 'Posts per week'],
+    youGet: ['Weekly cadence', 'Batching plan', 'Topic rotation'],
+  },
+}
+
 const TOOL_REGISTRY: Record<ToolId, ToolMeta> = Object.fromEntries(
   Object.entries(TOOL_REGISTRY_SEED).map(([id, tool]) => [
     id,
     {
       ...tool,
+      microcopy: TOOL_MICROCOPY[id as ToolId],
       category: deriveCategoryFromTags(tool.tags),
     },
   ])

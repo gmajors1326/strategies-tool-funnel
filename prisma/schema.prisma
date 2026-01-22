@@ -67,6 +67,10 @@ model ToolRun {
   id         String   @id @default(cuid())
   userId     String?
   toolKey    String
+  toolId     String?
+  toolSlug   String?
+  input      Json?
+  output     Json?
   inputsJson Json
   outputsJson Json
   saved      Boolean  @default(false)
@@ -77,6 +81,8 @@ model ToolRun {
 
   @@index([userId])
   @@index([toolKey])
+  @@index([toolSlug])
+  @@index([userId, toolSlug, createdAt])
   @@index([createdAt])
   @@index([saved])
   @@index([expiresAt])
@@ -335,6 +341,30 @@ model StripeEvent {
 
   @@index([type])
   @@index([createdAt])
+}
+
+enum VaultItemKind {
+  RUN_SNAPSHOT
+  TEMPLATE
+  CHECKLIST
+  NOTE
+}
+
+model VaultItem {
+  id        String        @id @default(cuid())
+  userId    String
+  toolSlug  String?
+  kind      VaultItemKind @default(RUN_SNAPSHOT)
+
+  title     String
+  body      Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([toolSlug])
+  @@index([userId, kind, createdAt])
 }
 
 model Organization {

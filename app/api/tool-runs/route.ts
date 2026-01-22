@@ -1,41 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { NextResponse } from 'next/server'
+import { prisma } from '@/src/lib/db/prisma'
+import { getUserOrThrow } from '@/src/lib/auth/getUser'
+import { getEntitlements } from '@/src/lib/entitlements/getEntitlements'
 
-export const dynamic = 'force-dynamic'
-
-export async function GET(_request: NextRequest) {
+export async function GET(req: Request) {
   try {
-    const session = await getSession()
-    if (!session) {
-      return NextResponse.json(
-        { toolRuns: [] },
-        { status: 200 }
-      )
+    const user = await getUserOrThrow()
+    const ent = getEntitlements(user)
+
+    if (!ent.canSeeHistory) {
+      return NextResponse.json({ error: 'History is a paid feature.' }, { status: 403 })
     }
 
-    const toolRuns = await prisma.toolRun.findMany({
-      where: {
-        userId: session.userId,
-        saved: true,
-      },
+    const { searchParams } = new URL(req.url)
+    const toolSlug = searchParams.get('toolSlug')
+    if (!toolSlug) {
+      return NextResponse.json({ error: 'Missing toolSlug.' }, { status: 400 })
+    }
+
+    const runs = await prisma.toolRun.findMany({
+      where: { userId: user.id, toolSlug },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      take: 20,
       select: {
         id: true,
-        toolKey: true,
-        inputsJson: true,
-        outputsJson: true,
         createdAt: true,
+        input: true,
+        output: true,
       },
     })
 
-    return NextResponse.json({ toolRuns })
-  } catch (error) {
-    console.error('Tool runs fetch error:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch tool runs', toolRuns: [] },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      runs: runs.map((r) => ({
+        id: r.id,
+        at: r.createdAt.toISOString(),
+        input: r.input,
+        output: r.output,
+      })),
+    })
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'Failed to load history.' }, { status: 500 })
   }
 }

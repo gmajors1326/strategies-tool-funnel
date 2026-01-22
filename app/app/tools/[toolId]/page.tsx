@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getToolMeta } from '@/src/lib/tools/registry'
+import { getToolBySlug } from '@/src/lib/tools/getToolBySlug'
 import ToolRunner from '@/src/components/tools/ToolRunner'
 
 export const dynamic = 'force-dynamic'
@@ -18,6 +19,9 @@ export default function ToolPage({ params }: { params: { toolId: string } }) {
   if (!tool.enabled || !tool.isPublic) {
     return notFound()
   }
+
+  const toolRecord = getToolBySlug(tool.id)
+  const fields = toolRecord?.inputs ?? []
 
   return (
     <div className="mx-auto max-w-6xl p-6">
@@ -69,7 +73,7 @@ export default function ToolPage({ params }: { params: { toolId: string } }) {
       {/* Runner */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-8">
-          <ToolRunner toolId={tool.id} />
+          <ToolRunner toolId={tool.id} toolSlug={tool.id} toolName={tool.name} fields={fields} tokensCost={tool.tokensPerRun} />
         </div>
 
         {/* Sidebar */}
