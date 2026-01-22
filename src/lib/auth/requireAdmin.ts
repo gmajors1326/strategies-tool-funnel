@@ -1,75 +1,72 @@
-import { requireAdmin as requireAdminCookie, type AdminRole } from '@/lib/adminAuth'
-import { redirect } from 'next/navigation'
+import 'server-only'
+import { createServerSupabaseClient } from '@/src/lib/supabase/server'
+import { prisma } from '@/src/lib/prisma'
 
-export type AdminSession = {
+export type AdminUser = {
   id: string
   email: string
-  role: AdminRole
+  provider: 'supabase' | 'dev'
 }
 
-/**
- * requireAdmin()
- * - DEV: optionally allow bypass via env when DEV_AUTH_BYPASS=true
- * - PROD: uses admin session cookie set by /api/admin/login
- */
-export const requireAdmin = async (): Promise<AdminSession> => {
-  const isProd = process.env.NODE_ENV === 'production'
-  const devBypassEnabled = process.env.DEV_AUTH_BYPASS === 'true'
-
-  if (!isProd && devBypassEnabled) {
-    const id = process.env.DEV_ADMIN_ID || 'admin_dev_1'
-    const email = process.env.DEV_ADMIN_EMAIL || 'admin@example.com'
-    return { id, email, role: 'admin' }
-  }
-
-  try {
-    const session = await requireAdminCookie()
-    return { id: session.userId, email: session.email, role: session.role }
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : ''
-    const allowlistMessage = [
-      'Allowlist an admin account:',
-      '  ADMIN_EMAILS=admin@example.com',
-      '  ADMIN_EMAIL=admin@example.com (single admin fallback)',
-      '  ADMIN_USER_IDS=user_123 (optional)',
-    ]
-    const devBypassMessage = [
-      'Dev bypass (local only):',
-      '  DEV_AUTH_BYPASS=true',
-      '  DEV_ADMIN_ID=admin_dev_1',
-      '  DEV_ADMIN_EMAIL=admin@example.com',
-    ]
-
-    if (reason === 'Forbidden') {
-      throw new Error(
-        [
-          'Forbidden: account is not authorized for admin access.',
-          '',
-          ...allowlistMessage,
-          '',
-          ...devBypassMessage,
-        ].join('\n')
-      )
+export async function requireAdmin(): Promise<AdminUser> {
+  // DEV bypass (local only)
+  if (process.env.DEV_AUTH_BYPASS === 'true') {
+    return {
+      id: process.env.DEV_ADMIN_ID || 'admin_dev_1',
+      email: process.env.DEV_ADMIN_EMAIL || 'admin@example.com',
+      provider: 'dev',
     }
-
-    throw new Error(
-      [
-        'Unauthorized: admin session missing or invalid.',
-        '',
-        'Log in via /verify (or /admin/login) and ensure your account is allowlisted.',
-        '',
-        ...allowlistMessage,
-        '',
-        ...devBypassMessage,
-      ].join('\n')
-    )
   }
+
+  // 1) Identify user from Supabase (server-side)
+  const supabase = createServerSupabaseClient()
+  const { data, error } = await supabase.auth.getUser()
+
+  if (error || !data?.user) {
+    throw forbidden('not signed in')
+  }
+
+  const user = data.user
+  const email = (user.email || '').toLowerCase().trim()
+  if (!email) throw forbidden('missing email on auth user')
+
+  // 2) Authorize admin (Prisma allowlist OR env allowlist)
+  const envAllow = parseEmailAllowlist(process.env.ADMIN_EMAILS)
+  if (envAllow.has(email)) {
+    return { id: user.id, email, provider: 'supabase' }
+  }
+
+  // Prisma allowlist (recommended)
+  // This expects a Prisma model named AdminAccess (see Step 4 optional)
+  const dbAdmin = await prisma.adminAccess.findUnique({
+    where: { email },
+    select: { email: true },
+  })
+
+  if (!dbAdmin) throw forbidden('user is not admin')
+
+  return { id: user.id, email, provider: 'supabase' }
 }
 
-export const requireAdminPage = async (): Promise<AdminSession> => {
-  try {
-    return await requireAdmin()
-  } catch {
-    redirect('/admin/login')
-  }
+function parseEmailAllowlist(raw?: string) {
+  const set = new Set<string>()
+  if (!raw) return set
+  raw
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+    .forEach((e) => set.add(e))
+  return set
+}
+
+function forbidden(reason: string) {
+  const err = new Error(
+    `Forbidden: admin auth not configured.\n\n` +
+      `Wire requireAdmin() to your real auth provider + admin authorization.\n` +
+      `Reason: ${reason}\n\n` +
+      `If developing locally and want dev-bypass, set:\n` +
+      `  DEV_AUTH_BYPASS=true\n  DEV_ADMIN_ID=admin_dev_1\n  DEV_ADMIN_EMAIL=gmajors1326@gmail.com\n`
+  ) as any
+  err.status = 403
+  return err
 }

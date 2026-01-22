@@ -1,4 +1,5 @@
 import { headers } from 'next/headers'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +13,7 @@ const fetchOrgs = async () => {
 }
 
 export default async function AdminOrgsPage() {
+  await requireAdmin()
   const data = await fetchOrgs()
   return (
     <section className="space-y-4">

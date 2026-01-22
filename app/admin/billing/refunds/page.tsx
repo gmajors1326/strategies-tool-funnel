@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { getMockRefunds } from '@/src/lib/mock/data'
 import { Table } from '@/components/app/Table'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminRefundsPage() {
+  await requireAdmin()
   // TODO: replace (billing): load refunds from billing provider.
   const refunds = await getMockRefunds()
 

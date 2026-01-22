@@ -1,10 +1,13 @@
 import Link from 'next/link'
 import { listTools } from '@/src/lib/tools/registry'
 import { Table } from '@/components/app/Table'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 
 export const dynamic = 'force-dynamic'
 
-export default function AdminToolsPage() {
+export default async function AdminToolsPage() {
+  await requireAdmin()
+
   return (
     <section className="space-y-4">
       <div>

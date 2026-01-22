@@ -2,10 +2,13 @@ import { notFound } from 'next/navigation'
 import { getToolMeta } from '@/src/lib/tools/registry'
 import { Button } from '@/components/app/Button'
 import { Input } from '@/components/app/Input'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 
 export const dynamic = 'force-dynamic'
 
-export default function AdminToolConfigPage({ params }: { params: { toolId: string } }) {
+export default async function AdminToolConfigPage({ params }: { params: { toolId: string } }) {
+  await requireAdmin()
+
   let tool
   try {
     tool = getToolMeta(params.toolId)

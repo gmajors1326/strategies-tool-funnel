@@ -1,9 +1,12 @@
 import Link from 'next/link'
 import { Button } from '@/components/app/Button'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 
 export const dynamic = 'force-dynamic'
 
-export default function AdminHomePage() {
+export default async function AdminHomePage() {
+  await requireAdmin()
+
   return (
     <section className="space-y-4">
       <div>

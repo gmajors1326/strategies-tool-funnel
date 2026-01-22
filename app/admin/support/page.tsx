@@ -1,4 +1,4 @@
-import { requireAdminPage } from '@/src/lib/auth/requireAdmin'
+import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 import { listTicketsForAdmin } from '@/src/lib/support/tickets'
 import { Table } from '@/components/app/Table'
 import Link from 'next/link'
@@ -6,7 +6,7 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminSupportPage() {
-  await requireAdminPage()
+  await requireAdmin()
   const tickets = await listTicketsForAdmin()
 
   return (
