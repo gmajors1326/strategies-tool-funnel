@@ -389,9 +389,9 @@ export async function POST(request: NextRequest) {
       metering: {
         chargedTokens: 0,
         remainingTokens: tokenBalance,
-        aiTokensUsed: usage.aiTokensUsed,
+        aiTokensUsed: usage.ai_tokens_used,
         aiTokensCap: planTokenCap,
-        runsUsed: usage.runsUsed,
+        runsUsed: usage.runs_used,
         runsCap: planRunCap,
         resetsAtISO: usage.resetsAt.toISOString(),
         meteringMode,
