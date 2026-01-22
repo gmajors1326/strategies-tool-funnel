@@ -210,9 +210,9 @@ export async function POST(request: NextRequest) {
         requiredTokens: tool.tokensPerRun,
         remainingTokens: tokenBalance,
         usage: {
-          runsUsed: usage.runsUsed,
+          runsUsed: usage.runs_used,
           runsCap: planRunCap,
-          aiTokensUsed: usage.aiTokensUsed,
+          aiTokensUsed: usage.ai_tokens_used,
           aiTokensCap: planTokenCap,
           toolRunsUsed,
           toolRunsCap: toolCap,
