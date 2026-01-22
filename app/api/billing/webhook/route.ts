@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
             user_id: userId,
             event_type: 'reversal',
             tokens_delta: -pack.tokensGranted,
-            toolId: pack.packId,
+            tool_id: pack.packId,
             reason: `stripe_charge:${charge.id}`,
           },
         })
