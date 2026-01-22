@@ -305,7 +305,7 @@ export default function ExploreTools({ tools }: Props) {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <div className="text-xs uppercase tracking-[0.3em] text-neutral-500">Explore</div>
-            <h1 className="text-2xl font-semibold text-neutral-100 md:text-3xl">Find the right tool fast</h1>
+            <h1 className="text-2xl font-semibold text-neutral-100 md:text-3xl">Free Spirit Marketing</h1>
             <p className="text-sm text-neutral-400">
               Filter by category, difficulty, and tags. Availability updates are live and plan-aware.
             </p>
