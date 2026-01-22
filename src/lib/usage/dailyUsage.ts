@@ -1,30 +1,48 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/src/lib/prisma'
-import type { Prisma } from '@prisma/client'
 import { getNextResetAt, getWindowStart } from '@/src/lib/usage/reset'
 
 export const ensureUsageWindow = async (userId: string) => {
   const now = new Date()
-  const entitlement = await prisma.entitlement.findUnique({ where: { user_id: userId } })
-  const resetsAt = entitlement?.resets_at ?? getNextResetAt(now)
+  try {
+    const entitlement = await prisma.entitlement.findUnique({ where: { user_id: userId } })
+    const resetsAt = entitlement?.resets_at ?? getNextResetAt(now)
 
-  if (!entitlement) {
-    await prisma.entitlement.create({
-      data: {
-        user_id: userId,
-        plan: 'free',
-        resets_at: resetsAt,
-      },
-    })
-  }
+    if (!entitlement) {
+      await prisma.entitlement.create({
+        data: {
+          user_id: userId,
+          plan: 'free',
+          resets_at: resetsAt,
+        },
+      })
+    }
 
-  if (now >= resetsAt) {
-    const newResetsAt = getNextResetAt(now)
-    await prisma.entitlement.update({
-      where: { user_id: userId },
-      data: { resets_at: newResetsAt },
-    })
+    if (now >= resetsAt) {
+      const newResetsAt = getNextResetAt(now)
+      await prisma.entitlement.update({
+        where: { user_id: userId },
+        data: { resets_at: newResetsAt },
+      })
+      const windowStart = getWindowStart(now)
+      const windowEnd = newResetsAt
+      return prisma.dailyUsage.upsert({
+        where: { user_id_window_end: { user_id: userId, window_end: windowEnd } },
+        update: {},
+        create: {
+          user_id: userId,
+          window_start: windowStart,
+          window_end: windowEnd,
+          ai_tokens_used: 0,
+          runs_used: 0,
+          per_tool_runs_used: {},
+          resets_at: windowEnd,
+        },
+      })
+    }
+
     const windowStart = getWindowStart(now)
-    const windowEnd = newResetsAt
+    const windowEnd = resetsAt
     return prisma.dailyUsage.upsert({
       where: { user_id_window_end: { user_id: userId, window_end: windowEnd } },
       update: {},
@@ -38,23 +56,24 @@ export const ensureUsageWindow = async (userId: string) => {
         resets_at: windowEnd,
       },
     })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2021') {
+      const windowEnd = getNextResetAt(now)
+      return {
+        id: `daily_${userId}_${windowEnd.toISOString()}`,
+        user_id: userId,
+        window_start: getWindowStart(now),
+        window_end: windowEnd,
+        ai_tokens_used: 0,
+        runs_used: 0,
+        per_tool_runs_used: {},
+        resets_at: windowEnd,
+        created_at: now,
+        updated_at: now,
+      }
+    }
+    throw err
   }
-
-  const windowStart = getWindowStart(now)
-  const windowEnd = resetsAt
-    return prisma.dailyUsage.upsert({
-      where: { user_id_window_end: { user_id: userId, window_end: windowEnd } },
-    update: {},
-    create: {
-      user_id: userId,
-      window_start: windowStart,
-      window_end: windowEnd,
-      ai_tokens_used: 0,
-      runs_used: 0,
-      per_tool_runs_used: {},
-      resets_at: windowEnd,
-    },
-  })
 }
 
 export const incrementUsageTx = async (params: {

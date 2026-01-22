@@ -1,11 +1,19 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/src/lib/prisma'
 
 export const getTokenBalance = async (userId: string) => {
-  const sum = await prisma.tokenLedger.aggregate({
-    where: { user_id: userId },
-    _sum: { tokens_delta: true },
-  })
-  return sum._sum.tokens_delta ?? 0
+  try {
+    const sum = await prisma.tokenLedger.aggregate({
+      where: { user_id: userId },
+      _sum: { tokens_delta: true },
+    })
+    return sum._sum.tokens_delta ?? 0
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2021') {
+      return 0
+    }
+    throw err
+  }
 }
 
 export const listLedgerEntries = async (userId: string, limit = 50) => {
