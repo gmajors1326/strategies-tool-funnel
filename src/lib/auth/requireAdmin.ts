@@ -1,51 +1,44 @@
 import 'server-only'
-import { createServerSupabaseClient } from '@/src/lib/supabase/server'
 import { prisma } from '@/src/lib/prisma'
+
+// IMPORTANT: this should be your existing auth guard that throws:
+// "Unauthorized: user session missing or invalid. Sign in via /verify..."
+import { requireUser } from '@/src/lib/auth/requireUser'
 
 export type AdminUser = {
   id: string
   email: string
-  provider: 'supabase' | 'dev'
+  provider: 'app-auth' | 'dev'
+  prismaUserId?: string
 }
 
 export async function requireAdmin(): Promise<AdminUser> {
-  // DEV bypass (local only)
-  if (process.env.DEV_AUTH_BYPASS === 'true') {
-    return {
-      id: process.env.DEV_ADMIN_ID || 'admin_dev_1',
-      email: process.env.DEV_ADMIN_EMAIL || 'admin@example.com',
-      provider: 'dev',
-    }
+  // Get the currently signed-in user from YOUR app auth (/verify OTP session)
+  const sessionUser = await requireUser()
+  const email = (sessionUser.email || '').toLowerCase().trim()
+  if (!email) throw forbidden('missing email on session user')
+
+  // Optional env allowlist (fast unblock / emergency)
+  const allow = parseEmailAllowlist(process.env.ADMIN_EMAILS)
+  if (allow.has(email)) {
+    return { id: sessionUser.id, email, provider: 'app-auth' }
   }
 
-  // 1) Identify user from Supabase (server-side)
-  const supabase = createServerSupabaseClient()
-  const { data, error } = await supabase.auth.getUser()
-
-  if (error || !data?.user) {
-    throw forbidden('not signed in')
-  }
-
-  const user = data.user
-  const email = (user.email || '').toLowerCase().trim()
-  if (!email) throw forbidden('missing email on auth user')
-
-  // 2) Authorize admin (Prisma allowlist OR env allowlist)
-  const envAllow = parseEmailAllowlist(process.env.ADMIN_EMAILS)
-  if (envAllow.has(email)) {
-    return { id: user.id, email, provider: 'supabase' }
-  }
-
-  // Prisma allowlist (recommended)
-  // This expects a Prisma model named AdminAccess (see Step 4 optional)
-  const dbAdmin = await prisma.adminAccess.findUnique({
+  // Prisma authorization (source of truth)
+  const u = await prisma.user.findUnique({
     where: { email },
-    select: { email: true },
+    select: { id: true, isAdmin: true },
   })
 
-  if (!dbAdmin) throw forbidden('user is not admin')
+  if (!u) throw forbidden('no prisma user for this email')
+  if (!u.isAdmin) throw forbidden('user is not admin')
 
-  return { id: user.id, email, provider: 'supabase' }
+  return {
+    id: sessionUser.id,
+    email,
+    provider: 'app-auth',
+    prismaUserId: u.id,
+  }
 }
 
 function parseEmailAllowlist(raw?: string) {
@@ -60,13 +53,7 @@ function parseEmailAllowlist(raw?: string) {
 }
 
 function forbidden(reason: string) {
-  const err = new Error(
-    `Forbidden: admin auth not configured.\n\n` +
-      `Wire requireAdmin() to your real auth provider + admin authorization.\n` +
-      `Reason: ${reason}\n\n` +
-      `If developing locally and want dev-bypass, set:\n` +
-      `  DEV_AUTH_BYPASS=true\n  DEV_ADMIN_ID=admin_dev_1\n  DEV_ADMIN_EMAIL=gmajors1326@gmail.com\n`
-  ) as any
+  const err = new Error(`Forbidden: admin access denied. Reason: ${reason}`) as any
   err.status = 403
   return err
 }
