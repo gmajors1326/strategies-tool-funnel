@@ -4,6 +4,7 @@ import { hash, compare } from 'bcryptjs'
 
 const SESSION_COOKIE_NAME = 'strategy-tools-session'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
+const IS_PRODUCTION = process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
 
 export interface Session {
   userId: string
@@ -48,7 +49,7 @@ export async function createSession(userId: string, email: string, plan: string)
   
   cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: IS_PRODUCTION,
     sameSite: 'lax',
     maxAge: SESSION_MAX_AGE,
     path: '/',
