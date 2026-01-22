@@ -83,12 +83,12 @@ export const getUsage = async () => {
 
   // Keep the shape your UI already expects
   return {
-    dailyRunsUsed: usage.runsUsed,
+    dailyRunsUsed: usage.runs_used,
     dailyRunCap,
-    aiTokensUsed: usage.aiTokensUsed,
+    aiTokensUsed: usage.ai_tokens_used,
     aiTokenCap: dailyAiTokenCap,
     purchasedTokensRemaining: tokenBalance,
-    resetsAtISO: usage.resetsAt.toISOString(),
+    resetsAtISO: usage.resets_at.toISOString(),
   }
 }
 

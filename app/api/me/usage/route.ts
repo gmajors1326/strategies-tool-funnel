@@ -42,13 +42,13 @@ export async function GET() {
   const tokenBalance = await getTokenBalance(userId)
 
   return NextResponse.json({
-    dailyRunsUsed: usage.runsUsed,
+    dailyRunsUsed: usage.runs_used,
     dailyRunCap: planRunCap,
-    aiTokensUsed: usage.aiTokensUsed,
+    aiTokensUsed: usage.ai_tokens_used,
     aiTokenCap: planTokenCap,
     tokensRemaining: tokenBalance,
     purchasedTokensRemaining: tokenBalance,
-    resetsAtISO: usage.resetsAt.toISOString(),
-    perToolRunsUsed: (usage.perToolRunsUsed as Record<string, number>) || {},
+    resetsAtISO: usage.resets_at.toISOString(),
+    perToolRunsUsed: (usage.per_tool_runs_used as Record<string, number>) || {},
   })
 }

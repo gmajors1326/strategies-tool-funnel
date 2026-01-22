@@ -4,15 +4,15 @@ import { getNextResetAt, getWindowStart } from '@/src/lib/usage/reset'
 
 export const ensureUsageWindow = async (userId: string) => {
   const now = new Date()
-  const entitlement = await prisma.entitlement.findUnique({ where: { userId } })
-  const resetsAt = entitlement?.resetsAt ?? getNextResetAt(now)
+  const entitlement = await prisma.entitlement.findUnique({ where: { user_id: userId } })
+  const resetsAt = entitlement?.resets_at ?? getNextResetAt(now)
 
   if (!entitlement) {
     await prisma.entitlement.create({
       data: {
-        userId,
+        user_id: userId,
         plan: 'free',
-        resetsAt,
+        resets_at: resetsAt,
       },
     })
   }
@@ -20,22 +20,22 @@ export const ensureUsageWindow = async (userId: string) => {
   if (now >= resetsAt) {
     const newResetsAt = getNextResetAt(now)
     await prisma.entitlement.update({
-      where: { userId },
-      data: { resetsAt: newResetsAt },
+      where: { user_id: userId },
+      data: { resets_at: newResetsAt },
     })
     const windowStart = getWindowStart(now)
     const windowEnd = newResetsAt
     return prisma.dailyUsage.upsert({
-      where: { userId_windowEnd: { userId, windowEnd } },
+      where: { DailyUsage_user_window_end_uidx: { user_id: userId, window_end: windowEnd } },
       update: {},
       create: {
-        userId,
-        windowStart,
-        windowEnd,
-        aiTokensUsed: 0,
-        runsUsed: 0,
-        perToolRunsUsed: {},
-        resetsAt: windowEnd,
+        user_id: userId,
+        window_start: windowStart,
+        window_end: windowEnd,
+        ai_tokens_used: 0,
+        runs_used: 0,
+        per_tool_runs_used: {},
+        resets_at: windowEnd,
       },
     })
   }
@@ -43,16 +43,16 @@ export const ensureUsageWindow = async (userId: string) => {
   const windowStart = getWindowStart(now)
   const windowEnd = resetsAt
   return prisma.dailyUsage.upsert({
-    where: { userId_windowEnd: { userId, windowEnd } },
+    where: { DailyUsage_user_window_end_uidx: { user_id: userId, window_end: windowEnd } },
     update: {},
     create: {
-      userId,
-      windowStart,
-      windowEnd,
-      aiTokensUsed: 0,
-      runsUsed: 0,
-      perToolRunsUsed: {},
-      resetsAt: windowEnd,
+      user_id: userId,
+      window_start: windowStart,
+      window_end: windowEnd,
+      ai_tokens_used: 0,
+      runs_used: 0,
+      per_tool_runs_used: {},
+      resets_at: windowEnd,
     },
   })
 }
@@ -66,20 +66,20 @@ export const incrementUsageTx = async (params: {
 }) => {
   const { tx, userId, windowEnd, toolId, tokensUsed } = params
   const usage = await tx.dailyUsage.findUnique({
-    where: { userId_windowEnd: { userId, windowEnd } },
+    where: { DailyUsage_user_window_end_uidx: { user_id: userId, window_end: windowEnd } },
   })
   if (!usage) return null
 
-  const perTool = (usage.perToolRunsUsed as Record<string, number>) || {}
+  const perTool = (usage.per_tool_runs_used as Record<string, number>) || {}
   perTool[toolId] = (perTool[toolId] || 0) + 1
 
   return tx.dailyUsage.update({
-    where: { userId_windowEnd: { userId, windowEnd } },
+    where: { DailyUsage_user_window_end_uidx: { user_id: userId, window_end: windowEnd } },
     data: {
-      aiTokensUsed: { increment: tokensUsed },
-      runsUsed: { increment: 1 },
-      perToolRunsUsed: perTool,
-      updatedAt: new Date(),
+      ai_tokens_used: { increment: tokensUsed },
+      runs_used: { increment: 1 },
+      per_tool_runs_used: perTool,
+      updated_at: new Date(),
     },
   })
 }

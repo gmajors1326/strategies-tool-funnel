@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
 
   // Idempotency: if a runId was provided and already exists in ledger, reject
   if (data.runId) {
-    const existing = await prisma.tokenLedger.findFirst({ where: { runId: data.runId } })
+    const existing = await prisma.tokenLedger.findFirst({ where: { run_id: data.runId } })
     if (existing) {
       await recordRun({ status: 'error', lockCode: 'duplicate' })
       return jsonWithRequestId(
@@ -223,9 +223,9 @@ export async function POST(request: NextRequest) {
 
   const usage = await ensureUsageWindow(userId)
   const toolCap = data.mode === 'trial' && toolCapForPlan <= 0 ? 1 : toolCapForPlan || planRunCap
-  const toolRunsUsed = (usage.perToolRunsUsed as Record<string, number>)?.[tool.id] ?? 0
+  const toolRunsUsed = (usage.per_tool_runs_used as Record<string, number>)?.[tool.id] ?? 0
 
-  if (usage.runsUsed >= planRunCap) {
+  if (usage.runs_used >= planRunCap) {
     await recordRun({ status: 'locked', lockCode: 'locked_usage_daily' })
     return jsonWithRequestId(
       {
@@ -235,14 +235,14 @@ export async function POST(request: NextRequest) {
           message: 'Daily run cap reached.',
           cta: { type: 'wait_reset', href: '/app/usage' },
           usage: {
-            runsUsed: usage.runsUsed,
+            runsUsed: usage.runs_used,
             runsCap: planRunCap,
-            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensUsed: usage.ai_tokens_used,
             aiTokensCap: planTokenCap,
             toolRunsUsed,
             toolRunsCap: toolCap,
           },
-          resetsAtISO: usage.resetsAt.toISOString(),
+          resetsAtISO: usage.resets_at.toISOString(),
         }),
         inputEcho: data.input ?? {},
         requestId,
@@ -252,7 +252,7 @@ export async function POST(request: NextRequest) {
   }
 
   // NOTE: If your ToolMeta doesn't have aiLevel, consider adding it.
-  if (usage.aiTokensUsed >= planTokenCap && (tool as any).aiLevel !== 'none') {
+  if (usage.ai_tokens_used >= planTokenCap && (tool as any).aiLevel !== 'none') {
     await recordRun({ status: 'locked', lockCode: 'locked_tokens' })
     return jsonWithRequestId(
       {
@@ -262,14 +262,14 @@ export async function POST(request: NextRequest) {
           message: 'Daily token cap reached.',
           cta: { type: 'buy_tokens', href: '/pricing' },
           usage: {
-            runsUsed: usage.runsUsed,
+            runsUsed: usage.runs_used,
             runsCap: planRunCap,
-            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensUsed: usage.ai_tokens_used,
             aiTokensCap: planTokenCap,
             toolRunsUsed,
             toolRunsCap: toolCap,
           },
-          resetsAtISO: usage.resetsAt.toISOString(),
+          resetsAtISO: usage.resets_at.toISOString(),
         }),
         inputEcho: data.input ?? {},
         requestId,
@@ -288,14 +288,14 @@ export async function POST(request: NextRequest) {
           message: 'Daily tool cap reached.',
           cta: { type: 'wait_reset', href: '/app/usage' },
           usage: {
-            runsUsed: usage.runsUsed,
+            runsUsed: usage.runs_used,
             runsCap: planRunCap,
-            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensUsed: usage.ai_tokens_used,
             aiTokensCap: planTokenCap,
             toolRunsUsed,
             toolRunsCap: toolCap,
           },
-          resetsAtISO: usage.resetsAt.toISOString(),
+          resetsAtISO: usage.resets_at.toISOString(),
         }),
         inputEcho: data.input ?? {},
         requestId,
@@ -378,8 +378,8 @@ export async function POST(request: NextRequest) {
         planTokenCap,
         toolCap,
         toolRunsUsed,
-        runsUsed: usage.runsUsed,
-        aiTokensUsed: usage.aiTokensUsed,
+        runsUsed: usage.runs_used,
+        aiTokensUsed: usage.ai_tokens_used,
         remainingTokens: tokenBalance,
         remainingBonusRuns: bonusRemaining,
         trialAllowed: trial.allowed,
@@ -428,11 +428,11 @@ export async function POST(request: NextRequest) {
       if (meteringMode === 'tokens') {
         await tx.tokenLedger.create({
           data: {
-            userId,
-            eventType: 'spend_tool',
-            tokensDelta: -requiredTokens,
-            toolId: tool.id,
-            runId,
+            user_id: userId,
+            event_type: 'spend_tool',
+            tokens_delta: -requiredTokens,
+            tool_id: tool.id,
+            run_id: runId,
             reason: 'tool_run',
           },
         })
@@ -442,7 +442,7 @@ export async function POST(request: NextRequest) {
       await incrementUsageTx({
         tx,
         userId,
-        windowEnd: usage.windowEnd,
+        windowEnd: usage.window_end,
         toolId: tool.id,
         tokensUsed: meteringMode === 'tokens' ? requiredTokens : 0,
       })
@@ -457,9 +457,9 @@ export async function POST(request: NextRequest) {
       metering: {
         chargedTokens,
         remainingTokens: updatedBalance,
-        aiTokensUsed: usage.aiTokensUsed + (meteringMode === 'tokens' ? requiredTokens : 0),
+        aiTokensUsed: usage.ai_tokens_used + (meteringMode === 'tokens' ? requiredTokens : 0),
         aiTokensCap: planTokenCap,
-        runsUsed: usage.runsUsed + 1,
+        runsUsed: usage.runs_used + 1,
         runsCap: planRunCap,
         resetsAtISO: usage.resetsAt.toISOString(),
         meteringMode,

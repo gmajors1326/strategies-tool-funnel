@@ -122,7 +122,6 @@ export async function executeTool(
           toolKey,
           inputsJson: minimizeInputsForStorage(inputs) as unknown as Prisma.InputJsonValue,
           outputsJson: outputs as unknown as Prisma.InputJsonValue,
-          saved: true,
         },
       })
 

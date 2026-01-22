@@ -107,19 +107,19 @@ export async function POST(request: NextRequest) {
           requiredTokens: tool.tokensPerRun,
           remainingTokens: tokenBalance,
           usage: {
-            runsUsed: usage.runsUsed,
+            runsUsed: usage.runs_used,
             runsCap: planRunCap,
-            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensUsed: usage.ai_tokens_used,
             aiTokensCap: planTokenCap,
-            resetsAtISO: usage.resetsAt.toISOString(),
+            resetsAtISO: usage.resets_at.toISOString(),
           },
         }
       }
 
-      const toolRunsUsed = (usage.perToolRunsUsed as Record<string, number>)?.[tool.id] ?? 0
+      const toolRunsUsed = (usage.per_tool_runs_used as Record<string, number>)?.[tool.id] ?? 0
       const toolCap = toolCapForPlan || planRunCap
 
-      if (usage.runsUsed >= planRunCap) {
+      if (usage.runs_used >= planRunCap) {
         return {
           toolId: tool.id,
           status: 'locked',
@@ -129,18 +129,18 @@ export async function POST(request: NextRequest) {
           requiredTokens: tool.tokensPerRun,
           remainingTokens: tokenBalance,
           usage: {
-            runsUsed: usage.runsUsed,
+            runsUsed: usage.runs_used,
             runsCap: planRunCap,
-            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensUsed: usage.ai_tokens_used,
             aiTokensCap: planTokenCap,
             toolRunsUsed,
             toolRunsCap: toolCap,
-            resetsAtISO: usage.resetsAt.toISOString(),
+            resetsAtISO: usage.resets_at.toISOString(),
           },
         }
       }
 
-      if (usage.aiTokensUsed >= planTokenCap && tool.aiLevel !== 'none') {
+      if (usage.ai_tokens_used >= planTokenCap && tool.aiLevel !== 'none') {
         return {
           toolId: tool.id,
           status: 'locked',
@@ -150,13 +150,13 @@ export async function POST(request: NextRequest) {
           requiredTokens: tool.tokensPerRun,
           remainingTokens: tokenBalance,
           usage: {
-            runsUsed: usage.runsUsed,
+            runsUsed: usage.runs_used,
             runsCap: planRunCap,
-            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensUsed: usage.ai_tokens_used,
             aiTokensCap: planTokenCap,
             toolRunsUsed,
             toolRunsCap: toolCap,
-            resetsAtISO: usage.resetsAt.toISOString(),
+            resetsAtISO: usage.resets_at.toISOString(),
           },
         }
       }
@@ -171,13 +171,13 @@ export async function POST(request: NextRequest) {
           requiredTokens: tool.tokensPerRun,
           remainingTokens: tokenBalance,
           usage: {
-            runsUsed: usage.runsUsed,
+            runsUsed: usage.runs_used,
             runsCap: planRunCap,
-            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensUsed: usage.ai_tokens_used,
             aiTokensCap: planTokenCap,
             toolRunsUsed,
             toolRunsCap: toolCap,
-            resetsAtISO: usage.resetsAt.toISOString(),
+            resetsAtISO: usage.resets_at.toISOString(),
           },
         }
       }
@@ -192,13 +192,13 @@ export async function POST(request: NextRequest) {
           requiredTokens: tool.tokensPerRun,
           remainingTokens: tokenBalance,
           usage: {
-            runsUsed: usage.runsUsed,
+            runsUsed: usage.runs_used,
             runsCap: planRunCap,
-            aiTokensUsed: usage.aiTokensUsed,
+            aiTokensUsed: usage.ai_tokens_used,
             aiTokensCap: planTokenCap,
             toolRunsUsed,
             toolRunsCap: toolCap,
-            resetsAtISO: usage.resetsAt.toISOString(),
+            resetsAtISO: usage.resets_at.toISOString(),
           },
         }
       }

@@ -2,16 +2,16 @@ import { prisma } from '@/src/lib/prisma'
 
 export const getTokenBalance = async (userId: string) => {
   const sum = await prisma.tokenLedger.aggregate({
-    where: { userId },
-    _sum: { tokensDelta: true },
+    where: { user_id: userId },
+    _sum: { tokens_delta: true },
   })
-  return sum._sum.tokensDelta ?? 0
+  return sum._sum.tokens_delta ?? 0
 }
 
 export const listLedgerEntries = async (userId: string, limit = 50) => {
   return prisma.tokenLedger.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
+    where: { user_id: userId },
+    orderBy: { created_at: 'desc' },
     take: Math.max(1, Math.min(limit, 200)),
   })
 }
@@ -27,11 +27,11 @@ export const createLedgerEntry = async (params: {
   const { userId, eventType, tokensDelta, toolId, runId, reason } = params
   return prisma.tokenLedger.create({
     data: {
-      userId,
-      eventType,
-      tokensDelta,
-      toolId: toolId ?? null,
-      runId: runId ?? null,
+      user_id: userId,
+      event_type: eventType,
+      tokens_delta: tokensDelta,
+      tool_id: toolId ?? null,
+      run_id: runId ?? null,
       reason: reason ?? null,
     },
   })
