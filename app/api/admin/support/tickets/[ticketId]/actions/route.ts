@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/adminAuth'
-import { logAudit } from '@/src/lib/orgs/orgs'
+import { logAdminAudit } from '@/src/lib/admin/audit'
 
 const actionSchema = z.object({
   actionType: z.string(),
@@ -18,11 +18,12 @@ export async function POST(
   const body = await request.json()
   const { actionType, payload } = actionSchema.parse(body)
 
-  await logAudit({
-    userId: admin.userId,
+  await logAdminAudit({
+    actorId: admin.userId,
+    actorEmail: admin.email,
     action: 'admin.support.action',
-    targetId: params.ticketId,
-    meta: { actionType, payload, adminEmail: admin.email },
+    target: params.ticketId,
+    meta: { actionType, payload },
   })
   // TODO: replace (ui): execute real admin action against support system.
   return NextResponse.json({

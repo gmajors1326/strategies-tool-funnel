@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/adminAuth'
-import { logAudit } from '@/src/lib/orgs/orgs'
+import { logAdminAudit } from '@/src/lib/admin/audit'
 
 const decisionSchema = z.object({
   decision: z.enum(['approve', 'deny', 'partial', 'credit']),
@@ -19,15 +19,15 @@ export async function POST(
   const body = await request.json()
   const data = decisionSchema.parse(body)
 
-  await logAudit({
-    userId: admin.userId,
+  await logAdminAudit({
+    actorId: admin.userId,
+    actorEmail: admin.email,
     action: 'admin.refund.decision',
-    targetId: params.refundId,
+    target: params.refundId,
     meta: {
       decision: data.decision,
       amount: data.amount ?? null,
       reason: data.reason,
-      adminEmail: admin.email,
     },
   })
 

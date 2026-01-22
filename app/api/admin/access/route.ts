@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 import { prisma } from '@/src/lib/prisma'
-import { logAudit } from '@/src/lib/orgs/orgs'
+import { logAdminAudit } from '@/src/lib/admin/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,11 +46,12 @@ export async function POST(request: NextRequest) {
     select: { id: true, email: true, isAdmin: true, name: true },
   })
 
-  await logAudit({
-    userId: admin.id,
+  await logAdminAudit({
+    actorId: admin.id,
+    actorEmail: admin.email,
     action: isAdmin ? 'admin.access.grant' : 'admin.access.revoke',
-    targetId: updated.id,
-    meta: { email: updated.email, name: updated.name ?? null },
+    target: updated.id,
+    meta: { email: updated.email, name: updated.name ?? null, isAdmin },
   })
 
   return NextResponse.json({ ok: true, user: updated })

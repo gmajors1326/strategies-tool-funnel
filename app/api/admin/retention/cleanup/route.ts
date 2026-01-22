@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin, canSupport } from '@/lib/adminAuth'
 import { prisma } from '@/lib/db'
-import { logAudit } from '@/src/lib/orgs/orgs'
+import { logAdminAudit } from '@/src/lib/admin/audit'
 
 export async function POST() {
   const admin = await requireAdmin()
@@ -19,10 +19,11 @@ export async function POST() {
     },
   })
 
-  await logAudit({
-    userId: admin.userId,
+  await logAdminAudit({
+    actorId: admin.userId,
+    actorEmail: admin.email,
     action: 'admin.retention.cleanup',
-    meta: { deleted: deleted.count, cutoff: cutoff.toISOString(), adminEmail: admin.email },
+    meta: { deleted: deleted.count, cutoff: cutoff.toISOString() },
   })
 
   return NextResponse.json({ deleted: deleted.count, cutoff: cutoff.toISOString() })

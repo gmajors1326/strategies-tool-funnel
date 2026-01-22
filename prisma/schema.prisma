@@ -134,6 +134,19 @@ model PlanEntitlement {
   @@index([userId])
 }
 
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorEmail String?
+  action     String
+  target     String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorEmail])
+  @@index([createdAt])
+}
+
 model KnowledgeItem {
   id           String   @id @default(cuid())
   key          String   @unique
