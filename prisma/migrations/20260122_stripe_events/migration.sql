@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "StripeEvent" (
+CREATE TABLE IF NOT EXISTS "StripeEvent" (
     "id" TEXT NOT NULL,
     "eventId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
@@ -9,10 +9,10 @@ CREATE TABLE "StripeEvent" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "StripeEvent_eventId_key" ON "StripeEvent"("eventId");
+CREATE UNIQUE INDEX IF NOT EXISTS "StripeEvent_eventId_key" ON "StripeEvent"("eventId");
 
 -- CreateIndex
-CREATE INDEX "StripeEvent_type_idx" ON "StripeEvent"("type");
+CREATE INDEX IF NOT EXISTS "StripeEvent_type_idx" ON "StripeEvent"("type");
 
 -- CreateIndex
-CREATE INDEX "StripeEvent_createdAt_idx" ON "StripeEvent"("createdAt");
+CREATE INDEX IF NOT EXISTS "StripeEvent_createdAt_idx" ON "StripeEvent"("createdAt");
