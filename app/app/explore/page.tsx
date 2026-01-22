@@ -9,7 +9,7 @@ export default function ExplorePage() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-neutral-100">Explore Tools</h1>
         <p className="mt-1 text-sm text-neutral-400">
-          Filter by category, difficulty, and tags. Save time. Make better posts. Print money responsibly.
+          Filter by category, difficulty, and tags. Badges reflect your plan + caps + token balance.
         </p>
       </div>
 

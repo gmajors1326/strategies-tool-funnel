@@ -162,20 +162,14 @@ type ToolMetaSeed = Omit<ToolMeta, 'category'>
 
 const normalizeTag = (tag: string) => tag.trim().toLowerCase()
 
-const CATEGORY_PRIORITY: ToolCategory[] = ['Hooks', 'Content', 'DMs', 'Offers', 'Analytics', 'Audience', 'Competitive']
-
 const deriveCategoryFromTags = (tags: string[]): ToolCategory => {
-  const matches = new Set<ToolCategory>()
   for (const raw of tags) {
     const normalized = normalizeTag(raw)
-    if (TAG_CATEGORY_RULES[normalized]) matches.add(TAG_CATEGORY_RULES[normalized])
+    if (TAG_CATEGORY_RULES[normalized]) return TAG_CATEGORY_RULES[normalized]
     if (normalized.endsWith('s')) {
       const singular = normalized.slice(0, -1)
-      if (TAG_CATEGORY_RULES[singular]) matches.add(TAG_CATEGORY_RULES[singular])
+      if (TAG_CATEGORY_RULES[singular]) return TAG_CATEGORY_RULES[singular]
     }
-  }
-  for (const category of CATEGORY_PRIORITY) {
-    if (matches.has(category)) return category
   }
   return 'Content'
 }
@@ -882,4 +876,4 @@ export function listToolIds(opts?: { includeHidden?: boolean }): string[] {
   return listTools(opts).map((t) => t.id)
 }
 
-export { TOOL_REGISTRY }
+export { TOOL_REGISTRY, deriveCategoryFromTags }
