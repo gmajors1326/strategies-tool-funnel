@@ -6,6 +6,7 @@ export type TicketSummary = {
   status: string
   category: string
   createdAtISO: string
+  createdAt: string
 }
 
 export type TicketThreadMessage = {
@@ -49,6 +50,7 @@ export const listTicketsForUser = async (userId: string): Promise<TicketSummary[
     status: row.status,
     category: row.category,
     createdAtISO: row.createdAt.toISOString(),
+    createdAt: row.createdAt.toISOString(),
   }))
 }
 
@@ -63,6 +65,7 @@ export const listTicketsForAdmin = async (): Promise<TicketSummary[]> => {
     status: row.status,
     category: row.category,
     createdAtISO: row.createdAt.toISOString(),
+    createdAt: row.createdAt.toISOString(),
   }))
 }
 
