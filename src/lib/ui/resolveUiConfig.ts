@@ -50,7 +50,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
       const trial = getTrialState(user.id, tool.id)
       const bonus = await getBonusRunsSummary({ userId: user.id, toolId: tool.id })
       const toolCap = tool.dailyRunsByPlan?.[user.planId] ?? 0
-      const toolRunsUsed = (usageWindow.perToolRunsUsed as Record<string, number>)?.[tool.id] ?? 0
+      const toolRunsUsed = (usageWindow.per_tool_runs_used as Record<string, number>)?.[tool.id] ?? 0
 
       let lockState: UiConfig['catalog'][number]['lockState'] = 'available'
       let reason: string | undefined
