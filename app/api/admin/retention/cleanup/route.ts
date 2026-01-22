@@ -14,7 +14,6 @@ export async function POST() {
 
   const deleted = await prisma.toolRun.deleteMany({
     where: {
-      saved: false,
       createdAt: { lt: cutoff },
     },
   })
