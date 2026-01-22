@@ -7,6 +7,9 @@ export default function NotAuthorizedPage() {
       <p className="mt-3 text-sm opacity-80">
         You don’t have access to the admin area.
       </p>
+      <p className="mt-2 text-sm opacity-60">
+        If you think this is a mistake, contact an admin.
+      </p>
     </div>
   )
 }

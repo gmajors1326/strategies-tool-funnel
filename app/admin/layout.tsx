@@ -8,12 +8,8 @@ export const dynamic = 'force-dynamic'
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   try {
     await requireAdmin()
-  } catch (e: any) {
-    // If they're not allowed, don't crash the app — bounce them cleanly.
-    if (e?.status === 403 || String(e?.message || '').toLowerCase().includes('forbidden')) {
-      redirect('/admin/not-authorized')
-    }
-    throw e
+  } catch {
+    redirect('/admin/not-authorized')
   }
 
   return <AdminShell>{children}</AdminShell>
