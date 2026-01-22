@@ -142,6 +142,30 @@ function badgeForPreflight(p?: ToolPreflightResult) {
   }
 }
 
+function getWorstLockBanner(preflightMap: Record<string, ToolPreflightResult>) {
+  const locked = Object.values(preflightMap).filter((r) => r.status === 'locked')
+  if (!locked.length) return null
+
+  if (locked.some((r) => r.lockCode === 'locked_tokens')) {
+    return { kind: 'tokens' as const }
+  }
+
+  const resetLocks = locked.filter(
+    (r) => r.lockCode === 'locked_usage_daily' || r.lockCode === 'locked_tool_daily'
+  )
+  if (!resetLocks.length) return null
+
+  const resetTimes = resetLocks
+    .map((r) => r.usage?.resetsAtISO)
+    .filter(Boolean)
+    .map((iso) => new Date(iso as string).getTime())
+
+  const worstReset =
+    resetTimes.length > 0 ? new Date(Math.max(...resetTimes)).toISOString() : resetLocks[0].usage?.resetsAtISO
+
+  return { kind: 'resets' as const, resetsAtISO: worstReset }
+}
+
 export default function ExploreTools({ tools }: Props) {
   const [category, setCategory] = React.useState<ToolCategory>('All')
   const [difficulty, setDifficulty] = React.useState<Difficulty | 'all'>('all')
@@ -203,6 +227,8 @@ export default function ExploreTools({ tools }: Props) {
     }
   }, [tools])
 
+  const worstLockBanner = React.useMemo(() => getWorstLockBanner(preflightMap), [preflightMap])
+
   const filtered = React.useMemo(() => {
     const q = normalizeText(query)
 
@@ -244,6 +270,32 @@ export default function ExploreTools({ tools }: Props) {
 
   return (
     <div className="space-y-4">
+      {worstLockBanner ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-800 bg-neutral-950 px-4 py-3 text-sm text-neutral-200">
+          {worstLockBanner.kind === 'tokens' ? (
+            <>
+              <div>You're locked by tokens → Buy tokens</div>
+              <a
+                href="/pricing"
+                className="rounded-md border border-red-500/60 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500"
+              >
+                Buy tokens
+              </a>
+            </>
+          ) : (
+            <div>
+              Resets at{' '}
+              <span className="font-semibold">
+                {worstLockBanner.resetsAtISO
+                  ? new Date(worstLockBanner.resetsAtISO).toLocaleString()
+                  : 'soon'}
+              </span>{' '}
+              → Come back then
+            </div>
+          )}
+        </div>
+      ) : null}
+
       <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
