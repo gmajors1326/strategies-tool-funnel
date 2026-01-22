@@ -589,7 +589,7 @@ function ToolCard({
       ) : null}
 
       <div className="mt-4 flex items-center justify-between">
-        <div className="text-sm font-semibold text-red-300 group-hover:text-red-200">Open tool -></div>
+        <div className="text-sm font-semibold text-red-300 group-hover:text-red-200">Open tool {'->'}</div>
         {preflight?.status === 'locked' && preflight.message ? (
           <div className="max-w-[55%] truncate text-xs text-neutral-500" title={preflight.message}>
             {preflight.message}
