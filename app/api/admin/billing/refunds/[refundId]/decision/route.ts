@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/adminAuth'
+import { logAudit } from '@/src/lib/orgs/orgs'
 
 const decisionSchema = z.object({
   decision: z.enum(['approve', 'deny', 'partial', 'credit']),
@@ -14,9 +15,21 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { refundId: string } }
 ) {
-  await requireAdmin()
+  const admin = await requireAdmin()
   const body = await request.json()
   const data = decisionSchema.parse(body)
+
+  await logAudit({
+    userId: admin.userId,
+    action: 'admin.refund.decision',
+    targetId: params.refundId,
+    meta: {
+      decision: data.decision,
+      amount: data.amount ?? null,
+      reason: data.reason,
+      adminEmail: admin.email,
+    },
+  })
 
   // TODO: replace (billing): issue refund decision through billing provider.
   return NextResponse.json({

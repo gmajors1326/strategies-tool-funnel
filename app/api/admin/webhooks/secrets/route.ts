@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, canSupport } from '@/lib/adminAuth'
 import { prisma } from '@/lib/db'
+import { logAudit } from '@/src/lib/orgs/orgs'
 
 function maskSecret(secret: string) {
   if (secret.length <= 6) return '***'
@@ -59,6 +60,13 @@ export async function POST(request: NextRequest) {
       secret,
       active: true,
     },
+  })
+
+  await logAudit({
+    userId: admin.userId,
+    action: 'admin.webhooks.secret_rotate',
+    targetId: created.id,
+    meta: { customerId, adminEmail: admin.email },
   })
 
   return NextResponse.json({

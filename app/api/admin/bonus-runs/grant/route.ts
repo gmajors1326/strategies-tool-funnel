@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/adminAuth'
 import { grantBonusRuns } from '@/src/lib/tool/bonusRuns'
+import { logAudit } from '@/src/lib/orgs/orgs'
 
 export async function POST(req: Request) {
   try {
@@ -30,6 +31,19 @@ export async function POST(req: Request) {
       reason,
       expiresAt: expiresAt ?? null,
       grantedBy: admin.userId,
+    })
+
+    await logAudit({
+      userId: admin.userId,
+      action: 'admin.bonus_runs.grant',
+      targetId: userId,
+      meta: {
+        toolId,
+        runsGranted,
+        reason,
+        expiresAt: expiresAt?.toISOString?.() ?? null,
+        adminEmail: admin.email,
+      },
     })
 
     return NextResponse.json({ ok: true, bonus: row })

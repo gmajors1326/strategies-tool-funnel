@@ -1,5 +1,5 @@
-import { getSession } from './auth'
 import { ensureDevDbReady } from './devDbGuard'
+import { requireAdmin as requireAppAdmin } from '@/src/lib/auth/requireAdmin'
 
 export type AdminRole = 'admin' | 'support' | 'analyst'
 
@@ -49,33 +49,12 @@ export function resolveAdminRole(identity: AdminIdentity): AdminRole | null {
 }
 
 export async function requireAdmin(): Promise<AdminSession> {
-  const isProd = process.env.NODE_ENV === 'production'
-  const devBypassEnabled = process.env.DEV_AUTH_BYPASS === 'true'
-
   await ensureDevDbReady()
-
-  if (!isProd && devBypassEnabled) {
-    return {
-      userId: process.env.DEV_ADMIN_ID || 'admin_dev_1',
-      email: process.env.DEV_ADMIN_EMAIL || 'admin@example.com',
-      role: 'admin',
-    }
-  }
-
-  const session = await getSession()
-  if (!session) {
-    throw new Error('Unauthorized')
-  }
-
-  const role = resolveAdminRole({ userId: session.userId, email: session.email })
-  if (!role) {
-    throw new Error('Forbidden')
-  }
-
+  const admin = await requireAppAdmin()
   return {
-    userId: session.userId,
-    email: session.email,
-    role,
+    userId: admin.id,
+    email: admin.email,
+    role: 'admin',
   }
 }
 

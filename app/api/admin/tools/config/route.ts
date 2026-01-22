@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/adminAuth'
 import { listTools } from '@/src/lib/tools/registry'
+import { logAudit } from '@/src/lib/orgs/orgs'
 
 // TODO: replace (tool-registry): persist tool config to database.
 let mockToolConfig = listTools({ includeHidden: true }).map((tool) => ({
@@ -19,9 +20,14 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  await requireAdmin()
+  const admin = await requireAdmin()
   const body = await request.json()
   // TODO: replace (tool-registry): validate and persist tool config updates.
   mockToolConfig = body.tools ?? mockToolConfig
+  await logAudit({
+    userId: admin.userId,
+    action: 'admin.tools.config_update',
+    meta: { adminEmail: admin.email, toolCount: mockToolConfig.length },
+  })
   return NextResponse.json({ status: 'ok', tools: mockToolConfig })
 }

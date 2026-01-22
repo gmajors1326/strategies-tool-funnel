@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/adminAuth'
 import { createLedgerEntry, getTokenBalance } from '@/src/lib/tokens/ledger'
+import { logAudit } from '@/src/lib/orgs/orgs'
 
 export async function POST(req: Request) {
   try {
-    await requireAdmin()
+    const admin = await requireAdmin()
     const body = await req.json()
     const userId = String(body.userId || '')
     const tokensDelta = Number(body.tokensDelta)
@@ -22,6 +23,13 @@ export async function POST(req: Request) {
       eventType: 'admin_adjustment',
       tokensDelta,
       reason,
+    })
+
+    await logAudit({
+      userId: admin.userId,
+      action: 'admin.tokens.adjust',
+      targetId: userId,
+      meta: { tokensDelta, reason, adminEmail: admin.email },
     })
 
     const balance = await getTokenBalance(userId)

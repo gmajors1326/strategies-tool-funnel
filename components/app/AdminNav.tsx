@@ -12,6 +12,7 @@ const ADMIN_ITEMS = [
   { label: 'Tokens', href: '/admin/tokens' },
   { label: 'Payments', href: '/admin/payments' },
   { label: 'Orgs', href: '/admin/orgs' },
+  { label: 'Access', href: '/admin/access' },
 ]
 
 export function AdminNav() {
