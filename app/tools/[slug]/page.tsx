@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { requireUser } from '@/src/lib/auth/requireUser'
 import { TOOL_REGISTRY, type ToolMeta } from '@/src/lib/tools/registry'
 import { ToolRunner } from '@/src/components/tools/ToolRunner'
@@ -49,7 +49,20 @@ export default async function ToolPage({
 }: {
   params: Promise<{ slug: string }>
 }) {
-  await requireUser()
+  try {
+    await requireUser()
+  } catch (error) {
+    const message = String((error as Error)?.message || '').toLowerCase()
+    if (
+      message.includes('unauthorized') ||
+      message.includes('session missing') ||
+      message.includes('session invalid') ||
+      message.includes('sign in via /verify')
+    ) {
+      redirect('/verify')
+    }
+    throw error
+  }
 
   const { slug } = await params
   const tool = (TOOL_REGISTRY as Record<string, ToolMeta>)[slug]
