@@ -4,12 +4,12 @@ import { getNextResetAt } from '@/src/lib/usage/reset'
 
 export const getOrCreateEntitlement = async (userId: string) => {
   try {
-    const existing = await prisma.entitlement.findUnique({ where: { userId } })
+    const existing = await prisma.entitlement.findUnique({ where: { user_id: userId } })
     if (existing) return existing
     const now = new Date()
     return prisma.entitlement.create({
       data: {
-        userId,
+        user_id: userId,
         plan: 'free',
         resetsAt: getNextResetAt(now),
       },
