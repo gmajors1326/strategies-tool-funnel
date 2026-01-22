@@ -80,12 +80,12 @@ export async function POST(request: NextRequest) {
       if (userId && plan) {
         const mappedPlan = plan.planId === 'business' ? 'team' : 'pro_monthly'
         await prisma.entitlement.upsert({
-          where: { userId },
+          where: { user_id: userId },
           update: { plan: mappedPlan },
           create: {
-            userId,
+            user_id: userId,
             plan: mappedPlan,
-            resetsAt: new Date(),
+            resets_at: new Date(),
           },
         })
       }
@@ -144,9 +144,9 @@ export async function POST(request: NextRequest) {
       if (userId && pack) {
         await prisma.tokenLedger.create({
           data: {
-            userId,
-            eventType: 'reversal',
-            tokensDelta: -pack.tokensGranted,
+            user_id: userId,
+            event_type: 'reversal',
+            tokens_delta: -pack.tokensGranted,
             toolId: pack.packId,
             reason: `stripe_charge:${charge.id}`,
           },
