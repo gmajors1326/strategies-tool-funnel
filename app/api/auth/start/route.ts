@@ -104,6 +104,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (
+      errorMessage.includes('eauth') ||
+      errorMessage.includes('invalid login') ||
+      errorMessage.includes('username and password not accepted') ||
+      errorMessage.includes('535')
+    ) {
+      return NextResponse.json(
+        {
+          error: 'Email authentication failed',
+          code: 'gmail_auth_failed',
+          details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+        },
+        { status: 500 }
+      )
+    }
+
+    if (errorMessage.includes('enotfound') || errorMessage.includes('getaddrinfo')) {
+      return NextResponse.json(
+        {
+          error: 'Email provider network error',
+          code: 'email_network_error',
+          details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+        },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
       {
         error: 'Failed to send verification code',
