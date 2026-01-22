@@ -66,9 +66,9 @@ export async function fetchUiConfig(): Promise<UiConfig> {
 
   // Canonical UiConfig usage keys (matches src/lib/ui/types.ts)
   const usage = {
-    dailyRunsUsed: usageWindow.runsUsed,
+    dailyRunsUsed: usageWindow.runs_used,
     dailyRunCap: planRunCap,
-    aiTokensUsed: usageWindow.aiTokensUsed,
+    aiTokensUsed: usageWindow.ai_tokens_used,
     aiTokenCap: planTokenCap,
     tokensRemaining: tokenBalance,
     purchasedTokensRemaining: tokenBalance,
