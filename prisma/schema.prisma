@@ -23,6 +23,7 @@ model User {
   email                     String   @unique
   emailVerifiedAt           DateTime?
   plan                      Plan     @default(FREE)
+  isAdmin                   Boolean  @default(false)
   freeVerifiedRunsRemaining Int      @default(3)
   activeOrgId               String?
   createdAt                 DateTime @default(now())
@@ -130,6 +131,11 @@ model PlanEntitlement {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model AdminAccess {
+  email     String   @id
+  createdAt DateTime @default(now())
 }
 
 model KnowledgeItem {
