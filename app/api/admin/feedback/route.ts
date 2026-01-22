@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   const enriched = await Promise.all(
     entries.map(async (entry) => ({
       ...entry,
-      bonusGranted: await getBonusRunGrantExists({ userId: entry.userId, toolId: entry.toolId }),
+      bonusGranted: await getBonusRunGrantExists({ userId: entry.user_id, toolId: entry.tool_id }),
     }))
   )
 
