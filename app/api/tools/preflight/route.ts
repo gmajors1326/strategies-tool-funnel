@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
           aiTokensCap: planTokenCap,
           toolRunsUsed,
           toolRunsCap: toolCap,
-          resetsAtISO: usage.resetsAt.toISOString(),
+          resetsAtISO: usage.resets_at.toISOString(),
         },
       }
     })
