@@ -26,7 +26,7 @@ export const ensureUsageWindow = async (userId: string) => {
     const windowStart = getWindowStart(now)
     const windowEnd = newResetsAt
     return prisma.dailyUsage.upsert({
-      where: { DailyUsage_user_window_end_uidx: { user_id: userId, window_end: windowEnd } },
+      where: { user_id_window_end: { user_id: userId, window_end: windowEnd } },
       update: {},
       create: {
         user_id: userId,
