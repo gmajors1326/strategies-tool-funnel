@@ -253,7 +253,7 @@ export default function ExploreTools({ tools }: Props) {
         if (ar !== br) return ar - br
         return a.name.localeCompare(b.name)
       })
-  }, [toolsWithCategory, category, difficulty, query, selectedTags])
+  }, [toolsWithCategory, category, difficulty, query, selectedTags, availableOnly, preflightMap])
 
   function toggleTag(tag: string) {
     setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
@@ -287,7 +287,7 @@ export default function ExploreTools({ tools }: Props) {
           {worstLockBanner.kind === 'tokens' ? (
             <>
               <div>
-                You're locked by tokens{' '}
+                You&apos;re locked by tokens{' '}
                 <span className="text-neutral-400">
                   ({worstLockBanner.remainingTokens ?? 0}/{worstLockBanner.requiredTokens ?? '—'} tokens)
                 </span>{' '}

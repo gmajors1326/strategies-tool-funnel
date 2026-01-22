@@ -9,7 +9,7 @@ import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
 
 import { listTools, type ToolMeta } from '@/src/lib/tools/registry'
 import { computeToolStatus, type ToolAccessStatus } from '@/src/lib/usage/limits'
-import type { ToolAiLevel, ToolUiItem, UiConfig, UiLockState } from '@/src/lib/ui/types'
+import type { ToolUiItem, UiConfig, UiLockState } from '@/src/lib/ui/types'
 
 function isProd() {
   return process.env.NODE_ENV === 'production'

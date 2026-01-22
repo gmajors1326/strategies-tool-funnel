@@ -13,7 +13,7 @@ export function ToolCard({ tool }: ToolCardProps) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-[hsl(var(--text))]">{tool.name}</p>
-          <p className="text-xs text-[hsl(var(--muted))] capitalize">{tool.type.replace('_', ' ')}</p>
+          <p className="text-xs text-[hsl(var(--muted))] capitalize">{tool.aiLevel}</p>
         </div>
         <StatusBadge status={tool.status} />
       </div>

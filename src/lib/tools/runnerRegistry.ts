@@ -573,8 +573,9 @@ const TOOL_SPECS: Record<string, ToolSpec> = {
 
 function assertToolSpecsAligned() {
   const specIds = Object.keys(TOOL_SPECS)
+  const expectedSet = new Set(EXPECTED_TOOL_IDS as readonly string[])
   const missing = EXPECTED_TOOL_IDS.filter((id) => !specIds.includes(id))
-  const extra = specIds.filter((id) => !EXPECTED_TOOL_IDS.includes(id))
+  const extra = specIds.filter((id) => !expectedSet.has(id))
   if (missing.length || extra.length) {
     throw new Error(
       [
