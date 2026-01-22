@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth'
+import { getSession } from '@/lib/auth.server'
 import { listNotifications } from '@/lib/notifications'
 
 export async function GET() {

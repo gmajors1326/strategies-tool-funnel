@@ -1,4 +1,4 @@
-import { getSession } from './auth'
+import { getSession } from './auth.server'
 import { getUserEntitlements } from './entitlements'
 import { enhanceWithAi, logAiUsage, isAiEnabled, type AiStyle } from './ai'
 import { retrieveKnowledge, getPromptProfile, getPromptRubric } from './knowledge'

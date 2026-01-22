@@ -1,5 +1,5 @@
 import { headers } from 'next/headers'
-import { getSession } from '@/lib/auth'
+import { getSession } from '@/lib/auth.server'
 import { resolveAdminRole } from '@/lib/adminAuth'
 import { ensureDevDbReady } from '@/lib/devDbGuard'
 import { getOrCreateEntitlement } from '@/src/lib/usage/entitlements'
@@ -31,8 +31,13 @@ const parseRole = (value?: string | null): UserSession['role'] | undefined => {
 
 /**
  * requireUser()
- * - DEV: optionally allow bypass via headers when DEV_AUTH_BYPASS=true
- * - PROD: must be wired to a real auth provider (Clerk/NextAuth/Supabase/etc.)
+ * - DEV: optional bypass via headers when DEV_AUTH_BYPASS=true
+ * - PROD: requires getSession() to be valid
+ * - PROD EMERGENCY BYPASS (optional):
+ *    Set AUTH_BYPASS_SECRET in env, then send header:
+ *      x-auth-bypass: <secret>
+ *    plus optional identity headers:
+ *      x-user-id, x-user-email, x-user-plan, x-user-role
  *
  * Dev bypass headers (only when DEV_AUTH_BYPASS=true):
  * - x-user-id: string
@@ -46,10 +51,11 @@ export const requireUser = async (): Promise<UserSession> => {
 
   await ensureDevDbReady()
 
+  const requestHeaders = headers()
+
   // ✅ DEV BYPASS (explicit opt-in)
   // NOTE: This is intentionally not "automatic" in dev.
   if (!isProd && devBypassEnabled) {
-    const requestHeaders = headers()
     const headerId = requestHeaders.get('x-user-id')
     const headerEmail = requestHeaders.get('x-user-email')
     const headerPlan = requestHeaders.get('x-user-plan')
@@ -59,6 +65,23 @@ export const requireUser = async (): Promise<UserSession> => {
     const email = headerEmail?.trim() || process.env.DEV_USER_EMAIL || 'dev@example.com'
     const planId = parsePlanId(headerPlan) || parsePlanId(process.env.DEV_USER_PLAN) || 'pro_monthly'
     const role = parseRole(headerRole) || parseRole(process.env.DEV_USER_ROLE) || 'user'
+
+    return { id, email, planId, role }
+  }
+
+  // ✅ PROD EMERGENCY BYPASS (locked behind secret)
+  const bypassSecret = process.env.AUTH_BYPASS_SECRET
+  const provided = requestHeaders.get('x-auth-bypass')
+  if (isProd && bypassSecret && provided === bypassSecret) {
+    const headerId = requestHeaders.get('x-user-id')
+    const headerEmail = requestHeaders.get('x-user-email')
+    const headerPlan = requestHeaders.get('x-user-plan')
+    const headerRole = requestHeaders.get('x-user-role')
+
+    const id = headerId?.trim() || process.env.DEV_USER_ID || 'user_prod_bypass_1'
+    const email = headerEmail?.trim() || process.env.DEV_USER_EMAIL || 'admin@example.com'
+    const planId = parsePlanId(headerPlan) || 'pro_monthly'
+    const role = parseRole(headerRole) || 'admin'
 
     return { id, email, planId, role }
   }

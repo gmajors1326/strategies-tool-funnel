@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth'
+import { getSession } from '@/lib/auth.server'
 import { markNotificationsRead } from '@/lib/notifications'
 
 export async function POST(request: NextRequest) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from '@/lib/auth'
+import { getSession } from '@/lib/auth.server'
 import { getNotificationPreference, upsertNotificationPreference } from '@/lib/notifications'
 
 const allowedFrequencies = new Set(['none', 'daily', 'weekly'])

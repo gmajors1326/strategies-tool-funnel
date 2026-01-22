@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getSession } from './auth'
+import { getSession } from './auth.server'
 import { logger } from './logger'
 import { getUserEntitlements } from './entitlements'
 

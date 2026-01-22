@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
 import { Button } from '@/components/ui/button'
-import { getSession } from '@/lib/auth'
+import { getSession } from '@/lib/auth.server'
 import { resolveAdminRole } from '@/lib/adminAuth'
 
 export default async function AdminLoginPage() {
