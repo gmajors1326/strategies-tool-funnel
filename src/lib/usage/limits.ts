@@ -48,6 +48,16 @@ export const computeToolStatus = (
   const planConfig = getPlanConfig(planId)
   const toolDailyCap = tool.dailyRunsByPlan[planId] ?? 0
 
+  // Category-based monetization: Analytics/Competitive are Pro+
+  if (planId === 'free' && (tool.category === 'Analytics' || tool.category === 'Competitive')) {
+    return {
+      status: 'locked_plan',
+      reason: 'Pro+ required for Analytics and Competitive tools',
+      cta: CTA.upgrade,
+      runsRemainingForTool: 0,
+    }
+  }
+
   // Not available on this plan
   if (toolDailyCap <= 0) {
     return {

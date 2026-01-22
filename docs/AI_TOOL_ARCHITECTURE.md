@@ -32,7 +32,7 @@ Tools use a single, canonical registry and a single OpenAI runner pipeline:
 - Persists runs and metering
 
 ### 5) UI Runner
-`components/app/ToolRunner.tsx`
+`src/components/tools/ToolRunner.tsx`
 - Renders inputs from registry fields
 - Posts `{ toolId, mode, trialMode?, input }`
 

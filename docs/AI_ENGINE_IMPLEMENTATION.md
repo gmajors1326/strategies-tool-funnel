@@ -19,7 +19,7 @@
    - Usage checks, token checks, trial/bonus logic
    - Logs metering and persists recent runs
 
-5. **`components/app/ToolRunner.tsx`**
+5. **`src/components/tools/ToolRunner.tsx`**
    - Schema‑driven input UI based on registry fields
    - Posts `{ toolId, mode, trialMode?, input }` to `/api/tools/run`
 

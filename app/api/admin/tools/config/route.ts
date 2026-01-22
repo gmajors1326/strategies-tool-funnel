@@ -3,7 +3,7 @@ import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 import { listTools } from '@/src/lib/tools/registry'
 
 // TODO: replace (tool-registry): persist tool config to database.
-let mockToolConfig = listTools().map((tool) => ({
+let mockToolConfig = listTools({ includeHidden: true }).map((tool) => ({
   id: tool.id,
   name: tool.name,
   tokensPerRun: tool.tokensPerRun,

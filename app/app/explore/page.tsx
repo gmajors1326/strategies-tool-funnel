@@ -1,30 +1,19 @@
-import { fetchUiConfig } from '@/src/lib/ui/fetchUiConfig'
-import { ToolCard } from '@/src/components/tools/ToolCard'
+import { listTools } from '@/src/lib/tools/registry'
+import ExploreTools from '@/src/components/tools/ExploreTools'
 
-export const dynamic = 'force-dynamic'
-
-export default async function ExplorePage() {
-  const uiConfig = await fetchUiConfig()
+export default function ExplorePage() {
+  const tools = listTools({ includeHidden: false })
 
   return (
-    <section className="space-y-4">
-      <div>
-        <h1 className="text-lg font-semibold">Explore Tools</h1>
-        <p className="text-sm text-[hsl(var(--muted))]">
-          Browse every tool and see what&apos;s unlocked.
+    <div className="mx-auto max-w-6xl p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-neutral-100">Explore Tools</h1>
+        <p className="mt-1 text-sm text-neutral-400">
+          Filter by category, difficulty, and tags. Save time. Make better posts. Print money responsibly.
         </p>
       </div>
-      {uiConfig.catalogTools.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-6 text-center text-sm text-[hsl(var(--muted))]">
-          No tools found. If this is production, your registry or access mapping is miswired.
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {uiConfig.catalogTools.map((tool) => (
-            <ToolCard key={tool.id} tool={tool as any} />
-          ))}
-        </div>
-      )}
-    </section>
+
+      <ExploreTools tools={tools} />
+    </div>
   )
 }

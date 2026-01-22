@@ -621,7 +621,7 @@ async function runToolWithOpenAI(req: RunRequest, ctx: RunContext) {
 
 export const runnerRegistry: Record<string, (req: RunRequest, ctx: RunContext) => Promise<{ output: any }>> =
   Object.fromEntries(
-    Object.keys(TOOL_SPECS).map((toolId) => [
+    EXPECTED_TOOL_IDS.map((toolId) => [
       toolId,
       async (req: RunRequest, ctx: RunContext) => runToolWithOpenAI(req, ctx),
     ])

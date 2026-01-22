@@ -24,6 +24,7 @@ const requestSchema = z.object({
   trialMode: z.enum(['sandbox', 'live', 'preview']).optional(),
   input: z.record(z.any()),
   runId: z.string().optional(),
+  dryRun: z.boolean().optional(), // ✅ NEW
 })
 
 export const dynamic = 'force-dynamic'
@@ -31,11 +32,14 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   const startedAt = Date.now()
 
+  // ✅ NEW: requestId for tracing (also echoed in JSON)
+  const requestId = crypto.randomUUID()
+
   const session = await requireUser()
   const userId = session.id
 
   const body = await request.json()
-  const data = requestSchema.parse(body) as RunRequest
+  const data = requestSchema.parse(body) as RunRequest & { dryRun?: boolean }
 
   const entitlement = await getOrCreateEntitlement(userId)
   const personalPlan = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
@@ -88,9 +92,16 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  // Helper to return JSON with requestId header consistently
+  const jsonWithRequestId = (payload: any, init?: Parameters<typeof NextResponse.json>[1]) => {
+    const res = NextResponse.json(payload, init)
+    res.headers.set('x-request-id', requestId)
+    return res
+  }
+
   if (!tool) {
     await recordRun({ status: 'locked', lockCode: 'locked_plan' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'locked',
         lock: buildLock({
@@ -98,6 +109,9 @@ export async function POST(request: NextRequest) {
           message: 'Tool not found.',
           cta: { type: 'contact', href: '/app/support' },
         }),
+        // ✅ NEW: inputEcho
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 404 }
     )
@@ -105,7 +119,7 @@ export async function POST(request: NextRequest) {
 
   if (membership?.role === 'viewer') {
     await recordRun({ status: 'locked', lockCode: 'locked_role' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'locked',
         lock: buildLock({
@@ -113,6 +127,8 @@ export async function POST(request: NextRequest) {
           message: 'Viewer seats cannot run tools.',
           cta: { type: 'upgrade', href: activeOrg ? `/orgs/${activeOrg.slug}/members` : '/pricing' },
         }),
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 403 }
     )
@@ -123,8 +139,8 @@ export async function POST(request: NextRequest) {
     const existing = await prisma.tokenLedger.findFirst({ where: { runId: data.runId } })
     if (existing) {
       await recordRun({ status: 'error', lockCode: 'duplicate' })
-      return NextResponse.json<RunResponse>(
-        { status: 'error', error: { message: 'Duplicate run_id; request already processed.', code: 'DUPLICATE_RUN' } },
+      return jsonWithRequestId(
+        { status: 'error', error: { message: 'Duplicate run_id; request already processed.', code: 'DUPLICATE_RUN' }, requestId },
         { status: 409 }
       )
     }
@@ -133,7 +149,7 @@ export async function POST(request: NextRequest) {
   const validation = validateInput(data.toolId, data.input)
   if (!validation.valid) {
     await recordRun({ status: 'error', lockCode: 'validation' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'error',
         error: {
@@ -141,6 +157,9 @@ export async function POST(request: NextRequest) {
           code: 'VALIDATION_ERROR',
           details: validation.errors?.details,
         },
+        // ✅ NEW: inputEcho
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 400 }
     )
@@ -148,7 +167,7 @@ export async function POST(request: NextRequest) {
 
   if (!tool.enabled) {
     await recordRun({ status: 'locked', lockCode: 'locked_plan' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'locked',
         lock: buildLock({
@@ -156,6 +175,25 @@ export async function POST(request: NextRequest) {
           message: 'Tool is offline.',
           cta: { type: 'contact', href: '/app/support' },
         }),
+        inputEcho: data.input ?? {},
+        requestId,
+      },
+      { status: 403 }
+    )
+  }
+
+  if (personalPlan === 'free' && (tool.category === 'Analytics' || tool.category === 'Competitive')) {
+    await recordRun({ status: 'locked', lockCode: 'locked_plan' })
+    return jsonWithRequestId(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_plan',
+          message: 'Analytics and Competitive tools require Pro+.',
+          cta: { type: 'upgrade', href: '/pricing' },
+        }),
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 403 }
     )
@@ -165,7 +203,7 @@ export async function POST(request: NextRequest) {
 
   if (data.mode === 'paid' && toolCapForPlan <= 0) {
     await recordRun({ status: 'locked', lockCode: 'locked_plan' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'locked',
         lock: buildLock({
@@ -173,6 +211,8 @@ export async function POST(request: NextRequest) {
           message: 'Tool requires purchase.',
           cta: { type: 'upgrade', href: '/pricing' },
         }),
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 403 }
     )
@@ -184,7 +224,7 @@ export async function POST(request: NextRequest) {
 
   if (usage.runsUsed >= planRunCap) {
     await recordRun({ status: 'locked', lockCode: 'locked_usage_daily' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'locked',
         lock: buildLock({
@@ -201,14 +241,17 @@ export async function POST(request: NextRequest) {
           },
           resetsAtISO: usage.resetsAt.toISOString(),
         }),
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 403 }
     )
   }
 
-  if (usage.aiTokensUsed >= planTokenCap && tool.aiLevel !== 'none') {
+  // NOTE: If your ToolMeta doesn't have aiLevel, consider adding it.
+  if (usage.aiTokensUsed >= planTokenCap && (tool as any).aiLevel !== 'none') {
     await recordRun({ status: 'locked', lockCode: 'locked_tokens' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'locked',
         lock: buildLock({
@@ -225,6 +268,8 @@ export async function POST(request: NextRequest) {
           },
           resetsAtISO: usage.resetsAt.toISOString(),
         }),
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 403 }
     )
@@ -232,7 +277,7 @@ export async function POST(request: NextRequest) {
 
   if (toolRunsUsed >= toolCap) {
     await recordRun({ status: 'locked', lockCode: 'locked_tool_daily' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'locked',
         lock: buildLock({
@@ -249,6 +294,8 @@ export async function POST(request: NextRequest) {
           },
           resetsAtISO: usage.resetsAt.toISOString(),
         }),
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 403 }
     )
@@ -259,7 +306,7 @@ export async function POST(request: NextRequest) {
 
   if (data.mode === 'trial' && !trial.allowed && bonusRemaining <= 0) {
     await recordRun({ status: 'locked', lockCode: 'locked_trial', meteringMode: 'trial' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'locked',
         lock: buildLock({
@@ -267,6 +314,8 @@ export async function POST(request: NextRequest) {
           message: 'Trial used.',
           cta: { type: 'upgrade', href: '/pricing' },
         }),
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 403 }
     )
@@ -280,7 +329,7 @@ export async function POST(request: NextRequest) {
 
   if (meteringMode === 'tokens' && tokenBalance < requiredTokens) {
     await recordRun({ status: 'locked', lockCode: 'locked_tokens', meteringMode: 'tokens' })
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'locked',
         lock: buildLock({
@@ -290,6 +339,8 @@ export async function POST(request: NextRequest) {
           requiredTokens,
           remainingTokens: tokenBalance,
         }),
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 403 }
     )
@@ -298,10 +349,54 @@ export async function POST(request: NextRequest) {
   const runner = runnerRegistry[data.toolId]
   if (!runner) {
     await recordRun({ status: 'error', lockCode: 'tool_error' })
-    return NextResponse.json<RunResponse>(
-      { status: 'error', error: { message: 'Runner not implemented.', code: 'TOOL_ERROR' } },
+    return jsonWithRequestId(
+      {
+        status: 'error',
+        error: { message: 'Runner not implemented.', code: 'TOOL_ERROR' },
+        inputEcho: data.input ?? {},
+        requestId,
+      },
       { status: 500 }
     )
+  }
+
+  // ✅ NEW: DRY RUN SUPPORT
+  // Return lock/validation/token status WITHOUT executing AI and WITHOUT charging tokens/usage.
+  if (data.dryRun) {
+    await recordRun({ status: 'ok', meteringMode: 'dry_run', tokensCharged: 0 })
+
+    return jsonWithRequestId({
+      status: 'ok',
+      output: {
+        dryRun: true,
+        estimatedTokens: requiredTokens,
+        meteringMode,
+        planRunCap,
+        planTokenCap,
+        toolCap,
+        toolRunsUsed,
+        runsUsed: usage.runsUsed,
+        aiTokensUsed: usage.aiTokensUsed,
+        remainingTokens: tokenBalance,
+        remainingBonusRuns: bonusRemaining,
+        trialAllowed: trial.allowed,
+      },
+      inputEcho: data.input ?? {},
+      runId,
+      metering: {
+        chargedTokens: 0,
+        remainingTokens: tokenBalance,
+        aiTokensUsed: usage.aiTokensUsed,
+        aiTokensCap: planTokenCap,
+        runsUsed: usage.runsUsed,
+        runsCap: planRunCap,
+        resetsAtISO: usage.resetsAt.toISOString(),
+        meteringMode,
+        remainingBonusRuns: bonusRemaining,
+        orgId: activeOrg?.id ?? null,
+      },
+      requestId,
+    })
   }
 
   try {
@@ -352,7 +447,7 @@ export async function POST(request: NextRequest) {
 
     const updatedBalance = await getTokenBalance(userId)
 
-    const response: RunResponse = {
+    const response: RunResponse & { inputEcho?: any; requestId?: string } = {
       status: 'ok',
       output: output.output,
       runId,
@@ -368,6 +463,9 @@ export async function POST(request: NextRequest) {
         remainingBonusRuns,
         orgId: activeOrg?.id ?? null,
       },
+      // ✅ NEW: inputEcho
+      inputEcho: data.input ?? {},
+      requestId,
     }
 
     // Persist recent runs (DB-backed now)
@@ -380,23 +478,25 @@ export async function POST(request: NextRequest) {
       lockCode: null,
     })
 
-    return NextResponse.json(response)
+    return jsonWithRequestId(response)
   } catch (err: any) {
     // Ensure we do not spend tokens or increment usage on failure (transaction only happens on success)
     await recordRun({ status: 'error', lockCode: 'tool_error' })
 
-    return NextResponse.json<RunResponse>(
+    return jsonWithRequestId(
       {
         status: 'error',
         error: {
           message: 'Tool execution failed.',
           code: 'TOOL_ERROR',
-          // Keep details minimal; avoid leaking user input/output.
           details:
             process.env.NODE_ENV !== 'production'
               ? { message: err?.message || String(err) }
               : undefined,
         },
+        // ✅ NEW: inputEcho
+        inputEcho: data.input ?? {},
+        requestId,
       },
       { status: 500 }
     )

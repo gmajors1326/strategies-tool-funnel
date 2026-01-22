@@ -13,7 +13,7 @@ export default function AdminToolsPage() {
       </div>
       <Table
         headers={['Tool', 'AI Level', 'Tokens/Run', 'Runs/Day (Free)']}
-        rows={listTools().map((tool) => [
+        rows={listTools({ includeHidden: true }).map((tool) => [
           <Link key={tool.id} href={`/admin/tools/${tool.id}`} className="text-red-300 hover:text-red-200">
             {tool.name}
           </Link>,
