@@ -1,6 +1,8 @@
 import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 import WebhookDashboard from './ui/WebhookDashboard'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminWebhooksPage() {
   await requireAdmin()
 
