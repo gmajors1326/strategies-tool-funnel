@@ -72,8 +72,8 @@ export async function fetchUiConfig(): Promise<UiConfig> {
     aiTokenCap: planTokenCap,
     tokensRemaining: tokenBalance,
     purchasedTokensRemaining: tokenBalance,
-    resetsAtISO: usageWindow.resetsAt.toISOString(),
-    perToolRunsUsed: (usageWindow.perToolRunsUsed as Record<string, number>) || {},
+    resetsAtISO: usageWindow.resets_at.toISOString(),
+    perToolRunsUsed: (usageWindow.per_tool_runs_used as Record<string, number>) || {},
   }
 
   const user = {
