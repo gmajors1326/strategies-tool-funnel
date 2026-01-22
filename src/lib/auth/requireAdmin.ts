@@ -1,4 +1,5 @@
 import { requireAdmin as requireAdminCookie, type AdminRole } from '@/lib/adminAuth'
+import { redirect } from 'next/navigation'
 
 export type AdminSession = {
   id: string
@@ -35,5 +36,13 @@ export const requireAdmin = async (): Promise<AdminSession> => {
         '  DEV_ADMIN_EMAIL=admin@example.com',
       ].join('\n')
     )
+  }
+}
+
+export const requireAdminPage = async (): Promise<AdminSession> => {
+  try {
+    return await requireAdmin()
+  } catch {
+    redirect('/admin/login')
   }
 }

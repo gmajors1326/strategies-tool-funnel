@@ -1,8 +1,9 @@
-import { requireAdmin, canSupport } from '@/lib/adminAuth'
+import { canSupport } from '@/lib/adminAuth'
+import { requireAdminPage } from '@/src/lib/auth/requireAdmin'
 import WebhookDashboard from './ui/WebhookDashboard'
 
 export default async function AdminWebhooksPage() {
-  const admin = await requireAdmin()
+  const admin = await requireAdminPage()
   if (!canSupport(admin.role)) {
     return (
       <div className="p-6 text-sm text-red-300">
