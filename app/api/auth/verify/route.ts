@@ -12,7 +12,19 @@ const verifySchema = z.object({
 const MAX_ATTEMPTS = 5
 
 export async function POST(request: NextRequest) {
+  let dbHost: string | null = null
+  let dbName: string | null = null
   try {
+    try {
+      if (process.env.DATABASE_URL) {
+        const dbUrl = new URL(process.env.DATABASE_URL)
+        dbHost = dbUrl.host
+        dbName = dbUrl.pathname.replace('/', '')
+        console.info('[auth/verify] DB host:', dbHost, 'db:', dbName)
+      }
+    } catch {
+      console.info('[auth/verify] DB host: unavailable')
+    }
     const body = await request.json()
     const { email, code } = verifySchema.parse(body)
 
@@ -89,6 +101,20 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Auth verify error:', error)
-    return NextResponse.json({ error: 'Failed to verify code' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const prismaCode =
+      (error as { code?: string } | null)?.code ||
+      (error as { meta?: { code?: string } } | null)?.meta?.code
+
+    return NextResponse.json(
+      {
+        error: 'Failed to verify code',
+        code: prismaCode || 'verify_failed',
+        dbHost,
+        dbName,
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+      },
+      { status: 500 }
+    )
   }
 }
