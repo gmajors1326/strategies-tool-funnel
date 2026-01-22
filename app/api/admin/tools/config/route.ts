@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+import { requireAdmin } from '@/lib/adminAuth'
 import { listTools } from '@/src/lib/tools/registry'
 
 // TODO: replace (tool-registry): persist tool config to database.

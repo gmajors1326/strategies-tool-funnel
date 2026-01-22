@@ -8,6 +8,7 @@ import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
 import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@/src/lib/billing/planConfig'
 import { getTokenBalance } from '@/src/lib/tokens/ledger'
 import { getActiveOrg, getMembership } from '@/src/lib/orgs/orgs'
+import { assertDbReadyOnce, isProviderError, normalizePrismaError } from '@/src/lib/prisma/guards'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,6 @@ const requestSchema = z.object({
   toolIds: z.array(z.string()).min(1).max(50),
 })
 
-type PreflightStatus = 'ok' | 'locked'
 type PreflightLockCode =
   | 'locked_tokens'
   | 'locked_usage_daily'
@@ -25,7 +25,7 @@ type PreflightLockCode =
 
 export type ToolPreflightResult = {
   toolId: string
-  status: PreflightStatus
+  status: 'ok' | 'locked'
   lockCode?: PreflightLockCode
   message?: string
   requiredTokens?: number
@@ -46,6 +46,8 @@ export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID()
 
   try {
+    await assertDbReadyOnce()
+
     const session = await requireUser()
     const userId = session.id
 
@@ -80,37 +82,21 @@ export async function POST(request: NextRequest) {
 
     const results: ToolPreflightResult[] = data.toolIds.map((toolId) => {
       if (membership?.role === 'viewer') {
-        return {
-          toolId,
-          status: 'locked',
-          lockCode: 'locked_role',
-          message: 'Viewer seats cannot run tools.',
-        }
+        return { toolId, status: 'locked', lockCode: 'locked_role', message: 'Viewer seats cannot run tools.' }
       }
 
       let tool
       try {
         tool = getToolMeta(toolId)
       } catch {
-        return {
-          toolId,
-          status: 'locked',
-          lockCode: 'locked_plan',
-          message: 'Tool not found.',
-        }
+        return { toolId, status: 'locked', lockCode: 'locked_plan', message: 'Tool not found.' }
       }
 
       if (!tool.enabled) {
-        return {
-          toolId: tool.id,
-          status: 'locked',
-          lockCode: 'locked_plan',
-          message: 'Tool is offline.',
-        }
+        return { toolId: tool.id, status: 'locked', lockCode: 'locked_plan', message: 'Tool is offline.' }
       }
 
       const toolCapForPlan = tool.dailyRunsByPlan?.[personalPlan] ?? 0
-
       if (toolCapForPlan <= 0) {
         return {
           toolId: tool.id,
@@ -237,23 +223,20 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { results },
-      {
-        headers: {
-          'x-request-id': requestId,
-        },
-      }
+      { headers: { 'x-request-id': requestId } }
     )
   } catch (err: any) {
+    const normalized = isProviderError(err) ? err : normalizePrismaError(err)
+
     return NextResponse.json(
       {
         error: {
-          message: err?.message || 'Preflight failed.',
+          code: 'PROVIDER_ERROR',
+          message: normalized.message,
+          details: normalized.details,
         },
       },
-      {
-        status: 400,
-        headers: { 'x-request-id': requestId },
-      }
+      { status: 503, headers: { 'x-request-id': requestId } }
     )
   }
 }

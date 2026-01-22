@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+import { requireAdmin } from '@/lib/adminAuth'
 
 const actionSchema = z.object({
   actionType: z.string(),

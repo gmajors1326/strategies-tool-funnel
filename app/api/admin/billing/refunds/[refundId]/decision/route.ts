@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+import { requireAdmin } from '@/lib/adminAuth'
 
 const decisionSchema = z.object({
   decision: z.enum(['approve', 'deny', 'partial', 'credit']),

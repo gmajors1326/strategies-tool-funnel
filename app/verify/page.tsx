@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { AppCard, AppCardContent, AppCardDescription, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
 import { AppPanel } from '@/components/ui/AppPanel'
@@ -10,12 +10,18 @@ import { Label } from '@/components/ui/label'
 
 export default function VerifyPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState<'start' | 'verify'>('start')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const nextParam = searchParams.get('next') ?? ''
+  const nextPath =
+    nextParam.startsWith('/') && !nextParam.startsWith('//')
+      ? nextParam
+      : '/account'
 
   const handleStart = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,7 +64,7 @@ export default function VerifyPage() {
       const data = await res.json()
 
       if (res.ok && data.success) {
-        router.push('/account')
+        router.push(nextPath)
       } else {
         setError(data.error || 'Invalid code')
       }

@@ -1,76 +1,40 @@
-'use client'
-
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { AppCard, AppCardContent, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
+import { Button } from '@/components/ui/button'
+import { getSession } from '@/lib/auth'
+import { resolveAdminRole } from '@/lib/adminAuth'
 
-export default function AdminLoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+export default async function AdminLoginPage() {
+  const isProd = process.env.NODE_ENV === 'production'
+  const devBypassEnabled = process.env.DEV_AUTH_BYPASS === 'true'
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    setLoading(true)
-    setError(null)
+  if (!isProd && devBypassEnabled) {
+    redirect('/admin/analytics')
+  }
 
-    try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
+  const session = await getSession()
+  if (!session) {
+    redirect('/verify?next=/admin/analytics')
+  }
 
-      if (!response.ok) {
-        const data = await response.json()
-        setError(data?.error || 'Login failed')
-        return
-      }
-
-      window.location.href = '/admin/analytics'
-    } catch {
-      setError('Login failed')
-    } finally {
-      setLoading(false)
-    }
+  const role = resolveAdminRole({ userId: session.userId, email: session.email })
+  if (role) {
+    redirect('/admin/analytics')
   }
 
   return (
     <div className="min-h-screen bg-hero-cactus flex items-center justify-center p-4">
       <AppCard className="w-full max-w-md">
         <AppCardHeader>
-          <AppCardTitle>Admin Login</AppCardTitle>
+          <AppCardTitle>Admin Access Required</AppCardTitle>
         </AppCardHeader>
-        <AppCardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-            </div>
-            {error && <p className="text-sm text-red-300">{error}</p>}
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
+        <AppCardContent className="space-y-3 text-sm text-[hsl(var(--muted))]">
+          <p>Your account is signed in but not allowlisted for admin access.</p>
+          <p>Contact an administrator to be added to the admin allowlist.</p>
+          <Button asChild className="w-full">
+            <Link href="/">Return Home</Link>
+          </Button>
         </AppCardContent>
       </AppCard>
     </div>

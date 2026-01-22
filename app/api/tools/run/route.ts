@@ -17,6 +17,7 @@ import { prisma } from '@/src/lib/prisma'
 import { getActiveOrg, getMembership, logToolRun } from '@/src/lib/orgs/orgs'
 import { requireUser } from '@/src/lib/auth/requireUser'
 import { validateInput } from '@/src/lib/tools/validate'
+import { assertDbReadyOnce, isProviderError, normalizePrismaError } from '@/src/lib/prisma/guards'
 
 const requestSchema = z.object({
   toolId: z.string(),
@@ -34,6 +35,8 @@ export async function POST(request: NextRequest) {
 
   // ✅ NEW: requestId for tracing (also echoed in JSON)
   const requestId = crypto.randomUUID()
+
+  await assertDbReadyOnce()
 
   const session = await requireUser()
   const userId = session.id
@@ -480,25 +483,20 @@ export async function POST(request: NextRequest) {
 
     return jsonWithRequestId(response)
   } catch (err: any) {
-    // Ensure we do not spend tokens or increment usage on failure (transaction only happens on success)
+    const normalized = isProviderError(err) ? err : normalizePrismaError(err)
+
     await recordRun({ status: 'error', lockCode: 'tool_error' })
 
-    return jsonWithRequestId(
+    return NextResponse.json<RunResponse>(
       {
         status: 'error',
         error: {
-          message: 'Tool execution failed.',
-          code: 'TOOL_ERROR',
-          details:
-            process.env.NODE_ENV !== 'production'
-              ? { message: err?.message || String(err) }
-              : undefined,
+          message: normalized.message,
+          code: 'PROVIDER_ERROR',
+          details: normalized.details,
         },
-        // ✅ NEW: inputEcho
-        inputEcho: data.input ?? {},
-        requestId,
       },
-      { status: 500 }
+      { status: 503, headers: { 'x-request-id': requestId } }
     )
   }
 }

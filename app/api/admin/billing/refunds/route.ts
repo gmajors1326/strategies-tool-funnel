@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+import { requireAdmin } from '@/lib/adminAuth'
 import { getMockRefunds } from '@/src/lib/mock/data'
 
 export const dynamic = 'force-dynamic'

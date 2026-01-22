@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+import { requireAdmin } from '@/lib/adminAuth'
 import { buildAnalytics } from '@/src/lib/analytics/buildAnalytics'
 
 export const dynamic = 'force-dynamic'

@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/adminAuth'
 import { grantBonusRuns } from '@/src/lib/tool/bonusRuns'
-
-async function getAuthedAdminId(req: Request): Promise<string> {
-  // TODO: replace (auth): verify admin identity via real auth/session middleware.
-  const devHeader = req.headers.get('x-admin-id')
-  if (process.env.NODE_ENV === 'development' && devHeader) return devHeader
-  throw new Error('Unauthorized: missing admin auth integration for getAuthedAdminId()')
-}
 
 export async function POST(req: Request) {
   try {
-    const adminId = await getAuthedAdminId(req)
+    const admin = await requireAdmin()
     const body = await req.json()
 
     const userId = String(body.userId || '')
@@ -35,14 +29,16 @@ export async function POST(req: Request) {
       runsGranted,
       reason,
       expiresAt: expiresAt ?? null,
-      grantedBy: adminId,
+      grantedBy: admin.userId,
     })
 
     return NextResponse.json({ ok: true, bonus: row })
   } catch (err: any) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    const status = message.includes('Unauthorized') ? 401 : message.includes('Forbidden') ? 403 : 500
     return NextResponse.json(
-      { ok: false, error: { message: err?.message || 'Unknown error' } },
-      { status: err?.message?.includes('Unauthorized') ? 401 : 500 }
+      { ok: false, error: { message } },
+      { status }
     )
   }
 }

@@ -1,3 +1,6 @@
+import { getSession } from './auth'
+import { ensureDevDbReady } from './devDbGuard'
+
 export type AdminRole = 'admin' | 'support' | 'analyst'
 
 export type AdminSession = {
@@ -6,34 +9,74 @@ export type AdminSession = {
   role: AdminRole
 }
 
-import { cookies } from 'next/headers'
+type AdminIdentity = {
+  userId: string
+  email: string
+}
 
-const ADMIN_COOKIE_NAME = 'admin_session'
+const normalizeEmail = (value: string) => value.trim().toLowerCase()
 
-function decodeSessionCookie(value: string): AdminSession | null {
-  try {
-    const json = Buffer.from(value, 'base64url').toString('utf-8')
-    const parsed = JSON.parse(json) as AdminSession
-    if (!parsed?.userId || !parsed?.email || !parsed?.role) return null
-    return parsed
-  } catch {
-    return null
+const parseEnvList = (value?: string, normalize?: (raw: string) => string) => {
+  if (!value) return new Set<string>()
+  const formatter = normalize ?? ((raw) => raw.trim())
+  return new Set(
+    value
+      .split(',')
+      .map((entry) => formatter(entry))
+      .filter((entry) => entry.length > 0)
+  )
+}
+
+const adminEmailSet = parseEnvList(process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL, normalizeEmail)
+const adminUserIdSet = parseEnvList(process.env.ADMIN_USER_IDS)
+const supportEmailSet = parseEnvList(process.env.ADMIN_SUPPORT_EMAILS, normalizeEmail)
+const supportUserIdSet = parseEnvList(process.env.ADMIN_SUPPORT_USER_IDS)
+const analystEmailSet = parseEnvList(process.env.ADMIN_ANALYST_EMAILS, normalizeEmail)
+const analystUserIdSet = parseEnvList(process.env.ADMIN_ANALYST_USER_IDS)
+
+export function resolveAdminRole(identity: AdminIdentity): AdminRole | null {
+  const normalizedEmail = normalizeEmail(identity.email)
+  if (adminEmailSet.has(normalizedEmail) || adminUserIdSet.has(identity.userId)) {
+    return 'admin'
   }
+  if (supportEmailSet.has(normalizedEmail) || supportUserIdSet.has(identity.userId)) {
+    return 'support'
+  }
+  if (analystEmailSet.has(normalizedEmail) || analystUserIdSet.has(identity.userId)) {
+    return 'analyst'
+  }
+  return null
 }
 
 export async function requireAdmin(): Promise<AdminSession> {
-  const cookieStore = cookies()
-  const sessionCookie = cookieStore.get(ADMIN_COOKIE_NAME)
-  if (!sessionCookie?.value) {
-    throw new Error('Unauthorized')
+  const isProd = process.env.NODE_ENV === 'production'
+  const devBypassEnabled = process.env.DEV_AUTH_BYPASS === 'true'
+
+  await ensureDevDbReady()
+
+  if (!isProd && devBypassEnabled) {
+    return {
+      userId: process.env.DEV_ADMIN_ID || 'admin_dev_1',
+      email: process.env.DEV_ADMIN_EMAIL || 'admin@example.com',
+      role: 'admin',
+    }
   }
 
-  const session = decodeSessionCookie(sessionCookie.value)
+  const session = await getSession()
   if (!session) {
     throw new Error('Unauthorized')
   }
 
-  return session
+  const role = resolveAdminRole({ userId: session.userId, email: session.email })
+  if (!role) {
+    throw new Error('Forbidden')
+  }
+
+  return {
+    userId: session.userId,
+    email: session.email,
+    role,
+  }
 }
 
 export function canViewAnalytics(role: AdminRole) {
