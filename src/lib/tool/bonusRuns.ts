@@ -6,8 +6,8 @@ export type BonusRunConsumeResult =
 
 const buildEligibilityFilter = (toolId: string, now: Date) => ({
   AND: [
-    { OR: [{ toolId }, { toolId: null }] },
-    { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+    { OR: [{ tool_id: toolId }, { tool_id: null }] },
+    { OR: [{ expires_at: null }, { expires_at: { gt: now } }] },
   ],
 })
 
@@ -20,14 +20,14 @@ export async function getBonusRunsRemainingForTool(params: {
 
   const rows = await prisma.toolBonusRuns.findMany({
     where: {
-      userId,
+      user_id: userId,
       ...buildEligibilityFilter(toolId, now),
     },
-    orderBy: [{ expiresAt: 'asc' }, { createdAt: 'asc' }],
+    orderBy: [{ expires_at: 'asc' }, { created_at: 'asc' }],
   })
 
   return rows.reduce((acc, r) => {
-    const rem = Math.max(0, r.runsGranted - r.runsUsed)
+    const rem = Math.max(0, r.runs_granted - r.runs_used)
     return acc + rem
   }, 0)
 }
@@ -38,7 +38,7 @@ export async function getBonusRunGrantExists(params: {
 }): Promise<boolean> {
   const { userId, toolId } = params
   const count = await prisma.toolBonusRuns.count({
-    where: { userId, toolId },
+    where: { user_id: userId, tool_id: toolId },
   })
   return count > 0
 }
@@ -51,20 +51,20 @@ export async function getBonusRunsSummary(params: {
   const { userId, toolId, now = new Date() } = params
   const rows = await prisma.toolBonusRuns.findMany({
     where: {
-      userId,
+      user_id: userId,
       ...buildEligibilityFilter(toolId, now),
     },
-    orderBy: [{ expiresAt: 'asc' }, { createdAt: 'asc' }],
+    orderBy: [{ expires_at: 'asc' }, { created_at: 'asc' }],
   })
 
   let grantedRuns = 0
   let usedRuns = 0
   let expiresAt: string | null = null
   rows.forEach((row) => {
-    grantedRuns += row.runsGranted
-    usedRuns += row.runsUsed
-    if (!expiresAt && row.expiresAt) {
-      expiresAt = row.expiresAt.toISOString()
+    grantedRuns += row.runs_granted
+    usedRuns += row.runs_used
+    if (!expiresAt && row.expires_at) {
+      expiresAt = row.expires_at.toISOString()
     }
   })
 
@@ -82,27 +82,27 @@ export async function consumeOneBonusRun(params: {
   return await prisma.$transaction(async (tx) => {
     const rows = await tx.toolBonusRuns.findMany({
       where: {
-        userId,
+        user_id: userId,
         ...buildEligibilityFilter(toolId, now),
       },
-      orderBy: [{ expiresAt: 'asc' }, { createdAt: 'asc' }],
+      orderBy: [{ expires_at: 'asc' }, { created_at: 'asc' }],
     })
 
-    const eligible = rows.find((r) => r.runsUsed < r.runsGranted)
+    const eligible = rows.find((r) => r.runs_used < r.runs_granted)
     if (!eligible) {
       return { ok: false as const, reason: 'none_available' }
     }
 
     const updated = await tx.toolBonusRuns.update({
       where: { id: eligible.id },
-      data: { runsUsed: { increment: 1 } },
-      select: { id: true, runsGranted: true, runsUsed: true },
+      data: { runs_used: { increment: 1 } },
+      select: { id: true, runs_granted: true, runs_used: true },
     })
 
-    if (updated.runsUsed > updated.runsGranted) {
+    if (updated.runs_used > updated.runs_granted) {
       await tx.toolBonusRuns.update({
         where: { id: eligible.id },
-        data: { runsUsed: { decrement: 1 } },
+        data: { runs_used: { decrement: 1 } },
       })
       return { ok: false as const, reason: 'none_available' }
     }
@@ -118,7 +118,7 @@ export async function grantBonusRuns(params: {
   reason?: string
   expiresAt?: Date | null
   grantedBy?: string | null
-}): Promise<{ id: string; userId: string; toolId: string | null; runsGranted: number; runsUsed: number }> {
+}): Promise<{ id: string; user_id: string; tool_id: string | null; runs_granted: number; runs_used: number }> {
   const { userId, toolId = null, runsGranted, reason, expiresAt = null, grantedBy = null } = params
 
   if (!Number.isInteger(runsGranted) || runsGranted <= 0) {
@@ -127,15 +127,15 @@ export async function grantBonusRuns(params: {
 
   const row = await prisma.toolBonusRuns.create({
     data: {
-      userId,
-      toolId,
-      runsGranted,
-      runsUsed: 0,
+      user_id: userId,
+      tool_id: toolId,
+      runs_granted: runsGranted,
+      runs_used: 0,
       reason,
-      expiresAt,
-      grantedBy,
+      expires_at: expiresAt,
+      granted_by: grantedBy,
     },
-    select: { id: true, userId: true, toolId: true, runsGranted: true, runsUsed: true },
+    select: { id: true, user_id: true, tool_id: true, runs_granted: true, runs_used: true },
   })
 
   return row
