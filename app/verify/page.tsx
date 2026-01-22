@@ -8,6 +8,8 @@ import { AppPanel } from '@/components/ui/AppPanel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+export const dynamic = 'force-dynamic'
+
 export default function VerifyPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
