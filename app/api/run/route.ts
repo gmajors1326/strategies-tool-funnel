@@ -64,6 +64,9 @@ export async function POST(req: Request) {
         toolSlug,
         input: runReq.input ?? {},
         output,
+        toolKey: toolId,
+        inputsJson: runReq.input ?? {},
+        outputsJson: output,
       },
     })
 

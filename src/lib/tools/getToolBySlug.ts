@@ -35,7 +35,8 @@ export function getAllTools(): ToolRecord[] {
   const raw: any = toolRegistry as any
   const tools: any[] = Array.isArray(raw) ? raw : Object.values(raw || {})
 
-  const mapFieldType = (type: string): ToolRecord['inputs'][number]['type'] => {
+  type ToolInputType = NonNullable<ToolRecord['inputs']>[number]['type']
+  const mapFieldType = (type: string): ToolInputType => {
     switch (type) {
       case 'shortText':
         return 'text'

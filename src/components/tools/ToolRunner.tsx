@@ -27,7 +27,7 @@ type UiConfig = {
 }
 
 type RunResponse = {
-  output: any
+  output?: any
   meta?: {
     tokensUsed?: number
     model?: string
