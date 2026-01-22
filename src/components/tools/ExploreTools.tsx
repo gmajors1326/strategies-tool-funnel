@@ -381,7 +381,7 @@ export default function ExploreTools({ tools }: Props) {
                 <span className="text-neutral-400">
                   ({worstLockBanner.remainingTokens ?? 0}/{worstLockBanner.requiredTokens ?? '—'} tokens)
                 </span>{' '}
-                -> Buy tokens
+                {'->'} Buy tokens
               </div>
               <a
                 href="/pricing"
@@ -392,7 +392,7 @@ export default function ExploreTools({ tools }: Props) {
             </>
           ) : worstLockBanner.kind === 'plan' ? (
             <>
-              <div>Locked by plan -> Upgrade</div>
+              <div>Locked by plan {'->'} Upgrade</div>
               <a
                 href="/pricing"
                 className="rounded-md border border-red-500/60 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500"
@@ -408,7 +408,7 @@ export default function ExploreTools({ tools }: Props) {
               <span className="font-semibold">
                 {worstLockBanner.resetsAtISO ? new Date(worstLockBanner.resetsAtISO).toLocaleString() : 'soon'}
               </span>{' '}
-              -> Come back then
+              {'->'} Come back then
             </div>
           )}
         </div>
