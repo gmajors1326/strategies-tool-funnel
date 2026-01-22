@@ -70,7 +70,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
           cta = { label: 'Unlock tool', href: '/pricing' }
           lockState = 'locked'
         }
-      } else if (usageWindow.runsUsed >= planRunCap) {
+      } else if (usageWindow.runs_used >= planRunCap) {
         lockState = 'limited'
         reason = 'Daily run cap reached'
         cta = { label: 'Wait for reset', href: '/app/usage' }
