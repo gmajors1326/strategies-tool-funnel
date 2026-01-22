@@ -13,11 +13,15 @@ const OTP_EXPIRY_MINUTES = 10
 // MAX_ATTEMPTS removed - not currently used in this route
 
 export async function POST(request: NextRequest) {
+  let dbHost: string | null = null
+  let dbName: string | null = null
   try {
     try {
       if (process.env.DATABASE_URL) {
         const dbUrl = new URL(process.env.DATABASE_URL)
-        console.info('[auth/start] DB host:', dbUrl.host, 'db:', dbUrl.pathname.replace('/', ''))
+        dbHost = dbUrl.host
+        dbName = dbUrl.pathname.replace('/', '')
+        console.info('[auth/start] DB host:', dbHost, 'db:', dbName)
       }
     } catch {
       console.info('[auth/start] DB host: unavailable')
@@ -106,6 +110,8 @@ export async function POST(request: NextRequest) {
         {
           error: 'Email provider not configured',
           code: 'email_not_configured',
+          dbHost,
+          dbName,
           details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
         },
         { status: 500 }
@@ -122,6 +128,8 @@ export async function POST(request: NextRequest) {
         {
           error: 'Email authentication failed',
           code: 'gmail_auth_failed',
+          dbHost,
+          dbName,
           details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
         },
         { status: 500 }
@@ -133,6 +141,8 @@ export async function POST(request: NextRequest) {
         {
           error: 'Email provider network error',
           code: 'email_network_error',
+          dbHost,
+          dbName,
           details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
         },
         { status: 500 }
@@ -143,6 +153,8 @@ export async function POST(request: NextRequest) {
       {
         error: 'Failed to send verification code',
         code: 'send_failed',
+        dbHost,
+        dbName,
         details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
       },
       { status: 500 }
