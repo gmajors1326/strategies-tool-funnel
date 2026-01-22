@@ -14,13 +14,15 @@ const MAX_ATTEMPTS = 5
 export async function POST(request: NextRequest) {
   let dbHost: string | null = null
   let dbName: string | null = null
+  let dbUser: string | null = null
   try {
     try {
       if (process.env.DATABASE_URL) {
         const dbUrl = new URL(process.env.DATABASE_URL)
         dbHost = dbUrl.host
         dbName = dbUrl.pathname.replace('/', '')
-        console.info('[auth/verify] DB host:', dbHost, 'db:', dbName)
+        dbUser = dbUrl.username || null
+        console.info('[auth/verify] DB host:', dbHost, 'db:', dbName, 'user:', dbUser)
       }
     } catch {
       console.info('[auth/verify] DB host: unavailable')
@@ -112,6 +114,7 @@ export async function POST(request: NextRequest) {
         code: prismaCode || 'verify_failed',
         dbHost,
         dbName,
+        dbUser,
         details: errorMessage,
       },
       { status: 500 }
