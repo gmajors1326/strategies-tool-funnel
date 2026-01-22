@@ -54,10 +54,10 @@ export async function POST(request: NextRequest) {
         if (userId && pack) {
           await prisma.tokenLedger.create({
             data: {
-              userId,
-              eventType: 'purchase_pack',
-              tokensDelta: pack.tokensGranted,
-              toolId: pack.packId,
+              user_id: userId,
+              event_type: 'purchase_pack',
+              tokens_delta: pack.tokensGranted,
+              tool_id: pack.packId,
               reason: `stripe_session:${session.id}`,
             },
           })
