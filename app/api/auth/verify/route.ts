@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         code: prismaCode || 'verify_failed',
         dbHost,
         dbName,
-        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+        details: errorMessage,
       },
       { status: 500 }
     )
