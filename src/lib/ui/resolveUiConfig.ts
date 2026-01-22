@@ -78,7 +78,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
         lockState = 'limited'
         reason = 'Daily tool cap reached'
         cta = { label: 'Wait for reset', href: '/app/usage' }
-      } else if (tool.aiLevel !== 'none' && usageWindow.aiTokensUsed >= planTokenCap) {
+      } else if (tool.aiLevel !== 'none' && usageWindow.ai_tokens_used >= planTokenCap) {
         lockState = 'locked'
         reason = 'Daily token cap reached'
         cta = { label: 'Buy tokens', href: '/pricing' }
@@ -104,13 +104,13 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
   return {
     user,
     usage: {
-      dailyRunsUsed: usageWindow.runsUsed,
+      dailyRunsUsed: usageWindow.runs_used,
       dailyRunCap: planRunCap,
-      aiTokensUsed: usageWindow.aiTokensUsed,
+      aiTokensUsed: usageWindow.ai_tokens_used,
       aiTokenCap: planTokenCap,
       tokensRemaining: tokenBalance,
       purchasedTokensRemaining: tokenBalance,
-      resetsAtISO: usageWindow.resetsAt.toISOString(),
+      resetsAtISO: usageWindow.resets_at.toISOString(),
     },
     myTools,
     catalog,
