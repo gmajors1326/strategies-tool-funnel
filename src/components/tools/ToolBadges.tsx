@@ -9,7 +9,7 @@ type ToolBadgesProps = {
 const lockStyles: Record<UiLockState, { label: string; className: string }> = {
   available: {
     label: 'Available',
-    className: 'bg-emerald-500/10 text-emerald-300',
+    className: 'bg-primary/10 text-primary',
   },
   trial: {
     label: 'Trial',

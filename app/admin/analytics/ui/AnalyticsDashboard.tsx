@@ -192,7 +192,7 @@ export default function AnalyticsDashboard() {
               <div
                 className={classNames(
                   'mt-1 text-xs',
-                  (k.deltaPct ?? 0) >= 0 ? 'text-emerald-300' : 'text-red-300'
+                  (k.deltaPct ?? 0) >= 0 ? 'text-primary' : 'text-red-300'
                 )}
               >
                 {k.deltaPct != null ? `${k.deltaPct >= 0 ? '+' : ''}${k.deltaPct}%` : '—'}

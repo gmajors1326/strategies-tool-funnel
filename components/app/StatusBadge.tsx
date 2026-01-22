@@ -7,7 +7,7 @@ type StatusBadgeProps = {
 }
 
 const STATUS_MAP: Record<ToolAccessStatus, { label: string; className: string }> = {
-  available: { label: 'Available', className: 'bg-emerald-500/10 text-emerald-300' },
+  available: { label: 'Available', className: 'bg-primary/10 text-primary' },
   locked_plan: { label: 'Plan Locked', className: 'bg-amber-500/10 text-amber-300' },
   locked_purchase: { label: 'Upgrade Needed', className: 'bg-amber-500/10 text-amber-300' },
   locked_usage_daily: { label: 'Daily Limit', className: 'bg-red-500/10 text-red-300' },

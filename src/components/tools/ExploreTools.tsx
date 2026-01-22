@@ -346,7 +346,7 @@ export default function ExploreTools({ tools }: Props) {
           </div>
           <div className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3">
             <div className="text-xs text-neutral-500">Available now</div>
-            <div className="text-lg font-semibold text-emerald-200">
+            <div className="text-lg font-semibold text-primary">
               {statusCounts.available || (preflightLoading ? '...' : 0)}
             </div>
           </div>
@@ -539,7 +539,7 @@ function ToolCard({
   const badge = badgeForPreflight(preflight)
   const badgeClass =
     badge.tone === 'good'
-      ? 'bg-emerald-950/30 border-emerald-900 text-emerald-200'
+      ? 'bg-primary/10 border-primary/40 text-primary'
       : badge.tone === 'warn'
         ? 'bg-yellow-950/30 border-yellow-900 text-yellow-200'
         : 'bg-neutral-900 border-neutral-800 text-neutral-200'
