@@ -1,5 +1,4 @@
 import { headers } from 'next/headers'
-import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,7 +12,6 @@ const fetchStripeEvents = async () => {
 }
 
 export default async function AdminPaymentsPage() {
-  await requireAdmin()
   const data = await fetchStripeEvents()
 
   return (

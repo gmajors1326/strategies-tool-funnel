@@ -1,11 +1,9 @@
-import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 import { getTicketDetailForAdmin } from '@/src/lib/support/tickets'
 import { Button } from '@/components/app/Button'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminTicketDetailPage({ params }: { params: { ticketId: string } }) {
-  await requireAdmin()
   const detail = await getTicketDetailForAdmin(params.ticketId)
 
   if (!detail) {

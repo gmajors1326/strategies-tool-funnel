@@ -1,11 +1,9 @@
 import { getMockRefundDetail } from '@/src/lib/mock/data'
 import { Button } from '@/components/app/Button'
-import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminRefundDetailPage({ params }: { params: { refundId: string } }) {
-  await requireAdmin()
   // TODO: replace (billing): load refund detail from billing provider.
   const refund = await getMockRefundDetail(params.refundId)
 
