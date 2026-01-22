@@ -45,14 +45,14 @@ export async function createToolFeedback(input: ToolFeedbackInput) {
     },
     select: {
       id: true,
-      userId: true,
-      toolId: true,
-      runId: true,
+      user_id: true,
+      tool_id: true,
+      run_id: true,
       thumbs: true,
       rating: true,
       tags: true,
       comment: true,
-      createdAt: true,
+      created_at: true,
     },
   })
 
@@ -67,19 +67,19 @@ export async function listToolFeedback(params: {
   const { userId, limit = 50, toolId } = params
 
   const rows = await prisma.toolFeedback.findMany({
-    where: { ...(userId ? { userId } : {}), ...(toolId ? { toolId } : {}) },
-    orderBy: { createdAt: 'desc' },
+    where: { ...(userId ? { user_id: userId } : {}), ...(toolId ? { tool_id: toolId } : {}) },
+    orderBy: { created_at: 'desc' },
     take: Math.max(1, Math.min(limit, 200)),
     select: {
       id: true,
-      userId: true,
-      toolId: true,
-      runId: true,
+      user_id: true,
+      tool_id: true,
+      run_id: true,
       thumbs: true,
       rating: true,
       tags: true,
       comment: true,
-      createdAt: true,
+      created_at: true,
     },
   })
 
