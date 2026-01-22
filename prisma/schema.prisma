@@ -44,6 +44,7 @@ model User {
   @@index([email])
   @@index([plan])
   @@index([activeOrgId])
+  @@index([isAdmin])
 }
 
 model Profile {
@@ -131,11 +132,6 @@ model PlanEntitlement {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-}
-
-model AdminAccess {
-  email     String   @id
-  createdAt DateTime @default(now())
 }
 
 model KnowledgeItem {

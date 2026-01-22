@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AdminShell } from '@/components/app/AdminShell'
 import { requireAdmin } from '@/src/lib/auth/requireAdmin'
@@ -6,28 +7,30 @@ import { requireAdmin } from '@/src/lib/auth/requireAdmin'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  try {
-    await requireAdmin()
-  } catch (e: any) {
-    const msg = String(e?.message || '').toLowerCase()
+  // Exempt routes that must be reachable without admin
+  const h = await headers()
+  const path = h.get('x-pathname') || h.get('next-url') || ''
+  const isNotAuthorized = path.includes('/admin/not-authorized')
 
-    // Not signed in -> go to OTP login
-    if (
-      msg.includes('unauthorized') ||
-      msg.includes('session missing') ||
-      msg.includes('session invalid') ||
-      msg.includes('sign in via /verify')
-    ) {
-      redirect('/verify')
-    }
+  if (!isNotAuthorized) {
+    try {
+      await requireAdmin()
+    } catch (e: any) {
+      const msg = String(e?.message || '').toLowerCase()
 
-    // Signed in but not admin -> polite bounce
-    if (e?.status === 403 || msg.includes('forbidden') || msg.includes('admin')) {
+      // Missing session -> send to login
+      if (
+        msg.includes('unauthorized') ||
+        msg.includes('session missing') ||
+        msg.includes('session invalid') ||
+        msg.includes('sign in via /verify')
+      ) {
+        redirect('/verify')
+      }
+
+      // Signed in but not admin
       redirect('/admin/not-authorized')
     }
-
-    // Anything else is a real bug
-    throw e
   }
 
   return <AdminShell>{children}</AdminShell>

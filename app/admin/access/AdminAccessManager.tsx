@@ -53,17 +53,27 @@ export default function AdminAccessManager({ initialAdmins }: AdminAccessManager
   const handleGrant = async () => {
     const trimmed = email.trim().toLowerCase()
     if (!trimmed) {
-      setStatus('Enter an email to grant access.')
+      setStatus('Enter an email to update access.')
       return
     }
     await updateAdmin(trimmed, true)
     setEmail('')
   }
 
+  const handleRevoke = async () => {
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed) {
+      setStatus('Enter an email to update access.')
+      return
+    }
+    await updateAdmin(trimmed, false)
+    setEmail('')
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-3">
-        <label className="text-xs text-[hsl(var(--muted))]">Grant admin access by email</label>
+        <label className="text-xs text-[hsl(var(--muted))]">Admin access by email</label>
         <div className="flex flex-wrap gap-2">
           <input
             className="min-w-[220px] flex-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 py-2 text-sm"
@@ -72,7 +82,10 @@ export default function AdminAccessManager({ initialAdmins }: AdminAccessManager
             placeholder="admin@example.com"
           />
           <Button onClick={handleGrant} disabled={busy}>
-            {busy ? 'Saving...' : 'Grant access'}
+            {busy ? 'Saving...' : 'Grant admin'}
+          </Button>
+          <Button variant="outline" onClick={handleRevoke} disabled={busy}>
+            Revoke admin
           </Button>
         </div>
         {status && <p className="text-xs text-[hsl(var(--muted))]">{status}</p>}
