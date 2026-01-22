@@ -40,7 +40,13 @@ export default function VerifyClient() {
       if (res.ok && data.success) {
         setStep('verify')
       } else {
-        setError(data.error || 'Failed to send verification code')
+        if (data.code === 'email_not_configured') {
+          setError(
+            'Email provider is not configured. Set RESEND_API_KEY or enable Gmail SMTP.'
+          )
+        } else {
+          setError(data.error || 'Failed to send verification code')
+        }
       }
     } catch (err) {
       setError('Something went wrong. Please try again.')

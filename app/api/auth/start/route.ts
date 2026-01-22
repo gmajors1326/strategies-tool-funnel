@@ -89,9 +89,27 @@ export async function POST(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[auth/start] Error:', errorMessage)
     console.error('[auth/start] Stack:', error instanceof Error ? error.stack : 'No stack')
-    
+
+    if (
+      errorMessage.includes('No email provider configured') ||
+      errorMessage.includes('Gmail SMTP enabled but')
+    ) {
+      return NextResponse.json(
+        {
+          error: 'Email provider not configured',
+          code: 'email_not_configured',
+          details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+        },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Failed to send verification code', details: process.env.NODE_ENV === 'development' ? errorMessage : undefined },
+      {
+        error: 'Failed to send verification code',
+        code: 'send_failed',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+      },
       { status: 500 }
     )
   }
