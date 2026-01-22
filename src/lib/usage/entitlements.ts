@@ -11,7 +11,7 @@ export const getOrCreateEntitlement = async (userId: string) => {
       data: {
         user_id: userId,
         plan: 'free',
-        resetsAt: getNextResetAt(now),
+        resets_at: getNextResetAt(now),
       },
     })
   } catch (err) {
