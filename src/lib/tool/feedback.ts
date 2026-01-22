@@ -35,9 +35,9 @@ export async function createToolFeedback(input: ToolFeedbackInput) {
 
   const row = await prisma.toolFeedback.create({
     data: {
-      userId,
-      toolId,
-      runId,
+      user_id: userId,
+      tool_id: toolId,
+      run_id: runId,
       thumbs,
       rating,
       tags: tags ? tags : undefined,
