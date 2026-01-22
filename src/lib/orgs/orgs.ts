@@ -1,18 +1,33 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/src/lib/prisma'
 
 export type OrgRole = 'owner' | 'admin' | 'member' | 'viewer'
 
 export const getActiveOrg = async (userId: string) => {
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user?.activeOrgId) return null
-  return prisma.organization.findUnique({ where: { id: user.activeOrgId } })
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user?.activeOrgId) return null
+    return prisma.organization.findUnique({ where: { id: user.activeOrgId } })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2022') {
+      return null
+    }
+    throw err
+  }
 }
 
 export const setActiveOrg = async (userId: string, orgId: string) => {
-  await prisma.user.update({
-    where: { id: userId },
-    data: { activeOrgId: orgId },
-  })
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { activeOrgId: orgId },
+    })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2022') {
+      return
+    }
+    throw err
+  }
 }
 
 export const listUserOrgs = async (userId: string) => {
