@@ -42,8 +42,8 @@ export const ensureUsageWindow = async (userId: string) => {
 
   const windowStart = getWindowStart(now)
   const windowEnd = resetsAt
-  return prisma.dailyUsage.upsert({
-    where: { DailyUsage_user_window_end_uidx: { user_id: userId, window_end: windowEnd } },
+    return prisma.dailyUsage.upsert({
+      where: { user_id_window_end: { user_id: userId, window_end: windowEnd } },
     update: {},
     create: {
       user_id: userId,
@@ -66,7 +66,7 @@ export const incrementUsageTx = async (params: {
 }) => {
   const { tx, userId, windowEnd, toolId, tokensUsed } = params
   const usage = await tx.dailyUsage.findUnique({
-    where: { DailyUsage_user_window_end_uidx: { user_id: userId, window_end: windowEnd } },
+    where: { user_id_window_end: { user_id: userId, window_end: windowEnd } },
   })
   if (!usage) return null
 
@@ -74,7 +74,7 @@ export const incrementUsageTx = async (params: {
   perTool[toolId] = (perTool[toolId] || 0) + 1
 
   return tx.dailyUsage.update({
-    where: { DailyUsage_user_window_end_uidx: { user_id: userId, window_end: windowEnd } },
+    where: { user_id_window_end: { user_id: userId, window_end: windowEnd } },
     data: {
       ai_tokens_used: { increment: tokensUsed },
       runs_used: { increment: 1 },
