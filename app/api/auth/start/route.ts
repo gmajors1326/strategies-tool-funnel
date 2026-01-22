@@ -14,6 +14,14 @@ const OTP_EXPIRY_MINUTES = 10
 
 export async function POST(request: NextRequest) {
   try {
+    try {
+      if (process.env.DATABASE_URL) {
+        const dbUrl = new URL(process.env.DATABASE_URL)
+        console.info('[auth/start] DB host:', dbUrl.host, 'db:', dbUrl.pathname.replace('/', ''))
+      }
+    } catch {
+      console.info('[auth/start] DB host: unavailable')
+    }
     const body = await request.json()
     const { name, email } = startSchema.parse(body)
 
