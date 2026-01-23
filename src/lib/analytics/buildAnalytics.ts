@@ -41,6 +41,45 @@ function buildDateSeries(from: Date, to: Date): TimeSeriesPoint[] {
   }))
 }
 
+export function buildEmptyAnalytics(filters: AnalyticsFilters): AnalyticsResponse {
+  const { from, to, preset } = resolveDateRange(filters)
+  const baseSeries = buildDateSeries(from, to)
+  const aiCosts = baseSeries.map((point) => ({
+    date: point.date,
+    costUsd: 0,
+    calls: 0,
+    tokensIn: 0,
+    tokensOut: 0,
+  }))
+
+  return {
+    range: { from: toISODate(from), to: toISODate(to), preset },
+    kpis: [
+      { label: 'Sessions', value: 0 },
+      { label: 'Signups', value: 0 },
+      { label: 'Tool Runs', value: 0 },
+      { label: 'Revenue (USD)', value: 0 },
+      { label: 'AI Cost (USD)', value: 0 },
+      { label: 'Unique Users', value: 0 },
+    ],
+    timeseries: {
+      sessions: baseSeries,
+      signups: baseSeries,
+      toolRuns: baseSeries,
+      revenueUsd: baseSeries,
+    },
+    funnel: [
+      { step: 'Landing Views', users: 0, conversionPct: 100 },
+      { step: 'Signups', users: 0, conversionPct: 0 },
+      { step: 'Activated (1st Tool Run)', users: 0, conversionPct: 0 },
+      { step: 'Paid', users: 0, conversionPct: 0 },
+    ],
+    toolUsage: [],
+    aiCosts,
+    recentErrors: [],
+  }
+}
+
 export async function buildAnalytics(filters: AnalyticsFilters): Promise<AnalyticsResponse> {
   const { from, to, preset } = resolveDateRange(filters)
   const rangeFrom = new Date(from)

@@ -1,21 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/adminAuth'
-import { buildAnalytics } from '@/src/lib/analytics/buildAnalytics'
+import { buildAnalytics, buildEmptyAnalytics } from '@/src/lib/analytics/buildAnalytics'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  await requireAdmin()
-
   const { searchParams } = new URL(req.url)
-  const data = await buildAnalytics({
+  const filters = {
     preset: (searchParams.get('preset') ?? '7d') as any,
     from: searchParams.get('from') ?? undefined,
     to: searchParams.get('to') ?? undefined,
     toolId: searchParams.get('toolId') ?? undefined,
     plan: searchParams.get('plan') ?? undefined,
     country: searchParams.get('country') ?? undefined,
-  })
+  }
 
-  return NextResponse.json(data)
+  try {
+    await requireAdmin()
+  } catch (err: any) {
+    const status = err?.status || 403
+    return NextResponse.json({ error: 'Unauthorized' }, { status })
+  }
+
+  try {
+    const data = await buildAnalytics(filters)
+    return NextResponse.json(data)
+  } catch {
+    return NextResponse.json(buildEmptyAnalytics(filters))
+  }
 }

@@ -5,7 +5,17 @@ import { getMockRefunds } from '@/src/lib/mock/data'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  await requireAdmin()
-  // TODO: replace (billing): load refund queue from billing system.
-  return NextResponse.json({ refunds: await getMockRefunds() })
+  try {
+    await requireAdmin()
+  } catch (err: any) {
+    const status = err?.status || 403
+    return NextResponse.json({ error: 'Unauthorized', refunds: [] }, { status })
+  }
+
+  try {
+    // TODO: replace (billing): load refund queue from billing system.
+    return NextResponse.json({ refunds: await getMockRefunds() })
+  } catch (err: any) {
+    return NextResponse.json({ refunds: [], error: err?.message ?? 'Refund queue unavailable.' })
+  }
 }

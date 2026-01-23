@@ -5,7 +5,22 @@ export const dynamic = 'force-dynamic'
 
 export default async function AdminRefundDetailPage({ params }: { params: { refundId: string } }) {
   // TODO: replace (billing): load refund detail from billing provider.
-  const refund = await getMockRefundDetail(params.refundId)
+  let refund: Awaited<ReturnType<typeof getMockRefundDetail>> | null = null
+  let errorMessage: string | null = null
+  try {
+    refund = await getMockRefundDetail(params.refundId)
+  } catch (err: any) {
+    errorMessage = err?.message ?? 'Refund detail unavailable.'
+  }
+
+  if (!refund) {
+    return (
+      <section className="space-y-4">
+        <h1 className="text-lg font-semibold">Refund unavailable</h1>
+        <p className="text-sm text-[hsl(var(--muted))]">{errorMessage ?? 'Refund details could not be loaded.'}</p>
+      </section>
+    )
+  }
 
   return (
     <section className="space-y-4">
