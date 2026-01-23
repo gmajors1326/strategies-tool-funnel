@@ -3,4 +3,5 @@ export const captionOptimizerBrief = [
   'Respect the platform, post type, and CTA goal.',
   'Avoid forbidden words or phrases if provided.',
   'Do not add claims or offers not present in the input.',
+  'Populate fields: optimizedCaption, openingLine, structure[], ctaLine, doNotUse[], notes[], evidence[].',
 ].join('\n')

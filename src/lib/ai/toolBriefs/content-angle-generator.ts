@@ -3,4 +3,5 @@ export const contentAngleGeneratorBrief = [
   'Each angle must include a hook, format, and rationale tied to the input.',
   'Avoid generic or recycled angles; stay specific to the topic.',
   'Do not introduce facts or claims not present in the input.',
+  'Populate fields: angles[{angle, hook, format, rationale}], notes[], evidence[].',
 ].join('\n')

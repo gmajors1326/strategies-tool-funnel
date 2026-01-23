@@ -3,4 +3,5 @@ export const engagementDiagnosticBrief = [
   'Prioritize the main bottleneck and list fixes with impact and effort.',
   'If inputs are missing, lower confidence and call out missing fields.',
   'Do not invent metrics or performance results.',
+  'Populate fields: summary, signals[], prioritizedFixes[], nextSteps[], stopDoing[], experiment, notes[], evidence[].',
 ].join('\n')

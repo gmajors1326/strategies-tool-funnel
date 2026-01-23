@@ -102,6 +102,7 @@ export async function generateStructuredOutput<T>(
         json_schema: {
           name: `${args.toolId.replace(/[^a-z0-9_]/gi, '_')}_schema`,
           schema: args.jsonSchema,
+          strict: true,
         },
       }
     : { type: 'json_object' }
@@ -180,6 +181,7 @@ async function repairStructuredOutput<T>(
           json_schema: {
             name: `${args.toolId.replace(/[^a-z0-9_]/gi, '_')}_schema`,
             schema: args.jsonSchema,
+            strict: true,
           },
         }
       : { type: 'json_object' })
