@@ -1,9 +1,8 @@
 import { z } from 'zod'
 import type { RunRequest } from '@/src/lib/tools/runTypes'
 import type { ToolMeta } from '@/src/lib/tools/registry'
-import { getOpenAIClient, pickModel, safetyIdentifierFromUserId } from '@/src/lib/ai/openaiClient'
+import { pickModel } from '@/src/lib/ai/openaiClient'
 import { EXPECTED_TOOL_IDS } from '@/src/lib/tools/registry'
-import { zodTextFormat } from 'openai/helpers/zod'
 import { runAIJson } from '@/src/lib/ai/openai'
 
 export type RunContext = {
@@ -592,8 +591,45 @@ function assertToolSpecsAligned() {
 
 assertToolSpecsAligned()
 
-// ---------- Generic AI Runner ----------
-async function runToolWithOpenAI(req: RunRequest, ctx: RunContext) {
+const TOOL_OUTPUT_FIELDS: Record<string, string[]> = {
+  'hook-analyzer': ['hookScore', 'hookType', 'strongerHooks', 'notes'],
+  'cta-match-analyzer': ['matchScore', 'mismatchReasons', 'improvedCtas'],
+  'dm-intelligence-engine': [
+    'leadScore',
+    'intentSignals',
+    'bestNextMessage',
+    'objectionGuesses',
+    'closePaths',
+    'redFlags',
+  ],
+  'retention-leak-finder': ['leaks', 'fixes', 'rewriteOutline', 'loopSuggestion'],
+  'reel-script-builder': ['hook', 'beats', 'onScreenText', 'loopEnding', 'caption', 'hashtags'],
+  'offer-clarity-check': ['clarityScore', 'oneLiner', 'bullets', 'gaps', 'strongerOfferVersion'],
+  'positioning-knife': ['positioningStatement', 'differentiators', 'proofToAdd', 'whatToCut', 'taglineOptions'],
+  'content-repurpose-machine': ['reelIdeas', 'carouselOutline', 'storySequence', 'captionBank'],
+  'comment-magnet': ['questions', 'pinnedComment', 'rulesOfThumb'],
+  'profile-clarity-scan': [
+    'clarityScore',
+    'whatWorks',
+    'whatHurts',
+    'improvedBio',
+    'nameField',
+    'profileCta',
+    'pinnedPostIdeas',
+  ],
+  'bio-to-cta': ['ctaOptions', 'bestPick', 'whyItFits'],
+  'carousel-blueprint': ['title', 'slides', 'saveHook', 'caption'],
+  'story-sequence-planner': ['slides', 'dmPrompt'],
+  'hashtag-support-pack': ['hashtagSets', 'usageNotes'],
+  'competitor-lunch-money': ['competitorPatterns', 'gapsToExploit', 'angles', 'first3Reels'],
+  'audience-mirror': ['target', 'pains', 'desires', 'languageToUse', 'languageToAvoid'],
+  'objection-crusher': ['bestReply', 'alternateReplies', 'questionsToAsk', 'doNotSay'],
+  'launch-plan-sprinter': ['timeline', 'dailyPosts', 'dmPlan', 'metricsToWatch'],
+  'content-calendar-minimal': ['weeks', 'batchingPlan'],
+}
+
+// ---------- Generic AI Runner (JSON-only) ----------
+async function runToolWithAIJson(req: RunRequest, ctx: RunContext) {
   const toolId = req.toolId
   const spec = TOOL_SPECS[toolId]
 
@@ -601,24 +637,69 @@ async function runToolWithOpenAI(req: RunRequest, ctx: RunContext) {
     throw new Error(`No TOOL_SPECS entry for toolId="${toolId}". Add schema + prompt.`)
   }
 
-  const openai = getOpenAIClient()
   const model = pickModel(spec.aiLevel === 'none' ? 'light' : spec.aiLevel)
   const messages = spec.buildMessages(req, ctx)
 
-  ctx.logger.info('openai.run.start', { toolId, model })
+  const systemBase = messages
+    .filter((m) => m.role === 'system')
+    .map((m) => m.content)
+    .join('\n')
+  const userBase = messages
+    .filter((m) => m.role === 'user')
+    .map((m) => m.content)
+    .join('\n\n')
 
-  const parsed = await openai.responses.parse({
+  const toolFields = TOOL_OUTPUT_FIELDS[toolId] ?? []
+
+  const system = [
+    systemBase,
+    '',
+    'Return ONLY valid JSON. No markdown or extra text.',
+    'JSON shape requirements:',
+    '{',
+    '  "summary": { "headline": string, "keyInsight": string, "confidence": "low"|"medium"|"high" },',
+    '  "recommendations": string[5-10],',
+    '  "nextSteps": { "plan": string[3-7], "timeframe": string },',
+    '  "stopDoing": string[3-7],',
+    '  "toolOutput": { ... }',
+    '}',
+    toolFields.length
+      ? `toolOutput must include fields: ${toolFields.join(', ')}`
+      : 'toolOutput can include any relevant structured fields for this tool.',
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  const user = [
+    userBase,
+    '',
+    'If input is missing or weak, explain what is missing inside summary.keyInsight and still provide best-effort guidance.',
+  ].join('\n')
+
+  const result = await runAIJson({
+    system,
+    user,
+    temperature: 0.2,
     model,
-    input: messages,
-    text: {
-      format: zodTextFormat(spec.schema, `${toolId}_output`),
-    },
-    safety_identifier: safetyIdentifierFromUserId(ctx.user.id),
   })
 
-  ctx.logger.info('openai.run.done', { toolId, model })
+  if ('error' in result) {
+    return {
+      output: {
+        summary: {
+          headline: 'Analysis unavailable',
+          keyInsight: 'AI request failed.',
+          confidence: 'low',
+        },
+        recommendations: [],
+        nextSteps: { plan: ['Retry with complete inputs.'], timeframe: '7 days' },
+        stopDoing: [],
+        toolOutput: { error: result.error.message },
+      },
+    }
+  }
 
-  return { output: parsed.output_parsed }
+  return { output: result }
 }
 
 const analyticsSignalReaderRunner = async (req: RunRequest) => {
@@ -743,6 +824,6 @@ export const runnerRegistry: Record<string, (req: RunRequest, ctx: RunContext) =
       async (req: RunRequest, ctx: RunContext) =>
         toolId === 'analytics-signal-reader'
           ? analyticsSignalReaderRunner(req)
-          : runToolWithOpenAI(req, ctx),
+          : runToolWithAIJson(req, ctx),
     ])
   )
