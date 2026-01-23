@@ -8,6 +8,7 @@ import { AppPanel } from "@/components/ui/AppPanel"
 
 const STORAGE_KEY = "leadCaptured"
 const STORAGE_AT_KEY = "leadCapturedAt"
+const STORAGE_EMAIL_KEY = "leadCapturedEmail"
 const COOKIE_NAME = "leadCaptured"
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 30
 
@@ -27,10 +28,16 @@ function hasLeadCaptured() {
   return readCookie(COOKIE_NAME) === "true"
 }
 
-function markLeadCaptured() {
+function readLeadEmail() {
+  if (typeof window === "undefined") return ""
+  return window.localStorage.getItem(STORAGE_EMAIL_KEY) || ""
+}
+
+function markLeadCaptured(email: string) {
   if (typeof window === "undefined") return
   window.localStorage.setItem(STORAGE_KEY, "true")
   window.localStorage.setItem(STORAGE_AT_KEY, new Date().toISOString())
+  window.localStorage.setItem(STORAGE_EMAIL_KEY, email)
   document.cookie = `${COOKIE_NAME}=true; Max-Age=${MAX_AGE_SECONDS}; Path=/; SameSite=Lax`
 }
 
@@ -64,7 +71,7 @@ export function OpenToolsCapture({ redirectTo = "/app/explore" }: { redirectTo?:
         setError("Couldn’t save that email. Try again.")
         return
       }
-      markLeadCaptured()
+      markLeadCaptured(email.trim().toLowerCase())
       setOpen(false)
       router.push(redirectTo)
     } catch {
@@ -76,22 +83,37 @@ export function OpenToolsCapture({ redirectTo = "/app/explore" }: { redirectTo?:
 
   return (
     <>
-      <Button
-        size="lg"
-        variant="outline"
-        onClick={() => {
-          if (captured) {
-            router.push(redirectTo)
-            return
-          }
-          setOpen(true)
-        }}
-      >
-        Open Tools
-      </Button>
+      <div className="flex flex-col items-center gap-2">
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => {
+            if (captured) {
+              router.push(redirectTo)
+              return
+            }
+            setEmail(readLeadEmail())
+            setOpen(true)
+          }}
+        >
+          Open Tools
+        </Button>
+        {captured ? (
+          <button
+            type="button"
+            className="text-xs text-[hsl(var(--muted))] underline"
+            onClick={() => {
+              setEmail(readLeadEmail())
+              setOpen(true)
+            }}
+          >
+            Change email
+          </button>
+        ) : null}
+      </div>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#7d9b76] p-4">
           <div className="w-full max-w-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-5">
             <div className="text-base font-semibold text-[hsl(var(--text))]">
               Enter your email to access tools
