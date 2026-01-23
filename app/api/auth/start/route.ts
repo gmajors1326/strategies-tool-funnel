@@ -5,7 +5,7 @@ import { sendVerificationCode } from '@/lib/email'
 import { z } from 'zod'
 
 const startSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
+  name: z.string().min(1).max(100),
   email: z.string().email(),
 })
 
@@ -59,10 +59,10 @@ export async function POST(request: NextRequest) {
       where: { email },
       create: {
         email,
-        name: name || null,
+        name,
       },
       update: {
-        name: name || undefined,
+        name,
       },
     })
 

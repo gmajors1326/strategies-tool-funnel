@@ -29,6 +29,11 @@ export default function VerifyClient() {
     setError('')
 
     try {
+      if (!name.trim()) {
+        setError('Please enter your name.')
+        setLoading(false)
+        return
+      }
       const res = await fetch('/api/auth/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -97,12 +102,13 @@ export default function VerifyClient() {
           {step === 'start' ? (
             <form onSubmit={handleStart} className="space-y-4">
               <div>
-                <Label htmlFor="name" className="text-[hsl(var(--muted))]">Name (optional)</Label>
+                <Label htmlFor="name" className="text-[hsl(var(--muted))]">Name</Label>
                 <Input
                   id="name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  required
                   className="mt-1"
                   placeholder="Your name"
                 />
