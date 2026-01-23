@@ -87,20 +87,19 @@ export async function fetchUiConfig(): Promise<UiConfig> {
   const catalogTools: ToolUiItem[] = listTools()
     .filter((tool) => isLaunchTool(tool.id))
     .map((tool) => {
-    const decision = computeToolStatus(tool, user.planId, usage)
-    return {
-      id: tool.id,
-      name: tool.name,
-      category: mapToolCategory(tool.category),
-      aiLevel: tool.aiLevel,
-      lockState: mapStatusToLockState(decision.status),
-      reason: decision.reason,
-      cta: decision.cta,
-      tokensPerRun: tool.tokensPerRun,
-      runsRemainingToday: decision.runsRemainingForTool,
-    }
-    }
-  })
+      const decision = computeToolStatus(tool, user.planId, usage)
+      return {
+        id: tool.id,
+        name: tool.name,
+        category: mapToolCategory(tool.category),
+        aiLevel: tool.aiLevel,
+        lockState: mapStatusToLockState(decision.status),
+        reason: decision.reason,
+        cta: decision.cta,
+        tokensPerRun: tool.tokensPerRun,
+        runsRemainingToday: decision.runsRemainingForTool,
+      }
+    })
 
   const myTools = catalogTools.filter((t) => t.lockState === 'available')
 

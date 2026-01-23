@@ -1,6 +1,7 @@
 // app/api/tools/run/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import type { Prisma } from '@prisma/client'
 import { getToolMeta } from '@/src/lib/tools/registry'
 import { runnerRegistry } from '@/src/lib/tools/runnerRegistry'
 import { addRun } from '@/src/lib/tools/runStore'
@@ -536,7 +537,7 @@ export async function POST(request: NextRequest) {
     await addRun(userId, tool.id, runId, response)
 
     try {
-      const sanitizedInput = sanitizeInputPayload(data.input ?? {})
+      const sanitizedInput = sanitizeInputPayload(data.input ?? {}) as Prisma.InputJsonValue
       await prisma.toolRun.create({
         data: {
           id: runId,

@@ -76,7 +76,15 @@ export async function GET(req: Request) {
     }
 
     const payload = run.output ?? run.outputsJson ?? {}
-    const table = findPrimaryTable(payload) ?? [payload]
+    const table =
+      findPrimaryTable(payload) ??
+      (Array.isArray(payload)
+        ? payload.map((item) => (item && typeof item === 'object' ? (item as Record<string, any>) : { value: item }))
+        : [
+            payload && typeof payload === 'object'
+              ? (payload as Record<string, any>)
+              : { value: payload },
+          ])
     const csv = toCsv(table)
     const filename = `${run.toolSlug || 'tool'}-${runId}.csv`
 

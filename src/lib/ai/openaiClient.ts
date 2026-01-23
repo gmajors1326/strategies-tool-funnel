@@ -77,17 +77,18 @@ async function callResponsesApi(
   prompt: { system: string; user: string },
   responseFormat?: Record<string, any>
 ) {
-  return client.responses.create({
+  const payload = {
     model: args.model,
     store: false,
     temperature: args.temperature ?? 0.2,
     max_output_tokens: args.maxOutputTokens ?? 1200,
     response_format: responseFormat,
     input: [
-      { role: 'system', content: [{ type: 'text', text: prompt.system }] },
-      { role: 'user', content: [{ type: 'text', text: prompt.user }] },
+      { role: 'system', content: [{ type: 'input_text', text: prompt.system }] },
+      { role: 'user', content: [{ type: 'input_text', text: prompt.user }] },
     ],
-  })
+  } as any
+  return client.responses.create(payload)
 }
 
 export async function generateStructuredOutput<T>(

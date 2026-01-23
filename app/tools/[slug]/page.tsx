@@ -1,4 +1,4 @@
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { requireUser } from '@/src/lib/auth/requireUser'
 import { TOOL_REGISTRY, type ToolMeta } from '@/src/lib/tools/registry'
 import { ToolRunner } from '@/src/components/tools/ToolRunner'

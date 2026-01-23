@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/src/lib/db/prisma'
 import { getUserOrThrow } from '@/src/lib/auth/getUser'

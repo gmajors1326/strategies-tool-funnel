@@ -12,7 +12,9 @@ export default function HomePage() {
   const allTools = useMemo(() => listTools().filter((tool) => isLaunchTool(tool.id)), [])
   const tools = useMemo(() => {
     const byId = new Map(allTools.map((tool) => [tool.id, tool]))
-    return LAUNCH_TOOL_IDS.map((id) => byId.get(id)).filter(Boolean)
+    return LAUNCH_TOOL_IDS.map((id) => byId.get(id)).filter(
+      (tool): tool is (typeof allTools)[number] => Boolean(tool)
+    )
   }, [allTools])
 
   return (

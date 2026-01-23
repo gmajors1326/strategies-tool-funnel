@@ -74,14 +74,6 @@ const OfferClarityCheckSchema = z.object({
   strongerOfferVersion: z.string(),
 })
 
-const RESPONSE_API_TOOLS = new Set([
-  'hook-analyzer',
-  'cta-match-analyzer',
-  'content-angle-generator',
-  'caption-optimizer',
-  'engagement-diagnostic',
-])
-
 async function runResponsesTool(toolId: string, req: RunRequest) {
   const config = TOOL_AI_CONFIG[toolId as keyof typeof TOOL_AI_CONFIG]
   const schema = TOOL_OUTPUT_ZOD[toolId as keyof typeof TOOL_OUTPUT_ZOD]
@@ -106,12 +98,12 @@ async function runResponsesTool(toolId: string, req: RunRequest) {
     JSON.stringify(jsonSchema, null, 2),
   ].join('\n\n')
 
-  const result = await generateStructuredOutput(
+  const result = await generateStructuredOutput<any>(
     {
       toolId,
       input: req.input ?? {},
-      schema,
-      jsonSchema,
+      schema: schema as z.ZodSchema<any>,
+      jsonSchema: jsonSchema as Record<string, any> | undefined,
       model,
       temperature: 0.2,
       maxOutputTokens: 1200,
@@ -914,113 +906,6 @@ const analyticsSignalReaderRunner = async (req: RunRequest) => {
   }
 
   return { output: normalizeToolOutput('analytics-signal-reader', result) }
-}
-
-const hookAnalyzerRunner = async (req: RunRequest) => {
-  const hookText = String(req.input.hookText ?? req.input.hook ?? req.input.topic ?? '').trim()
-
-  if (!hookText) {
-    return {
-      output: normalizeToolOutput('hook-analyzer', {
-        score: { hook: 10, clarity: 10, curiosity: 10, specificity: 10 },
-        hookType: 'other',
-        bestFor: ['awareness'],
-        diagnosis: {
-          whatWorks: [],
-          whatHurts: ['No hook text provided.'],
-          retentionRisk: 'high',
-        },
-        rewrites: [
-          { style: 'safer', hook: 'Add your hook text to get tailored rewrites.' },
-          { style: 'sharper', hook: 'Provide a specific hook to sharpen it.' },
-          { style: 'more_specific', hook: 'Share your hook so I can make it specific.' },
-          { style: 'contrarian', hook: 'Paste a hook to get a contrarian angle.' },
-          { style: 'curiosity_gap', hook: 'Paste a hook to build a curiosity gap.' },
-          { style: 'authority', hook: 'Paste a hook to add authority.' },
-          { style: 'short_5_words', hook: 'Paste a hook to compress to 5 words.' },
-          { style: 'question', hook: 'Paste a hook to turn into a question.' },
-          { style: 'numbers', hook: 'Paste a hook to add numbers.' },
-          { style: 'callout', hook: 'Paste a hook to add a direct callout.' },
-        ],
-        '6secReelPlan': {
-          openingFrameText: 'Paste your hook text',
-          beats: [
-            { t: '0.0-1.5', onScreen: 'Paste your hook', voice: 'Paste your hook' },
-            { t: '1.5-3.5', onScreen: 'Add key pain', voice: 'Add key pain' },
-            { t: '3.5-5.5', onScreen: 'Add quick proof', voice: 'Add quick proof' },
-            { t: '5.5-6.0', onScreen: 'Add CTA', voice: 'Add CTA' },
-          ],
-          loopEnding: 'Tease the next step once hook is provided.',
-        },
-        avoid: ['Leaving the hook field empty.'],
-        cta: { recommended: 'comment', line: 'Drop your hook so I can rewrite it.' },
-        notes: ['Provide a single-line hook or opening sentence to analyze.'],
-      }),
-    }
-  }
-
-  const system = [
-    'You are a world-class hook editor for Instagram Reels in 2026.',
-    'Return ONLY valid JSON matching the schema below.',
-    'No markdown, no extra keys, no backticks.',
-    '',
-    'Output schema (exact keys):',
-    '{',
-    '  "score": { "hook": 0-100, "clarity": 0-100, "curiosity": 0-100, "specificity": 0-100 },',
-    '  "hookType": "contrarian|nobody_tells_you|before_after|simple_truth|story|how_to|list|warning|other",',
-    '  "bestFor": ["awareness","saves","comments","profile_taps","follows"],',
-    '  "diagnosis": {',
-    '    "whatWorks": string[],',
-    '    "whatHurts": string[],',
-    '    "retentionRisk": "low|med|high"',
-    '  },',
-    '  "rewrites": [',
-    '    { "style": "safer", "hook": string },',
-    '    { "style": "sharper", "hook": string },',
-    '    { "style": "more_specific", "hook": string },',
-    '    { "style": "contrarian", "hook": string },',
-    '    { "style": "curiosity_gap", "hook": string },',
-    '    { "style": "authority", "hook": string },',
-    '    { "style": "short_5_words", "hook": string },',
-    '    { "style": "question", "hook": string },',
-    '    { "style": "numbers", "hook": string },',
-    '    { "style": "callout", "hook": string }',
-    '  ],',
-    '  "6secReelPlan": {',
-    '    "openingFrameText": string,',
-    '    "beats": [',
-    '      { "t": "0.0-1.5", "onScreen": string, "voice": string },',
-    '      { "t": "1.5-3.5", "onScreen": string, "voice": string },',
-    '      { "t": "3.5-5.5", "onScreen": string, "voice": string },',
-    '      { "t": "5.5-6.0", "onScreen": string, "voice": string }',
-    '    ],',
-    '    "loopEnding": string',
-    '  },',
-    '  "avoid": string[],',
-    '  "cta": { "recommended": "save|follow|comment|dm", "line": string },',
-    '  "notes": string[]',
-    '}',
-  ].join('\n')
-
-  const user = [
-    'Hook text:',
-    hookText,
-    '',
-    'If the hook is vague, add notes about what to clarify.',
-  ].join('\n')
-
-  const result = await runAIJson({
-    system,
-    user,
-    temperature: 0.25,
-    model: pickModel('light'),
-  })
-
-  if ('error' in result) {
-    return { output: { error: result.error } }
-  }
-
-  return { output: normalizeToolOutput('hook-analyzer', result) }
 }
 
 const dmIntelligenceEngineRunner = async (req: RunRequest) => {

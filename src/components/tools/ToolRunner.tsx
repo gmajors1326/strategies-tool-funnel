@@ -26,6 +26,8 @@ type ToolField = {
   help?: string
   required?: boolean
   options?: string[]
+  min?: number
+  max?: number
 }
 
 type UiConfig = {
@@ -39,6 +41,7 @@ type UiConfig = {
 
 type RunResponse = {
   status?: 'ok' | 'locked' | 'error'
+  runId?: string | null
   output?: any
   lock?: { code?: string; message?: string; resetsAtISO?: string; remainingTokens?: number }
   error?: string | { message?: string; code?: string; cta?: { label: string; href: string } }
@@ -581,9 +584,10 @@ export function ToolRunner(props: {
           (typeof errorValue === 'string' ? errorValue : errorValue?.message) ||
           mapErrorState(data, res.status).message
         const errorState = mapErrorState(data, res.status)
+        const errorCode = data?.lock?.code || (typeof errorValue === 'string' ? undefined : errorValue?.code)
         setResult({
           status: 'error',
-          error: { message, code: data?.lock?.code || data?.error?.code, cta: errorState.cta },
+          error: { message, code: errorCode, cta: errorState.cta },
         })
         return
       }
@@ -1079,7 +1083,7 @@ export function ToolRunner(props: {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle className="text-base">Run {toolName}</CardTitle>
         </CardHeader>
@@ -1143,136 +1147,138 @@ export function ToolRunner(props: {
             </div>
           ) : null}
           {fields.length ? (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-xs text-muted-foreground">Presets</div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    if (!input || Object.keys(input).length === 0) {
-                      setMsg('Add inputs before saving a preset.')
-                      return
-                    }
-                    if (!canSaveToVault) {
-                      router.push('/pricing?reason=plan&tab=plans&feature=save')
-                      return
-                    }
-                    const nextName = `Preset ${presets.length + 1}`
-                    const nextPreset: ToolPreset = {
-                      id: crypto.randomUUID(),
-                      name: nextName,
-                      input,
-                      createdAt: new Date().toISOString(),
-                    }
-                    const next = [nextPreset, ...presets].slice(0, 10)
-                    setPresets(next)
-                    writeToolPresets(toolId, next)
-                    setSelectedPreset(nextPreset.id)
-                    setMsg(`Saved ${nextName}.`)
-                  }}
-                  title={canSaveToVault ? 'Save preset' : 'Available on Pro'}
-                >
-                  Save preset
-                </Button>
-              </div>
-              <Select
-                value={selectedPreset}
-                onChange={(e) => {
-                  const value = e.target.value
-                  setSelectedPreset(value)
-                  if (value === 'example' && getExampleInput()) {
-                    setInput(getExampleInput() ?? {})
-                    setPrefillNote('Loaded example preset.')
-                    return
-                  }
-                  if (value === 'last') {
-                    const last = readLastInput(toolId)
-                    if (last) {
-                      setInput(last)
-                      setPrefillNote('Loaded your last inputs.')
-                    }
-                    return
-                  }
-                  const preset = presets.find((p) => p.id === value)
-                  if (preset) {
-                    setInput(preset.input)
-                    setPrefillNote(`Loaded ${preset.name}.`)
-                  }
-                }}
-              >
-                <option value="">Choose preset</option>
-                {readLastInput(toolId) ? <option value="last">Last used</option> : null}
-                {getExampleInput() ? <option value="example">Example</option> : null}
-                {presets.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            fields.map((f) => (
-              <div key={f.key} className="space-y-1.5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">{f.label}</label>
-                    {f.help ? <HelpTooltip content={f.help} /> : null}
-                  </div>
-                  {f.required ? <span className="text-xs text-muted-foreground">required</span> : null}
-                </div>
-
-                {f.type === 'textarea' ? (
-                  <Textarea
-                    placeholder={f.placeholder}
-                    value={input[f.key] ?? ''}
-                    onChange={(e) => {
-                      setInput((p) => ({ ...p, [f.key]: e.target.value }))
-                      if (fieldErrors[f.key]) {
-                        setFieldErrors((prev) => ({ ...prev, [f.key]: '' }))
+            <>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs text-muted-foreground">Presets</div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (!input || Object.keys(input).length === 0) {
+                        setMsg('Add inputs before saving a preset.')
+                        return
                       }
-                    }}
-                  />
-                ) : f.type === 'select' ? (
-                  <Select
-                    value={input[f.key] ?? ''}
-                    onChange={(e) => {
-                      setInput((p) => ({ ...p, [f.key]: e.target.value }))
-                      if (fieldErrors[f.key]) {
-                        setFieldErrors((prev) => ({ ...prev, [f.key]: '' }))
+                      if (!canSaveToVault) {
+                        router.push('/pricing?reason=plan&tab=plans&feature=save')
+                        return
                       }
+                      const nextName = `Preset ${presets.length + 1}`
+                      const nextPreset: ToolPreset = {
+                        id: crypto.randomUUID(),
+                        name: nextName,
+                        input,
+                        createdAt: new Date().toISOString(),
+                      }
+                      const next = [nextPreset, ...presets].slice(0, 10)
+                      setPresets(next)
+                      writeToolPresets(toolId, next)
+                      setSelectedPreset(nextPreset.id)
+                      setMsg(`Saved ${nextName}.`)
                     }}
+                    title={canSaveToVault ? 'Save preset' : 'Available on Pro'}
                   >
-                    <option value="">{f.placeholder ?? 'Select'}</option>
-                    {(f.options ?? []).map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </Select>
-                ) : (
-                  <Input
-                    type={f.type === 'number' ? 'number' : 'text'}
-                    placeholder={f.placeholder}
-                    value={input[f.key] ?? ''}
-                    onChange={(e) => {
-                      setInput((p) => ({
-                        ...p,
-                        [f.key]: f.type === 'number' ? Number(e.target.value) : e.target.value,
-                      }))
-                      if (fieldErrors[f.key]) {
-                        setFieldErrors((prev) => ({ ...prev, [f.key]: '' }))
+                    Save preset
+                  </Button>
+                </div>
+                <Select
+                  value={selectedPreset}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setSelectedPreset(value)
+                    if (value === 'example' && getExampleInput()) {
+                      setInput(getExampleInput() ?? {})
+                      setPrefillNote('Loaded example preset.')
+                      return
+                    }
+                    if (value === 'last') {
+                      const last = readLastInput(toolId)
+                      if (last) {
+                        setInput(last)
+                        setPrefillNote('Loaded your last inputs.')
                       }
-                    }}
-                  />
-                )}
-                {getFieldExample(f.key) ? (
-                  <p className="text-xs text-muted-foreground">Example: {getFieldExample(f.key)}</p>
-                ) : null}
-                {fieldErrors[f.key] ? (
-                  <p className="text-xs text-destructive">{fieldErrors[f.key]}</p>
-                ) : null}
+                      return
+                    }
+                    const preset = presets.find((p) => p.id === value)
+                    if (preset) {
+                      setInput(preset.input)
+                      setPrefillNote(`Loaded ${preset.name}.`)
+                    }
+                  }}
+                >
+                  <option value="">Choose preset</option>
+                  {readLastInput(toolId) ? <option value="last">Last used</option> : null}
+                  {getExampleInput() ? <option value="example">Example</option> : null}
+                  {presets.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.name}
+                    </option>
+                  ))}
+                </Select>
               </div>
-            ))
+              {fields.map((f) => (
+                <div key={f.key} className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium">{f.label}</label>
+                      {f.help ? <HelpTooltip content={f.help} /> : null}
+                    </div>
+                    {f.required ? <span className="text-xs text-muted-foreground">required</span> : null}
+                  </div>
+
+                  {f.type === 'textarea' ? (
+                    <Textarea
+                      placeholder={f.placeholder}
+                      value={input[f.key] ?? ''}
+                      onChange={(e) => {
+                        setInput((p) => ({ ...p, [f.key]: e.target.value }))
+                        if (fieldErrors[f.key]) {
+                          setFieldErrors((prev) => ({ ...prev, [f.key]: '' }))
+                        }
+                      }}
+                    />
+                  ) : f.type === 'select' ? (
+                    <Select
+                      value={input[f.key] ?? ''}
+                      onChange={(e) => {
+                        setInput((p) => ({ ...p, [f.key]: e.target.value }))
+                        if (fieldErrors[f.key]) {
+                          setFieldErrors((prev) => ({ ...prev, [f.key]: '' }))
+                        }
+                      }}
+                    >
+                      <option value="">{f.placeholder ?? 'Select'}</option>
+                      {(f.options ?? []).map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input
+                      type={f.type === 'number' ? 'number' : 'text'}
+                      placeholder={f.placeholder}
+                      value={input[f.key] ?? ''}
+                      onChange={(e) => {
+                        setInput((p) => ({
+                          ...p,
+                          [f.key]: f.type === 'number' ? Number(e.target.value) : e.target.value,
+                        }))
+                        if (fieldErrors[f.key]) {
+                          setFieldErrors((prev) => ({ ...prev, [f.key]: '' }))
+                        }
+                      }}
+                    />
+                  )}
+                  {getFieldExample(f.key) ? (
+                    <p className="text-xs text-muted-foreground">Example: {getFieldExample(f.key)}</p>
+                  ) : null}
+                  {fieldErrors[f.key] ? (
+                    <p className="text-xs text-destructive">{fieldErrors[f.key]}</p>
+                  ) : null}
+                </div>
+              ))}
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">This tool does not expose input fields yet.</p>
           )}

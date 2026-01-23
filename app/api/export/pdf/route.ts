@@ -6,9 +6,9 @@ import { jsPDF } from 'jspdf'
 
 function addSection(doc: jsPDF, title: string, body: string, y: number) {
   doc.setFontSize(12)
-  doc.setFont(undefined, 'bold')
+  doc.setFont('helvetica', 'bold')
   doc.text(title, 40, y)
-  doc.setFont(undefined, 'normal')
+  doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   const lines = doc.splitTextToSize(body, 520)
   doc.text(lines, 40, y + 16)
@@ -52,10 +52,10 @@ export async function GET(req: Request) {
     const output = run.output ?? run.outputsJson ?? {}
 
     doc.setFontSize(16)
-    doc.setFont(undefined, 'bold')
+    doc.setFont('helvetica', 'bold')
     doc.text(`${toolName} Report`, 40, 40)
     doc.setFontSize(10)
-    doc.setFont(undefined, 'normal')
+    doc.setFont('helvetica', 'normal')
     doc.text(`Run ID: ${runId}`, 40, 58)
     doc.text(`Created: ${createdAt}`, 40, 72)
 
