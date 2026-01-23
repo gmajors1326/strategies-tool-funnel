@@ -69,25 +69,13 @@ export async function POST(request: NextRequest) {
 
   const leadCaptured = request.cookies.get('leadCaptured')?.value === 'true'
   const dbHealth = await dbHealthCheck()
-  const degraded = !dbHealth.ok
+  let degraded = !dbHealth.ok
   log('db_health', { ok: dbHealth.ok, error: dbHealth.error })
   let session: Awaited<ReturnType<typeof requireUser>> | null = null
+  const disabledFeatures = ['tokens', 'history', 'vault', 'exports'] as const
+  const degradedMessage = 'Temporary database outage — results are available, but saving/export/history is disabled.'
 
-  if (!degraded) {
-    if (!leadCaptured) {
-      await assertDbReadyOnce()
-      session = await requireUser()
-    } else {
-      try {
-        await assertDbReadyOnce()
-        session = await requireUser()
-      } catch {
-        session = null
-      }
-    }
-  }
-
-  if (degraded) {
+  const runDegraded = async () => {
     let tool: ReturnType<typeof getToolMeta> | null = null
     try {
       tool = getToolMeta(data.toolId)
@@ -103,8 +91,8 @@ export async function POST(request: NextRequest) {
           requestId,
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
-          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
-          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+          disabledFeatures: [...disabledFeatures],
+          message: degradedMessage,
         },
         { status: 404, headers: { 'x-request-id': requestId } }
       )
@@ -123,8 +111,8 @@ export async function POST(request: NextRequest) {
           requestId,
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
-          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
-          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+          disabledFeatures: [...disabledFeatures],
+          message: degradedMessage,
         },
         { status: 400, headers: { 'x-request-id': requestId } }
       )
@@ -139,8 +127,8 @@ export async function POST(request: NextRequest) {
           requestId,
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
-          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
-          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+          disabledFeatures: [...disabledFeatures],
+          message: degradedMessage,
         },
         { status: 401, headers: { 'x-request-id': requestId } }
       )
@@ -155,8 +143,8 @@ export async function POST(request: NextRequest) {
           requestId,
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
-          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
-          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+          disabledFeatures: [...disabledFeatures],
+          message: degradedMessage,
         },
         { status: 500, headers: { 'x-request-id': requestId } }
       )
@@ -181,8 +169,8 @@ export async function POST(request: NextRequest) {
             requestId,
             degraded: true,
             degradedReason: 'DB_UNAVAILABLE',
-            disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
-            message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+            disabledFeatures: [...disabledFeatures],
+            message: degradedMessage,
           },
           { status: 502, headers: { 'x-request-id': requestId } }
         )
@@ -196,8 +184,8 @@ export async function POST(request: NextRequest) {
           requestId,
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
-          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
-          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+          disabledFeatures: [...disabledFeatures],
+          message: degradedMessage,
           metering: {
             chargedTokens: 0,
             remainingTokens: 0,
@@ -219,12 +207,35 @@ export async function POST(request: NextRequest) {
           requestId,
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
-          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
-          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+          disabledFeatures: [...disabledFeatures],
+          message: degradedMessage,
         },
         { status: 502, headers: { 'x-request-id': requestId } }
       )
     }
+  }
+
+  if (!degraded) {
+    try {
+      if (!leadCaptured) {
+        await assertDbReadyOnce()
+        session = await requireUser()
+      } else {
+        try {
+          await assertDbReadyOnce()
+          session = await requireUser()
+        } catch {
+          session = null
+        }
+      }
+    } catch (err: any) {
+      log('auth_db_failed', { message: err?.message || 'Unknown error' })
+      degraded = true
+    }
+  }
+
+  if (degraded) {
+    return runDegraded()
   }
 
   if (!session && leadCaptured) {
