@@ -4,6 +4,7 @@ import type { ToolMeta } from '@/src/lib/tools/registry'
 import { getOpenAIClient, pickModel, safetyIdentifierFromUserId } from '@/src/lib/ai/openaiClient'
 import { EXPECTED_TOOL_IDS } from '@/src/lib/tools/registry'
 import { zodTextFormat } from 'openai/helpers/zod'
+import { runAIJson } from '@/src/lib/ai/openai'
 
 export type RunContext = {
   user: { id: string; planId: 'free' | 'pro_monthly' | 'team' | 'lifetime' }
@@ -620,10 +621,128 @@ async function runToolWithOpenAI(req: RunRequest, ctx: RunContext) {
   return { output: parsed.output_parsed }
 }
 
+const analyticsSignalReaderRunner = async (req: RunRequest) => {
+  const rawMetrics = String(req.input.last30 ?? '').trim()
+  const priority = String(req.input.priority ?? 'watch_time').trim()
+
+  const system = [
+    'You are an Instagram analytics expert.',
+    'Return ONLY valid JSON using the schema below.',
+    'If data is insufficient, set summary.confidence="low", explain missing data in summary.missingData,',
+    'and provide best-effort generic recommendations without guessing numbers.',
+    'No markdown, no extra text.',
+    '',
+    'Output schema:',
+    '{',
+    '  "summary": {',
+    '    "headline": string,',
+    '    "primaryIssue": string,',
+    '    "confidence": "low" | "medium" | "high",',
+    '    "missingData": string[]',
+    '  },',
+    '  "signals": [{',
+    '    "name": string,',
+    '    "evidence": string,',
+    '    "impact": "low" | "medium" | "high",',
+    '    "severity": "low" | "medium" | "high"',
+    '  }],',
+    '  "prioritizedFixes": [{',
+    '    "action": string,',
+    '    "reason": string,',
+    '    "expectedImpact": "low" | "medium" | "high",',
+    '    "effort": "low" | "medium" | "high",',
+    '    "timeframe": string',
+    '  }],',
+    '  "next7Days": [{',
+    '    "day": string,',
+    '    "focus": string,',
+    '    "tasks": string[]',
+    '  }],',
+    '  "stopDoing": [{',
+    '    "action": string,',
+    '    "why": string',
+    '  }],',
+    '  "experiment": {',
+    '    "hypothesis": string,',
+    '    "test": string,',
+    '    "successMetric": string,',
+    '    "duration": string,',
+    '    "risk": string,',
+    '    "fallback": string',
+    '  },',
+    '  "notes": string[]',
+    '}',
+    '',
+    'Requirements:',
+    '- prioritizedFixes must be 5-10 items.',
+    '- stopDoing must be 3-7 items.',
+    '- next7Days must include 7 items (Day 1..Day 7).',
+    '- Keep summary concise.',
+  ].join('\n')
+
+  const user = [
+    `Priority: ${priority || 'watch_time'}`,
+    'Metrics (last 30 days, messy paste allowed):',
+    rawMetrics || '(missing)',
+    '',
+    'Task: Analyze signals, diagnose issues, and produce actionable fixes.',
+    'If missing metrics, explain what is missing and proceed with best-effort guidance.',
+  ].join('\n')
+
+  const result = await runAIJson({
+    system,
+    user,
+    temperature: 0.2,
+    model: pickModel('heavy'),
+  })
+
+  if ('error' in result) {
+    return {
+      output: {
+        summary: {
+          headline: 'Analysis unavailable',
+          primaryIssue: 'AI request failed',
+          confidence: 'low',
+          missingData: ['metrics'],
+        },
+        signals: [],
+        prioritizedFixes: [],
+        next7Days: [
+          { day: 'Day 1', focus: 'Retry analysis', tasks: ['Paste metrics again and retry.'] },
+          { day: 'Day 2', focus: 'Collect data', tasks: ['Export last 30 days insights.'] },
+          { day: 'Day 3', focus: 'Baseline', tasks: ['List top posts and key metrics.'] },
+          { day: 'Day 4', focus: 'Hooks', tasks: ['Review opening 3 seconds of top posts.'] },
+          { day: 'Day 5', focus: 'CTAs', tasks: ['Audit CTAs and outcomes.'] },
+          { day: 'Day 6', focus: 'Format', tasks: ['Compare formats and retention.'] },
+          { day: 'Day 7', focus: 'Plan', tasks: ['Create a 7-day test plan.'] },
+        ],
+        stopDoing: [],
+        experiment: {
+          hypothesis: 'Improving hooks and CTAs will lift retention and saves.',
+          test: 'Test two hook variants across similar posts.',
+          successMetric: 'Retention + saves increase',
+          duration: '7 days',
+          risk: 'Low signal due to small sample size',
+          fallback: 'Use qualitative feedback from comments/DMs.',
+        },
+        notes: [
+          'AI request failed.',
+          result.error.message,
+        ],
+      },
+    }
+  }
+
+  return { output: result }
+}
+
 export const runnerRegistry: Record<string, (req: RunRequest, ctx: RunContext) => Promise<{ output: any }>> =
   Object.fromEntries(
     EXPECTED_TOOL_IDS.map((toolId) => [
       toolId,
-      async (req: RunRequest, ctx: RunContext) => runToolWithOpenAI(req, ctx),
+      async (req: RunRequest, ctx: RunContext) =>
+        toolId === 'analytics-signal-reader'
+          ? analyticsSignalReaderRunner(req)
+          : runToolWithOpenAI(req, ctx),
     ])
   )
