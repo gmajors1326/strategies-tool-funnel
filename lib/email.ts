@@ -137,3 +137,34 @@ export async function sendAdminNotification(email: string, name?: string, profil
     })
   }
 }
+
+export async function sendLeadNotification(email: string, source = 'open_tools', ip?: string): Promise<void> {
+  const subject = 'New Lead: Open Tools'
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333;">
+      <h2>New Lead Captured</h2>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Source:</strong> ${source}</p>
+      ${ip ? `<p><strong>IP:</strong> ${ip}</p>` : ''}
+      <p><strong>Captured at:</strong> ${new Date().toISOString()}</p>
+    </div>
+  `
+
+  if (!ADMIN_EMAIL) return
+
+  if (resend) {
+    await resend.emails.send({
+      from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
+      to: ADMIN_EMAIL,
+      subject,
+      html,
+    })
+  } else if (gmailTransporter) {
+    await gmailTransporter.sendMail({
+      from: GMAIL_USER,
+      to: ADMIN_EMAIL,
+      subject,
+      html,
+    })
+  }
+}

@@ -7,6 +7,8 @@ import { listTools } from '@/src/lib/tools/registry'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { LAUNCH_TOOL_IDS, getLaunchMeta, isLaunchTool } from '@/src/lib/tools/launchTools'
+import { OpenToolsCapture } from '@/src/components/leads/OpenToolsCapture'
+import { FaqBlock } from '@/src/components/marketing/FaqBlock'
 
 export default function HomePage() {
   const allTools = useMemo(() => listTools().filter((tool) => isLaunchTool(tool.id)), [])
@@ -22,7 +24,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-6 pb-12 md:pt-12 md:pb-20">
         <div className="flex justify-end no-print">
-          <Button asChild size="sm" variant="outline" className="shadow-ink-40">
+          <Button asChild size="sm" variant="outline">
             <Link href="/admin/login">Admin</Link>
           </Button>
         </div>
@@ -32,17 +34,15 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 text-[#d8ba8c] text-shadow-ink-40">
-            The Strategy Tools
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#f7e0b2] via-[#e7c98a] to-[#caa367] bg-clip-text text-transparent">
+            Free Spirit Marketing
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-white mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
             Strategic engagement tools that turn conversations into revenue.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
-            <Button asChild size="lg" variant="outline" className="shadow-ink-40">
-              <Link href="#tool">Try Tool</Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="shadow-ink-40">
+            <OpenToolsCapture redirectTo="/app/explore" />
+            <Button asChild size="lg" variant="outline">
               <Link href="#faq">Learn More</Link>
             </Button>
           </div>
@@ -128,20 +128,20 @@ export default function HomePage() {
 
       {/* FAQ Section */}
       <section id="faq" className="container mx-auto px-4 py-20">
-        <div className="max-w-3xl mx-auto text-center text-white/70 text-sm">
-          Launching with five tools. More coming soon.
+        <div className="mx-auto max-w-3xl">
+          <FaqBlock />
         </div>
       </section>
 
       {/* Final CTA */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6 text-white text-shadow-ink-40">Ready to Get Started?</h2>
+          <h2 className="text-4xl font-bold mb-6 text-white">Ready to Get Started?</h2>
           <p className="text-xl text-[hsl(var(--muted))] mb-8">
             All tools are free to use. Get started now.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="shadow-ink-40">
+            <Button asChild size="lg">
               <Link href="#faq">Learn More →</Link>
             </Button>
           </div>

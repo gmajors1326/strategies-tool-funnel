@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { AppPanel } from '@/components/ui/AppPanel'
 import { formatLocalTime } from '@/src/lib/locks/lockCopy'
+import { FaqBlock } from '@/src/components/marketing/FaqBlock'
 
 type UiConfigSummary = {
   user: { planId: string }
@@ -373,6 +374,8 @@ export function PricingClient() {
             </div>
           </TabsContent>
         </Tabs>
+
+        <FaqBlock title="FAQ" />
 
         <div className="flex justify-between">
           <Button variant="outline" onClick={() => checkoutSku('tokens_small')}>
