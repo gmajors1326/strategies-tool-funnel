@@ -37,9 +37,34 @@ export async function POST(request: NextRequest) {
   // ✅ NEW: requestId for tracing (also echoed in JSON)
   const requestId = crypto.randomUUID()
 
-  const body = await request.json()
-  const data = requestSchema.parse(body) as RunRequest & { dryRun?: boolean }
+  let body: unknown
+  let data: (RunRequest & { dryRun?: boolean }) | null = null
+  try {
+    body = await request.json()
+    data = requestSchema.parse(body) as RunRequest & { dryRun?: boolean }
+  } catch (err: any) {
+    console.info('[tools/run] invalid_request', { requestId, error: err?.message || 'Invalid payload' })
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'error',
+        error: { message: 'Invalid request payload.', code: 'VALIDATION_ERROR' },
+        requestId,
+      },
+      { status: 400, headers: { 'x-request-id': requestId } }
+    )
+  }
   const runId = data.runId || crypto.randomUUID()
+
+  const log = (message: string, meta?: Record<string, any>) => {
+    console.info('[tools/run]', {
+      requestId,
+      toolId: data?.toolId,
+      ...meta,
+      message,
+    })
+  }
+
+  log('request_start', { dryRun: data.dryRun ?? false })
 
   const leadCaptured = request.cookies.get('leadCaptured')?.value === 'true'
   let session: Awaited<ReturnType<typeof requireUser>> | null = null
@@ -57,6 +82,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!session && leadCaptured) {
+    log('lead_guest_session', { leadCaptured: true })
     let tool: ReturnType<typeof getToolMeta> | null = null
     try {
       tool = getToolMeta(data.toolId)
@@ -76,12 +102,14 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const result = await runnerRegistry[tool.id](data, {
+        log('runner_start', { leadGuest: true })
+        const result = await runnerRegistry[tool.id](data, {
         user: { id: 'lead_guest', planId: 'free' },
         toolMeta: tool,
         usage: { aiTokensRemaining: 100000 },
         logger: { info: () => {}, error: () => {} },
       })
+        log('runner_finish', { leadGuest: true })
 
       return NextResponse.json<RunResponse>(
         {
@@ -115,6 +143,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!session) {
+    log('auth_missing', { leadCaptured })
     return NextResponse.json<RunResponse>(
       {
         status: 'error',
@@ -126,6 +155,7 @@ export async function POST(request: NextRequest) {
   }
 
   const userId = session.id
+  log('auth_ok', { userIdPresent: Boolean(userId) })
 
   const entitlement = await getOrCreateEntitlement(userId)
   const personalPlan = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
@@ -234,6 +264,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!tool) {
+    log('tool_not_found')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
     return jsonWithRequestId(
@@ -253,6 +284,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (membership?.role === 'viewer') {
+    log('locked_role')
     await recordRun({ status: 'locked', lockCode: 'locked_role', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_role' })
     return jsonWithRequestId(
@@ -274,6 +306,7 @@ export async function POST(request: NextRequest) {
   if (data.runId) {
     const existing = await prisma.tokenLedger.findFirst({ where: { run_id: data.runId } })
     if (existing) {
+      log('duplicate_run')
       await recordRun({ status: 'error', lockCode: 'duplicate', errorCode: 'DUPLICATE_RUN' })
       return jsonWithRequestId(
         { status: 'error', error: { message: 'Duplicate run_id; request already processed.', code: 'DUPLICATE_RUN' }, requestId },
@@ -284,6 +317,7 @@ export async function POST(request: NextRequest) {
 
   const validation = validateInput(data.toolId, data.input)
   if (!validation.valid) {
+    log('input_validation_failed')
     await recordRun({ status: 'error', lockCode: 'validation', errorCode: 'VALIDATION_ERROR' })
     return jsonWithRequestId(
       {
@@ -302,6 +336,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!tool.enabled) {
+    log('tool_disabled')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
     return jsonWithRequestId(
@@ -320,6 +355,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (personalPlan === 'free' && (tool.category === 'Analytics' || tool.category === 'Competitive')) {
+    log('locked_plan_category')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
     return jsonWithRequestId(
@@ -340,6 +376,7 @@ export async function POST(request: NextRequest) {
   const toolCapForPlan = tool.dailyRunsByPlan?.[personalPlan] ?? 0
 
   if (data.mode === 'paid' && toolCapForPlan <= 0) {
+    log('locked_plan_tool_cap')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
     return jsonWithRequestId(
@@ -362,6 +399,7 @@ export async function POST(request: NextRequest) {
   const toolRunsUsed = (usage.per_tool_runs_used as Record<string, number>)?.[tool.id] ?? 0
 
   if (usage.runs_used >= planRunCap) {
+    log('locked_usage_daily')
     await recordRun({ status: 'locked', lockCode: 'locked_usage_daily', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_usage_daily' })
     return jsonWithRequestId(
@@ -390,6 +428,7 @@ export async function POST(request: NextRequest) {
 
   // NOTE: If your ToolMeta doesn't have aiLevel, consider adding it.
   if (usage.ai_tokens_used >= planTokenCap && (tool as any).aiLevel !== 'none') {
+    log('locked_tokens_cap')
     await recordRun({ status: 'locked', lockCode: 'locked_tokens', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_tokens' })
     return jsonWithRequestId(
@@ -417,6 +456,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (toolRunsUsed >= toolCap) {
+    log('locked_tool_daily')
     await recordRun({ status: 'locked', lockCode: 'locked_tool_daily', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_tool_daily' })
     return jsonWithRequestId(
@@ -447,6 +487,7 @@ export async function POST(request: NextRequest) {
   const bonusRemaining = await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
 
   if (data.mode === 'trial' && !trial.allowed && bonusRemaining <= 0) {
+    log('locked_trial')
     await recordRun({ status: 'locked', lockCode: 'locked_trial', meteringMode: 'trial', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_trial' })
     return jsonWithRequestId(
@@ -471,6 +512,7 @@ export async function POST(request: NextRequest) {
     bonusRemaining > 0 && data.mode !== 'trial' ? 'bonus_run' : data.mode === 'trial' ? 'trial' : 'tokens'
 
   if (meteringMode === 'tokens' && tokenBalance < requiredTokens) {
+    log('locked_tokens_balance')
     await recordRun({ status: 'locked', lockCode: 'locked_tokens', meteringMode: 'tokens', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_tokens' })
     return jsonWithRequestId(
@@ -492,6 +534,7 @@ export async function POST(request: NextRequest) {
 
   const runner = runnerRegistry[data.toolId]
   if (!runner) {
+    log('runner_missing')
     await recordRun({ status: 'error', lockCode: 'tool_error', errorCode: 'TOOL_ERROR' })
     return jsonWithRequestId(
       {
@@ -507,6 +550,7 @@ export async function POST(request: NextRequest) {
   // ✅ NEW: DRY RUN SUPPORT
   // Return lock/validation/token status WITHOUT executing AI and WITHOUT charging tokens/usage.
   if (data.dryRun) {
+    log('dry_run')
     await recordRun({ status: 'ok', meteringMode: 'dry_run', tokensCharged: 0 })
 
     return jsonWithRequestId({
@@ -544,15 +588,18 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    log('runner_start', { meteringMode })
     const output = await runner(data, {
       user: { id: userId, planId: personalPlan },
       toolMeta: tool,
       usage: { aiTokensRemaining: tokenBalance },
       logger: { info: () => undefined, error: () => undefined },
     })
+    log('runner_finish', { meteringMode })
 
     const outputError = (output as any)?.output?.error
     if (outputError) {
+      log('ai_output_error', { code: outputError.errorCode || outputError.code })
       await recordRun({
         status: 'error',
         lockCode: 'tool_error',
@@ -671,6 +718,7 @@ export async function POST(request: NextRequest) {
     return jsonWithRequestId(response)
   } catch (err: any) {
     const normalized = isProviderError(err) ? err : normalizePrismaError(err)
+    log('provider_error', { code: normalized.code, message: normalized.message })
 
     await recordRun({ status: 'error', lockCode: 'tool_error', errorCode: normalized.code || 'PROVIDER_ERROR' })
 

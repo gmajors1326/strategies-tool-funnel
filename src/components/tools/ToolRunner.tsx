@@ -45,6 +45,7 @@ type RunResponse = {
   output?: any
   lock?: { code?: string; message?: string; resetsAtISO?: string; remainingTokens?: number }
   error?: string | { message?: string; code?: string; cta?: { label: string; href: string } }
+  requestId?: string
 }
 
 function safeJsonParse(s: string) {
@@ -273,6 +274,13 @@ export function ToolRunner(props: {
   const [tokensRemaining, setTokensRemaining] = React.useState<number | null>(null)
   const [tokensAllowance, setTokensAllowance] = React.useState<number | null>(null)
   const [tokensResetAt, setTokensResetAt] = React.useState<string | null>(null)
+  const isDev = process.env.NODE_ENV !== 'production'
+
+  function debugLog(message: string, meta?: Record<string, any>) {
+    if (!isDev) return
+    // eslint-disable-next-line no-console
+    console.info(`[tool-runner] ${message}`, meta ?? {})
+  }
 
   const canExport = Boolean(ui?.entitlements?.canExport)
   const canSeeHistory = Boolean(ui?.entitlements?.canSeeHistory)
@@ -554,7 +562,11 @@ export function ToolRunner(props: {
     setFieldErrors({})
     setSoftWarning(null)
 
-    validateInputs()
+    if (!validateInputs()) {
+      setMsg('Please fill the required fields to run this tool.')
+      setBusy(false)
+      return
+    }
     const missing = missingCriticalFields()
     if (missing.length) {
       setSoftWarning(`Results may be weak without ${missing.join(', ')}.`)
@@ -567,13 +579,31 @@ export function ToolRunner(props: {
     }
 
     try {
+      debugLog('request_start', { toolId, payloadKeys: Object.keys(input || {}) })
       const res = await fetch('/api/tools/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ toolId, mode: 'paid', input }),
       })
 
-      const data = (await res.json()) as RunResponse
+      const data = (await res.json().catch(() => null)) as RunResponse | null
+      const requestId = res.headers.get('x-request-id') || data?.requestId
+      debugLog('request_end', {
+        toolId,
+        status: res.status,
+        ok: res.ok,
+        errorCode: typeof data?.error === 'string' ? undefined : data?.error?.code,
+        lockCode: data?.lock?.code,
+        requestId,
+      })
+      if (!data) {
+        setResult({
+          status: 'error',
+          error: { message: 'Run failed. Invalid response from server.' },
+        })
+        if (requestId) setMsg(`Request ID: ${requestId}`)
+        return
+      }
 
       if (!res.ok || data?.status === 'locked' || data?.status === 'error') {
         const mapped = mapRunLockToReason(data.lock)
@@ -588,7 +618,11 @@ export function ToolRunner(props: {
         setResult({
           status: 'error',
           error: { message, code: errorCode, cta: errorState.cta },
+          requestId,
         })
+        if (res.status === 401) {
+          router.push(`/verify?next=/tools/${toolSlug}`)
+        }
         return
       }
 
@@ -1341,6 +1375,9 @@ export function ToolRunner(props: {
               <div className="font-medium">
                 {typeof result.error === 'string' ? result.error : result.error?.message}
               </div>
+              {result?.requestId ? (
+                <div className="mt-1 text-xs text-[hsl(var(--muted))]">Request ID: {result.requestId}</div>
+              ) : null}
               {'cta' in (result.error as any) && (result.error as any)?.cta?.href ? (
                 <div className="mt-2">
                   <Link href={(result.error as any).cta.href}>
