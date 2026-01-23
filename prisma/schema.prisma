@@ -209,11 +209,74 @@ model TokenLedger {
   tool_id      String?
   run_id       String?
   reason       String?
+  stripe_payment_intent_id String? @unique
   created_at   DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([run_id])
   @@index([user_id, created_at(sort: Desc)], map: "TokenLedger_user_created_idx")
   @@index([user_id, event_type, created_at(sort: Desc)], map: "TokenLedger_user_event_created_idx")
+}
+
+model BillingCustomer {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  stripeCustomerId String   @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model BillingSubscription {
+  id                    String   @id @default(cuid())
+  userId                String
+  stripeSubscriptionId  String   @unique
+  stripePriceId         String
+  status                String
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model BillingEvent {
+  id            String   @id @default(cuid())
+  stripeEventId String   @unique
+  type          String
+  payloadJson   Json
+  receivedAt    DateTime @default(now())
+
+  @@index([type])
+  @@index([receivedAt])
+}
+
+model ProductEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  eventName String
+  metaJson  Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([eventName])
+  @@index([userId])
+}
+
+model Purchase {
+  id                      String   @id @default(cuid())
+  userId                  String
+  sku                     String
+  stripeCheckoutSessionId String   @unique
+  stripePaymentIntentId   String?  @unique
+  status                  String
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }
 
 model DailyUsage {
@@ -348,6 +411,9 @@ model ToolRunLog {
   status        String
   lockCode      String?
   durationMs    Int?
+  inputSummary  String?
+  outputSummary String?
+  errorCode     String?
   createdAt     DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([orgId, createdAt], map: "ToolRunLog_org_created_idx")

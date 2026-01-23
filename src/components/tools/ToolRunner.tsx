@@ -1,11 +1,16 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import type { ToolMeta, PlanId } from '@/src/lib/tools/registry'
+import type { LockReason } from '@/src/lib/locks/lockTypes'
+import { computeToolLock } from '@/src/lib/locks/lockCompute'
+import { LockBanner } from '@/src/components/locks/LockBanner'
 
 type ToolField = {
   key: string
@@ -29,7 +34,7 @@ type UiConfig = {
 type RunResponse = {
   status?: 'ok' | 'locked' | 'error'
   output?: any
-  lock?: { message?: string }
+  lock?: { code?: string; message?: string; resetsAtISO?: string; remainingTokens?: number }
   error?: string | { message?: string }
 }
 
@@ -65,12 +70,13 @@ export function ToolRunner(props: {
   toolId: string
   toolSlug: string
   toolName: string
+  toolMeta: ToolMeta
   fields: ToolField[]
   access?: 'unlocked' | 'locked_tokens' | 'locked_time' | 'locked_plan'
   tokensCost?: number
   ui?: UiConfig | null
 }) {
-  const { toolId, toolSlug, toolName, fields, access, tokensCost, ui } = props
+  const { toolId, toolSlug, toolName, toolMeta, fields, access, tokensCost, ui } = props
 
   const [input, setInput] = React.useState<Record<string, any>>({})
   const [busy, setBusy] = React.useState(false)
@@ -78,13 +84,97 @@ export function ToolRunner(props: {
   const [history, setHistory] = React.useState<any[]>([])
   const [copied, setCopied] = React.useState<string | null>(null)
   const [msg, setMsg] = React.useState<string | null>(null)
+  const [lockReason, setLockReason] = React.useState<LockReason>({ type: 'none' })
+  const [tokensRemaining, setTokensRemaining] = React.useState<number | null>(null)
+  const [tokensAllowance, setTokensAllowance] = React.useState<number | null>(null)
+  const [tokensResetAt, setTokensResetAt] = React.useState<string | null>(null)
 
   const canExport = Boolean(ui?.entitlements?.canExport)
   const canSeeHistory = Boolean(ui?.entitlements?.canSeeHistory)
   const canSaveToVault = Boolean(ui?.entitlements?.canSaveToVault)
   const canExportTemplates = Boolean(ui?.entitlements?.canExportTemplates)
 
-  const isLocked = access === 'locked_tokens' || access === 'locked_time' || access === 'locked_plan'
+  const isLocked =
+    access === 'locked_tokens' || access === 'locked_time' || access === 'locked_plan' || lockReason.type !== 'none'
+
+  function mapRunLockToReason(lock: RunResponse['lock']): LockReason | null {
+    if (!lock?.code) return null
+    if (lock.code === 'locked_tokens') {
+      return {
+        type: 'tokens',
+        tokensRemaining: lock.remainingTokens ?? 0,
+        resetAt: lock.resetsAtISO || '',
+      }
+    }
+    if (lock.code === 'locked_plan' || lock.code === 'locked_role') {
+      return { type: 'plan', requiredPlanId: 'pro_monthly' }
+    }
+    if (lock.code === 'locked_usage_daily' || lock.code === 'locked_tool_daily') {
+      return { type: 'cooldown', availableAt: lock.resetsAtISO || '' }
+    }
+    return null
+  }
+
+  React.useEffect(() => {
+    let active = true
+    async function loadLock() {
+      try {
+        const res = await fetch('/api/me/ui-config', { cache: 'no-store' })
+        if (!res.ok) return
+        const uiConfig = await res.json()
+        if (!active) return
+        setTokensRemaining(Number(uiConfig?.usage?.tokensRemaining ?? 0))
+        setTokensAllowance(Number(uiConfig?.usage?.aiTokenCap ?? 0))
+        setTokensResetAt(uiConfig?.usage?.resetsAtISO ?? null)
+        const planId = uiConfig?.user?.planId as PlanId
+        const usage = uiConfig?.usage || {}
+        const lock = computeToolLock({
+          toolMeta,
+          userPlanId: planId,
+          usage: {
+            tokensRemaining: Number(usage.tokensRemaining ?? 0),
+            resetAt: usage.resetsAtISO,
+            runsUsed: Number(usage.dailyRunsUsed ?? 0),
+            runsCap: Number(usage.dailyRunCap ?? 0),
+            perToolRunsUsed: usage.perToolRunsUsed ?? {},
+            toolRunsCap: toolMeta.dailyRunsByPlan?.[planId] ?? 0,
+          },
+        })
+        setLockReason(lock)
+      } catch {
+        // ignore
+      }
+    }
+    loadLock()
+    return () => {
+      active = false
+    }
+  }, [toolMeta])
+
+  const lowTokenThreshold = React.useMemo(() => {
+    if (!tokensAllowance) return 0
+    return Math.max(200, Math.floor(tokensAllowance * 0.1))
+  }, [tokensAllowance])
+
+  const showLowTokens =
+    tokensRemaining !== null &&
+    tokensAllowance !== null &&
+    tokensAllowance > 0 &&
+    tokensRemaining <= lowTokenThreshold
+
+  const hasLoggedLowTokens = React.useRef(false)
+  React.useEffect(() => {
+    if (!showLowTokens || hasLoggedLowTokens.current) return
+    hasLoggedLowTokens.current = true
+    void fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: 'token_low_banner_shown',
+        meta: { toolId, remaining: tokensRemaining, allowance: tokensAllowance },
+      }),
+    })
+  }, [showLowTokens, toolId, tokensRemaining, tokensAllowance])
 
   async function loadHistory() {
     if (canSeeHistory) {
@@ -110,6 +200,12 @@ export function ToolRunner(props: {
     setResult(null)
     setMsg(null)
 
+    if (lockReason.type !== 'none') {
+      setMsg('This tool is temporarily unavailable. Review the lock details above.')
+      setBusy(false)
+      return
+    }
+
     try {
       const res = await fetch('/api/tools/run', {
         method: 'POST',
@@ -120,6 +216,8 @@ export function ToolRunner(props: {
       const data = (await res.json()) as RunResponse
 
       if (!res.ok || data?.status === 'locked' || data?.status === 'error') {
+        const mapped = mapRunLockToReason(data.lock)
+        if (mapped) setLockReason(mapped)
         const errorValue = data?.error
         const message =
           data?.lock?.message ||
@@ -210,6 +308,252 @@ export function ToolRunner(props: {
     setTimeout(() => setMsg(null), 1200)
   }
 
+  function renderJsonFallback(output: any) {
+    return (
+      <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
+        {JSON.stringify(output ?? {}, null, 2)}
+      </pre>
+    )
+  }
+
+  function renderHookAnalyzer(output: any) {
+    const scores = output?.score || {}
+    const diagnosis = output?.diagnosis || {}
+    const rewrites = Array.isArray(output?.rewrites) ? output.rewrites : []
+    const beats = output?.['6secReelPlan']?.beats || []
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold">Scores</h3>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+            {['hook', 'clarity', 'curiosity', 'specificity'].map((key) => (
+              <div key={key} className="rounded-md border bg-muted/20 p-2">
+                <div className="text-muted-foreground">{key}</div>
+                <div className="text-sm font-semibold">{scores?.[key] ?? '—'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">Hook Type + Best For</h3>
+          <div className="mt-2 text-sm">
+            <div className="text-muted-foreground">Type</div>
+            <div className="font-medium">{output?.hookType ?? '—'}</div>
+            <div className="mt-2 text-muted-foreground">Best for</div>
+            <div className="flex flex-wrap gap-2">
+              {(output?.bestFor || []).map((item: string) => (
+                <span key={item} className="rounded-md border bg-muted/20 px-2 py-1 text-xs">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">Diagnosis</h3>
+          <div className="mt-2 space-y-2 text-sm">
+            <div>
+              <div className="text-muted-foreground">What works</div>
+              <ul className="list-disc pl-5">
+                {(diagnosis?.whatWorks || []).map((item: string, idx: number) => (
+                  <li key={`works-${idx}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="text-muted-foreground">What hurts</div>
+              <ul className="list-disc pl-5">
+                {(diagnosis?.whatHurts || []).map((item: string, idx: number) => (
+                  <li key={`hurts-${idx}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="text-muted-foreground">
+              Retention risk: <span className="text-foreground">{diagnosis?.retentionRisk ?? '—'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">Rewrites</h3>
+          <div className="mt-2 space-y-2 text-sm">
+            {rewrites.map((item: any, idx: number) => (
+              <div key={`rewrite-${idx}`} className="rounded-md border bg-muted/20 p-2">
+                <div className="text-xs text-muted-foreground">{item?.style ?? 'style'}</div>
+                <div className="text-sm">{item?.hook ?? '—'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">6-sec Reel Plan</h3>
+          <div className="mt-2 space-y-2 text-sm">
+            <div className="rounded-md border bg-muted/20 p-2">
+              <div className="text-xs text-muted-foreground">Opening frame</div>
+              <div>{output?.['6secReelPlan']?.openingFrameText ?? '—'}</div>
+            </div>
+            <div className="space-y-2">
+              {beats.map((beat: any, idx: number) => (
+                <div key={`beat-${idx}`} className="rounded-md border bg-muted/20 p-2 text-xs">
+                  <div className="text-muted-foreground">{beat?.t ?? 'time'}</div>
+                  <div>On-screen: {beat?.onScreen ?? '—'}</div>
+                  <div>Voice: {beat?.voice ?? '—'}</div>
+                </div>
+              ))}
+            </div>
+            <div className="rounded-md border bg-muted/20 p-2">
+              <div className="text-xs text-muted-foreground">Loop ending</div>
+              <div>{output?.['6secReelPlan']?.loopEnding ?? '—'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">CTA + Avoid</h3>
+          <div className="mt-2 space-y-2 text-sm">
+            <div className="rounded-md border bg-muted/20 p-2">
+              <div className="text-xs text-muted-foreground">CTA</div>
+              <div className="font-medium">{output?.cta?.recommended ?? '—'}</div>
+              <div>{output?.cta?.line ?? '—'}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Avoid</div>
+              <ul className="list-disc pl-5">
+                {(output?.avoid || []).map((item: string, idx: number) => (
+                  <li key={`avoid-${idx}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  function renderAnalyticsSignalReader(output: any) {
+    const summary = output?.summary || {}
+    const signals = Array.isArray(output?.signals) ? output.signals : []
+    const fixes = Array.isArray(output?.prioritizedFixes) ? output.prioritizedFixes.slice(0, 5) : []
+    const plan = Array.isArray(output?.next7Days) ? output.next7Days : []
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-sm font-semibold">Summary</h3>
+          <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm">
+            <div className="text-xs text-muted-foreground">Primary issue</div>
+            <div className="font-medium">{summary?.primaryIssue ?? '—'}</div>
+            <div className="mt-2 text-xs text-muted-foreground">Diagnosis</div>
+            <div>{summary?.oneSentenceDiagnosis ?? '—'}</div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              Confidence: <span className="text-foreground">{summary?.confidence ?? '—'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">Signals</h3>
+          <ul className="mt-2 space-y-2 text-sm">
+            {signals.map((item: any, idx: number) => (
+              <li key={`signal-${idx}`} className="rounded-md border bg-muted/20 p-2">
+                <div className="text-xs text-muted-foreground">{item?.severity ?? '—'}</div>
+                <div className="font-medium">{item?.signal ?? '—'}</div>
+                <div className="text-xs text-muted-foreground">{item?.evidence ?? '—'}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">Prioritized Fixes</h3>
+          <div className="mt-2 space-y-2 text-sm">
+            {fixes.map((item: any, idx: number) => (
+              <div key={`fix-${idx}`} className="rounded-md border bg-muted/20 p-3">
+                <div className="font-medium">{item?.title ?? '—'}</div>
+                <div className="text-xs text-muted-foreground">{item?.why ?? '—'}</div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Impact: <span className="text-foreground">{item?.impact ?? '—'}</span> · Effort:{' '}
+                  <span className="text-foreground">{item?.effort ?? '—'}</span>
+                </div>
+                <ul className="mt-2 list-disc pl-5 text-xs">
+                  {(item?.how || []).map((step: string, stepIdx: number) => (
+                    <li key={`fix-${idx}-step-${stepIdx}`}>{step}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">Next 7 Days</h3>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {plan.map((item: any, idx: number) => (
+              <div key={`day-${idx}`} className="rounded-md border bg-muted/20 p-3 text-xs">
+                <div className="text-muted-foreground">Day {item?.day ?? idx + 1}</div>
+                <div className="font-medium">{item?.reelIdea ?? '—'}</div>
+                <div className="text-muted-foreground">Hook: {item?.hook ?? '—'}</div>
+                <ul className="mt-1 list-disc pl-4">
+                  {(item?.shotPlan || []).map((step: string, stepIdx: number) => (
+                    <li key={`day-${idx}-shot-${stepIdx}`}>{step}</li>
+                  ))}
+                </ul>
+                <div className="mt-1 text-muted-foreground">CTA: {item?.cta ?? '—'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">Stop Doing</h3>
+          <ul className="mt-2 list-disc pl-5 text-sm">
+            {(output?.stopDoing || []).map((item: string, idx: number) => (
+              <li key={`stop-${idx}`}>{item}</li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold">Experiment</h3>
+          <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm">
+            <div className="font-medium">{output?.experiment?.name ?? '—'}</div>
+            <div className="text-xs text-muted-foreground">{output?.experiment?.hypothesis ?? '—'}</div>
+            <ul className="mt-2 list-disc pl-5 text-xs">
+              {(output?.experiment?.steps || []).map((step: string, idx: number) => (
+                <li key={`exp-${idx}`}>{step}</li>
+              ))}
+            </ul>
+            <div className="mt-2 text-xs text-muted-foreground">
+              Success metric: <span className="text-foreground">{output?.experiment?.successMetric ?? '—'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  function renderOutput() {
+    if (!result?.output) return null
+    if (typeof result.output === 'string') {
+      return (
+        <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
+          {result.output}
+        </pre>
+      )
+    }
+    if (toolId === 'hook-analyzer') {
+      return renderHookAnalyzer(result.output)
+    }
+    if (toolId === 'analytics-signal-reader') {
+      return renderAnalyticsSignalReader(result.output)
+    }
+    return renderJsonFallback(result.output)
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <Card className="lg:col-span-1">
@@ -217,6 +561,33 @@ export function ToolRunner(props: {
           <CardTitle className="text-base">Run {toolName}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {lockReason.type !== 'none' ? (
+            <LockBanner
+              lock={lockReason}
+              context="tool"
+              showChips={lockReason.type === 'multi'}
+              showUpgradeCta={Boolean(toolMeta.planEntitlements?.pro_monthly)}
+            />
+          ) : null}
+          {showLowTokens ? (
+            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
+              <div className="font-semibold">Running low on tokens</div>
+              <p className="text-xs text-[hsl(var(--muted))]">
+                Buy a pack to keep going, or wait for the daily reset at{' '}
+                {tokensResetAt ? new Date(tokensResetAt).toLocaleString() : 'soon'}.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Link href="/pricing?tab=tokens&reason=tokens">
+                  <Button className="h-8 px-3 text-xs">Buy tokens</Button>
+                </Link>
+                <Link href="/account/usage">
+                  <Button variant="outline" className="h-8 px-3 text-xs">
+                    See usage
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : null}
           {fields.length ? (
             fields.map((f) => (
               <div key={f.key} className="space-y-1.5">
@@ -317,7 +688,7 @@ export function ToolRunner(props: {
                     : JSON.stringify(result?.output ?? {}, null, 2)
                 )
               }
-              title={canExport ? 'Download output' : 'Export is a paid perk'}
+              title={canExport ? 'Download output' : 'Available on Pro'}
             >
               Export
             </Button>
@@ -327,7 +698,7 @@ export function ToolRunner(props: {
               size="sm"
               disabled={!result?.output || !canSaveToVault}
               onClick={saveToVault}
-              title={canSaveToVault ? 'Save this run' : 'Vault is a paid perk'}
+              title={canSaveToVault ? 'Save this run' : 'Available on Pro'}
             >
               Save to Vault
             </Button>
@@ -337,7 +708,7 @@ export function ToolRunner(props: {
               size="sm"
               disabled={!result?.output || !canExportTemplates}
               onClick={() => exportTemplate('template')}
-              title={canExportTemplates ? 'Export template' : 'Templates are a paid perk'}
+              title={canExportTemplates ? 'Export template' : 'Available on Pro'}
             >
               Template
             </Button>
@@ -347,7 +718,7 @@ export function ToolRunner(props: {
               size="sm"
               disabled={!result?.output || !canExportTemplates}
               onClick={() => exportTemplate('checklist')}
-              title={canExportTemplates ? 'Export checklist' : 'Checklists are a paid perk'}
+              title={canExportTemplates ? 'Export checklist' : 'Available on Pro'}
             >
               Checklist
             </Button>
@@ -355,6 +726,11 @@ export function ToolRunner(props: {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {!canExport || !canSaveToVault || !canExportTemplates ? (
+            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-xs text-[hsl(var(--muted))]">
+              Pro unlocks exports and saved templates.
+            </div>
+          ) : null}
           {!canExport ? (
             <div className="rounded-md border p-3 text-xs text-muted-foreground">
               Export is locked (paid perk). Copy JSON is still available.
@@ -366,9 +742,7 @@ export function ToolRunner(props: {
               {typeof result.error === 'string' ? result.error : result.error?.message}
             </div>
           ) : result?.output ? (
-            <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
-              {typeof result.output === 'string' ? result.output : JSON.stringify(result.output, null, 2)}
-            </pre>
+            renderOutput()
           ) : (
             <div className="rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">
               Run the tool to see output here.

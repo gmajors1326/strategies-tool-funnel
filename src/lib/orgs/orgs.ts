@@ -97,6 +97,9 @@ export const logToolRun = async (params: {
   status: string
   lockCode?: string | null
   durationMs?: number | null
+  inputSummary?: string | null
+  outputSummary?: string | null
+  errorCode?: string | null
 }) => {
   try {
     return prisma.toolRunLog.create({
@@ -110,6 +113,9 @@ export const logToolRun = async (params: {
         status: params.status,
         lockCode: params.lockCode || null,
         durationMs: params.durationMs || null,
+        inputSummary: params.inputSummary || null,
+        outputSummary: params.outputSummary || null,
+        errorCode: params.errorCode || null,
       },
     })
   } catch (err) {

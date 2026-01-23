@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { fetchUiConfig } from '@/src/lib/mock/fetchUiConfig'
 import { Button } from '@/components/app/Button'
 
@@ -16,7 +17,12 @@ export default async function AccountPage() {
       <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
         <p className="text-sm">Email: {uiConfig.user.email}</p>
         <p className="text-sm">Plan: {uiConfig.user.planId}</p>
-        <Button>Manage Profile</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button>Manage Profile</Button>
+          <Button variant="outline" asChild>
+            <Link href="/account/usage">Usage</Link>
+          </Button>
+        </div>
       </div>
     </section>
   )

@@ -4,6 +4,7 @@ import type { ToolMeta } from '@/src/lib/tools/registry'
 import { pickModel } from '@/src/lib/ai/openaiClient'
 import { EXPECTED_TOOL_IDS } from '@/src/lib/tools/registry'
 import { runAIJson } from '@/src/lib/ai/openai'
+import { normalizeToolOutput } from '@/src/lib/ai/normalizeOutput'
 
 export type RunContext = {
   user: { id: string; planId: 'free' | 'pro_monthly' | 'team' | 'lifetime' }
@@ -220,9 +221,12 @@ const TOOL_SPECS: Record<string, ToolSpec> = {
     aiLevel: 'light',
     schema: HookAnalyzerSchema,
     buildMessages: (req) => {
-      const hook = String(req.input.hook ?? '').trim()
+      const hook = String(req.input.hookText ?? req.input.hook ?? req.input.topic ?? '').trim()
       const audience = String(req.input.audience ?? '').trim()
-      const format = String(req.input.format ?? 'reel').trim()
+      const format = String(req.input.format ?? 'spoken').trim()
+      const platform = String(req.input.platform ?? 'instagram_reels').trim()
+      const tone = String(req.input.tone ?? 'calm_confident').trim()
+      const goal = String(req.input.goal ?? 'watch_time').trim()
       return [
         {
           role: 'system',
@@ -231,7 +235,7 @@ const TOOL_SPECS: Record<string, ToolSpec> = {
         },
         {
           role: 'user',
-          content: `Analyze and improve this hook.\n\nFORMAT:\n${format}\n\nAUDIENCE:\n${audience || '(unspecified)'}\n\nHOOK:\n${hook || '(missing hook)'}\n\nReturn: hookScore, hookType, strongerHooks, notes.`,
+          content: `Analyze and improve this hook.\n\nPLATFORM:\n${platform}\n\nFORMAT:\n${format}\n\nTONE:\n${tone}\n\nGOAL:\n${goal}\n\nAUDIENCE:\n${audience || '(unspecified)'}\n\nHOOK:\n${hook || '(missing hook)'}\n\nReturn: hookScore, hookType, strongerHooks, notes.`,
         },
       ]
     },
@@ -243,13 +247,16 @@ const TOOL_SPECS: Record<string, ToolSpec> = {
     schema: CtaMatchAnalyzerSchema,
     buildMessages: (req) => {
       const summary = String(req.input.contentSummary ?? '').trim()
-      const cta = String(req.input.cta ?? '').trim()
+      const cta = String(req.input.ctaText ?? req.input.cta ?? '').trim()
       const offerType = String(req.input.offerType ?? '').trim()
+      const platform = String(req.input.platform ?? 'instagram_reels').trim()
+      const contentType = String(req.input.contentType ?? 'reel').trim()
+      const desiredAction = String(req.input.desiredAction ?? '').trim()
       return [
         { role: 'system', content: 'You are a conversion strategist. Output JSON matching schema only.' },
         {
           role: 'user',
-          content: `Score CTA-to-content match.\n\nCONTENT SUMMARY:\n${summary || '(missing)'}\n\nOFFER TYPE:\n${offerType || '(missing)'}\n\nCTA:\n${cta || '(missing)'}\n\nReturn: matchScore, mismatchReasons, improvedCtas.`,
+          content: `Score CTA-to-content match.\n\nPLATFORM:\n${platform}\n\nCONTENT TYPE:\n${contentType}\n\nDESIRED ACTION:\n${desiredAction || '(missing)'}\n\nCONTENT SUMMARY:\n${summary || '(missing)'}\n\nOFFER TYPE:\n${offerType || '(missing)'}\n\nCTA:\n${cta || '(missing)'}\n\nReturn: matchScore, mismatchReasons, improvedCtas.`,
         },
       ]
     },
@@ -569,6 +576,77 @@ const TOOL_SPECS: Record<string, ToolSpec> = {
       ]
     },
   },
+
+  // 21) content-angle-generator
+  'content-angle-generator': {
+    aiLevel: 'light',
+    schema: z.object({}),
+    buildMessages: (req) => {
+      const platform = String(req.input.platform ?? 'instagram_reels').trim()
+      const topic = String(req.input.topic ?? '').trim()
+      const audience = String(req.input.audience ?? '').trim()
+      const voice = String(req.input.voice ?? '').trim()
+      const constraints = Array.isArray(req.input.constraints) ? req.input.constraints : []
+      const outputCount = String(req.input.outputCount ?? '10').trim()
+      return [
+        { role: 'system', content: 'You generate distinct content angles. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Generate scroll-stopping angles.\n\nPLATFORM:\n${platform}\n\nTOPIC:\n${topic || '(missing)'}\n\nAUDIENCE:\n${audience || '(missing)'}\n\nVOICE:\n${voice || '(none)'}\n\nCONSTRAINTS:\n${constraints.length ? constraints.join(', ') : '(none)'}\n\nCOUNT:\n${outputCount}\n\nReturn: angles (list), notes.`,
+        },
+      ]
+    },
+  },
+
+  // 22) caption-optimizer
+  'caption-optimizer': {
+    aiLevel: 'light',
+    schema: z.object({}),
+    buildMessages: (req) => {
+      const platform = String(req.input.platform ?? 'instagram_reels').trim()
+      const postType = String(req.input.postType ?? 'reel').trim()
+      const hook = String(req.input.hook ?? '').trim()
+      const rawCaption = String(req.input.rawCaption ?? '').trim()
+      const ctaGoal = String(req.input.ctaGoal ?? '').trim()
+      const style = String(req.input.style ?? '').trim()
+      const forbidden = String(req.input.forbidden ?? '').trim()
+      return [
+        { role: 'system', content: 'You optimize captions for clarity and conversion. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Optimize this caption.\n\nPLATFORM:\n${platform}\n\nPOST TYPE:\n${postType}\n\nHOOK (optional):\n${hook || '(none)'}\n\nCTA GOAL:\n${ctaGoal || '(missing)'}\n\nSTYLE:\n${style || '(none)'}\n\nAVOID:\n${forbidden || '(none)'}\n\nCAPTION:\n${rawCaption || '(missing)'}\n\nReturn: optimizedCaption, improvements, notes.`,
+        },
+      ]
+    },
+  },
+
+  // 23) engagement-diagnostic
+  'engagement-diagnostic': {
+    aiLevel: 'heavy',
+    schema: z.object({}),
+    buildMessages: (req) => {
+      const platform = String(req.input.platform ?? 'instagram_reels').trim()
+      const content = String(req.input.contentLinkOrTranscript ?? '').trim()
+      const goal = String(req.input.goal ?? '').trim()
+      const offer = String(req.input.offer ?? '').trim()
+      const audience = String(req.input.audience ?? '').trim()
+      const metrics = {
+        views: req.input.views,
+        avgWatchTimeSeconds: req.input.avgWatchTimeSeconds,
+        likes: req.input.likes,
+        comments: req.input.comments,
+        saves: req.input.saves,
+        followsFromPost: req.input.followsFromPost,
+      }
+      return [
+        { role: 'system', content: 'You diagnose engagement issues across hook, retention, positioning, and CTA. Output JSON only.' },
+        {
+          role: 'user',
+          content: `Diagnose this content.\n\nPLATFORM:\n${platform}\n\nGOAL:\n${goal || '(missing)'}\n\nOFFER:\n${offer || '(none)'}\n\nAUDIENCE:\n${audience || '(missing)'}\n\nCONTENT:\n${content || '(missing)'}\n\nMETRICS:\n${JSON.stringify(metrics)}\n\nReturn: diagnosis, topIssues, fixes, notes.`,
+        },
+      ]
+    },
+  },
 }
 
 function assertToolSpecsAligned() {
@@ -594,6 +672,9 @@ assertToolSpecsAligned()
 const TOOL_OUTPUT_FIELDS: Record<string, string[]> = {
   'hook-analyzer': ['hookScore', 'hookType', 'strongerHooks', 'notes'],
   'cta-match-analyzer': ['matchScore', 'mismatchReasons', 'improvedCtas'],
+  'content-angle-generator': ['angles', 'notes'],
+  'caption-optimizer': ['optimizedCaption', 'improvements', 'notes'],
+  'engagement-diagnostic': ['diagnosis', 'topIssues', 'fixes', 'notes'],
   'dm-intelligence-engine': [
     'leadScore',
     'intentSignals',
@@ -654,18 +735,20 @@ async function runToolWithAIJson(req: RunRequest, ctx: RunContext) {
   const system = [
     systemBase,
     '',
-    'Return ONLY valid JSON. No markdown or extra text.',
-    'JSON shape requirements:',
+    'Return ONLY valid JSON. No markdown. No backticks. No extra keys.',
+    'Gold-standard JSON output schema:',
     '{',
     '  "summary": { "headline": string, "keyInsight": string, "confidence": "low"|"medium"|"high" },',
     '  "recommendations": string[5-10],',
     '  "nextSteps": { "plan": string[3-7], "timeframe": string },',
     '  "stopDoing": string[3-7],',
-    '  "toolOutput": { ... }',
+    '  "toolOutput": { ... },',
+    '  "notes": string[]',
     '}',
     toolFields.length
       ? `toolOutput must include fields: ${toolFields.join(', ')}`
       : 'toolOutput can include any relevant structured fields for this tool.',
+    'If input is missing/weak, say so in summary.keyInsight and add notes; still provide best-effort guidance.',
   ]
     .filter(Boolean)
     .join('\n')
@@ -684,19 +767,7 @@ async function runToolWithAIJson(req: RunRequest, ctx: RunContext) {
   })
 
   if ('error' in result) {
-    return {
-      output: {
-        summary: {
-          headline: 'Analysis unavailable',
-          keyInsight: 'AI request failed.',
-          confidence: 'low',
-        },
-        recommendations: [],
-        nextSteps: { plan: ['Retry with complete inputs.'], timeframe: '7 days' },
-        stopDoing: [],
-        toolOutput: { error: result.error.message },
-      },
-    }
+    return { output: { error: result.error } }
   }
 
   return { output: result }
@@ -706,124 +777,535 @@ const analyticsSignalReaderRunner = async (req: RunRequest) => {
   const rawMetrics = String(req.input.last30 ?? '').trim()
   const priority = String(req.input.priority ?? 'watch_time').trim()
 
+  const missingNotes = [
+    'Paste last 10 posts metrics (views, avg watch time, completion rate).',
+    'Include follows gained, profile visits, saves, shares per post.',
+    'Add topic/format for each post (hook style, length, CTA).',
+  ]
+
+  if (!rawMetrics || rawMetrics.length < 40) {
+    return {
+      output: normalizeToolOutput('analytics-signal-reader', {
+        summary: {
+          primaryIssue: 'unknown',
+          confidence: 0.1,
+          oneSentenceDiagnosis: 'Insufficient input to diagnose performance.',
+        },
+        signals: [],
+        prioritizedFixes: [],
+        next7Days: [
+          { day: 1, reelIdea: 'Collect metrics', hook: 'Bring me your last 10 posts', shotPlan: ['Export insights'], cta: 'comment' },
+          { day: 2, reelIdea: 'Organize data', hook: 'Turn raw insights into a simple table', shotPlan: ['List posts by topic'], cta: 'comment' },
+          { day: 3, reelIdea: 'Baseline audit', hook: 'Spot your top 3 hooks', shotPlan: ['Rank by retention'], cta: 'save' },
+          { day: 4, reelIdea: 'Retention check', hook: 'Where do people drop off?', shotPlan: ['Mark drop-off timestamps'], cta: 'save' },
+          { day: 5, reelIdea: 'CTA audit', hook: 'Are your CTAs aligned?', shotPlan: ['Map CTA to goal'], cta: 'comment' },
+          { day: 6, reelIdea: 'Format audit', hook: 'Which format actually wins?', shotPlan: ['Compare lengths'], cta: 'save' },
+          { day: 7, reelIdea: 'Plan tests', hook: 'Pick 2 fixes to test', shotPlan: ['Draft next 2 reels'], cta: 'follow' },
+        ],
+        stopDoing: [],
+        experiment: {
+          name: 'Baseline data collection',
+          hypothesis: 'Clear metrics reveal the real bottleneck.',
+          steps: ['Export last 30 days insights', 'List top 10 posts with metrics', 'Add topic and hook notes'],
+          successMetric: 'Complete data for analysis',
+        },
+        notes: missingNotes,
+      }),
+    }
+  }
+
   const system = [
-    'You are an Instagram analytics expert.',
-    'Return ONLY valid JSON using the schema below.',
-    'If data is insufficient, set summary.confidence="low", explain missing data in summary.missingData,',
-    'and provide best-effort generic recommendations without guessing numbers.',
-    'No markdown, no extra text.',
+    'You are an Instagram growth analyst in 2026 (Reels-first, retention-obsessed).',
+    'You must output ONLY valid JSON matching the schema below.',
+    'No markdown, no extra keys, no backticks.',
     '',
     'Output schema:',
     '{',
     '  "summary": {',
-    '    "headline": string,',
-    '    "primaryIssue": string,',
-    '    "confidence": "low" | "medium" | "high",',
-    '    "missingData": string[]',
+    '    "primaryIssue": "reach|retention|conversion|positioning|consistency|unknown",',
+    '    "confidence": number (0.0-1.0),',
+    '    "oneSentenceDiagnosis": string',
     '  },',
-    '  "signals": [{',
-    '    "name": string,',
-    '    "evidence": string,',
-    '    "impact": "low" | "medium" | "high",',
-    '    "severity": "low" | "medium" | "high"',
-    '  }],',
-    '  "prioritizedFixes": [{',
-    '    "action": string,',
-    '    "reason": string,',
-    '    "expectedImpact": "low" | "medium" | "high",',
-    '    "effort": "low" | "medium" | "high",',
-    '    "timeframe": string',
-    '  }],',
-    '  "next7Days": [{',
-    '    "day": string,',
-    '    "focus": string,',
-    '    "tasks": string[]',
-    '  }],',
-    '  "stopDoing": [{',
-    '    "action": string,',
-    '    "why": string',
-    '  }],',
-    '  "experiment": {',
-    '    "hypothesis": string,',
-    '    "test": string,',
-    '    "successMetric": string,',
-    '    "duration": string,',
-    '    "risk": string,',
-    '    "fallback": string',
-    '  },',
+    '  "signals": [',
+    '    { "signal": string, "evidence": string, "severity": "low|med|high" }',
+    '  ],',
+    '  "prioritizedFixes": [',
+    '    { "title": string, "why": string, "how": string[], "impact": "low|med|high", "effort": "low|med|high" }',
+    '  ],',
+    '  "next7Days": [',
+    '    { "day": 1-7, "reelIdea": string, "hook": string, "shotPlan": string[], "cta": "save|follow|dm|comment" }',
+    '  ],',
+    '  "stopDoing": string[],',
+    '  "experiment": { "name": string, "hypothesis": string, "steps": string[], "successMetric": string },',
     '  "notes": string[]',
     '}',
-    '',
-    'Requirements:',
-    '- prioritizedFixes must be 5-10 items.',
-    '- stopDoing must be 3-7 items.',
-    '- next7Days must include 7 items (Day 1..Day 7).',
-    '- Keep summary concise.',
   ].join('\n')
 
   const user = [
-    `Priority: ${priority || 'watch_time'}`,
-    'Metrics (last 30 days, messy paste allowed):',
-    rawMetrics || '(missing)',
+    `Priority focus: ${priority || 'watch_time'}`,
+    'Metrics/notes (messy paste allowed):',
+    rawMetrics,
     '',
-    'Task: Analyze signals, diagnose issues, and produce actionable fixes.',
-    'If missing metrics, explain what is missing and proceed with best-effort guidance.',
+    'Analyze signals, diagnose issues, and produce actionable fixes.',
+    'If something is missing, mention it in notes and proceed with best-effort.',
   ].join('\n')
 
   const result = await runAIJson({
     system,
     user,
-    temperature: 0.2,
+    temperature: 0.25,
     model: pickModel('heavy'),
   })
 
   if ('error' in result) {
+    return { output: { error: result.error } }
+  }
+
+  return { output: normalizeToolOutput('analytics-signal-reader', result) }
+}
+
+const hookAnalyzerRunner = async (req: RunRequest) => {
+  const hookText = String(req.input.hookText ?? req.input.hook ?? req.input.topic ?? '').trim()
+
+  if (!hookText) {
     return {
-      output: {
-        summary: {
-          headline: 'Analysis unavailable',
-          primaryIssue: 'AI request failed',
-          confidence: 'low',
-          missingData: ['metrics'],
+      output: normalizeToolOutput('hook-analyzer', {
+        score: { hook: 10, clarity: 10, curiosity: 10, specificity: 10 },
+        hookType: 'other',
+        bestFor: ['awareness'],
+        diagnosis: {
+          whatWorks: [],
+          whatHurts: ['No hook text provided.'],
+          retentionRisk: 'high',
         },
-        signals: [],
-        prioritizedFixes: [],
-        next7Days: [
-          { day: 'Day 1', focus: 'Retry analysis', tasks: ['Paste metrics again and retry.'] },
-          { day: 'Day 2', focus: 'Collect data', tasks: ['Export last 30 days insights.'] },
-          { day: 'Day 3', focus: 'Baseline', tasks: ['List top posts and key metrics.'] },
-          { day: 'Day 4', focus: 'Hooks', tasks: ['Review opening 3 seconds of top posts.'] },
-          { day: 'Day 5', focus: 'CTAs', tasks: ['Audit CTAs and outcomes.'] },
-          { day: 'Day 6', focus: 'Format', tasks: ['Compare formats and retention.'] },
-          { day: 'Day 7', focus: 'Plan', tasks: ['Create a 7-day test plan.'] },
+        rewrites: [
+          { style: 'safer', hook: 'Add your hook text to get tailored rewrites.' },
+          { style: 'sharper', hook: 'Provide a specific hook to sharpen it.' },
+          { style: 'more_specific', hook: 'Share your hook so I can make it specific.' },
+          { style: 'contrarian', hook: 'Paste a hook to get a contrarian angle.' },
+          { style: 'curiosity_gap', hook: 'Paste a hook to build a curiosity gap.' },
+          { style: 'authority', hook: 'Paste a hook to add authority.' },
+          { style: 'short_5_words', hook: 'Paste a hook to compress to 5 words.' },
+          { style: 'question', hook: 'Paste a hook to turn into a question.' },
+          { style: 'numbers', hook: 'Paste a hook to add numbers.' },
+          { style: 'callout', hook: 'Paste a hook to add a direct callout.' },
         ],
-        stopDoing: [],
-        experiment: {
-          hypothesis: 'Improving hooks and CTAs will lift retention and saves.',
-          test: 'Test two hook variants across similar posts.',
-          successMetric: 'Retention + saves increase',
-          duration: '7 days',
-          risk: 'Low signal due to small sample size',
-          fallback: 'Use qualitative feedback from comments/DMs.',
+        '6secReelPlan': {
+          openingFrameText: 'Paste your hook text',
+          beats: [
+            { t: '0.0-1.5', onScreen: 'Paste your hook', voice: 'Paste your hook' },
+            { t: '1.5-3.5', onScreen: 'Add key pain', voice: 'Add key pain' },
+            { t: '3.5-5.5', onScreen: 'Add quick proof', voice: 'Add quick proof' },
+            { t: '5.5-6.0', onScreen: 'Add CTA', voice: 'Add CTA' },
+          ],
+          loopEnding: 'Tease the next step once hook is provided.',
         },
-        notes: [
-          'AI request failed.',
-          result.error.message,
-        ],
-      },
+        avoid: ['Leaving the hook field empty.'],
+        cta: { recommended: 'comment', line: 'Drop your hook so I can rewrite it.' },
+        notes: ['Provide a single-line hook or opening sentence to analyze.'],
+      }),
     }
   }
 
-  return { output: result }
+  const system = [
+    'You are a world-class hook editor for Instagram Reels in 2026.',
+    'Return ONLY valid JSON matching the schema below.',
+    'No markdown, no extra keys, no backticks.',
+    '',
+    'Output schema (exact keys):',
+    '{',
+    '  "score": { "hook": 0-100, "clarity": 0-100, "curiosity": 0-100, "specificity": 0-100 },',
+    '  "hookType": "contrarian|nobody_tells_you|before_after|simple_truth|story|how_to|list|warning|other",',
+    '  "bestFor": ["awareness","saves","comments","profile_taps","follows"],',
+    '  "diagnosis": {',
+    '    "whatWorks": string[],',
+    '    "whatHurts": string[],',
+    '    "retentionRisk": "low|med|high"',
+    '  },',
+    '  "rewrites": [',
+    '    { "style": "safer", "hook": string },',
+    '    { "style": "sharper", "hook": string },',
+    '    { "style": "more_specific", "hook": string },',
+    '    { "style": "contrarian", "hook": string },',
+    '    { "style": "curiosity_gap", "hook": string },',
+    '    { "style": "authority", "hook": string },',
+    '    { "style": "short_5_words", "hook": string },',
+    '    { "style": "question", "hook": string },',
+    '    { "style": "numbers", "hook": string },',
+    '    { "style": "callout", "hook": string }',
+    '  ],',
+    '  "6secReelPlan": {',
+    '    "openingFrameText": string,',
+    '    "beats": [',
+    '      { "t": "0.0-1.5", "onScreen": string, "voice": string },',
+    '      { "t": "1.5-3.5", "onScreen": string, "voice": string },',
+    '      { "t": "3.5-5.5", "onScreen": string, "voice": string },',
+    '      { "t": "5.5-6.0", "onScreen": string, "voice": string }',
+    '    ],',
+    '    "loopEnding": string',
+    '  },',
+    '  "avoid": string[],',
+    '  "cta": { "recommended": "save|follow|comment|dm", "line": string },',
+    '  "notes": string[]',
+    '}',
+  ].join('\n')
+
+  const user = [
+    'Hook text:',
+    hookText,
+    '',
+    'If the hook is vague, add notes about what to clarify.',
+  ].join('\n')
+
+  const result = await runAIJson({
+    system,
+    user,
+    temperature: 0.25,
+    model: pickModel('light'),
+  })
+
+  if ('error' in result) {
+    return { output: { error: result.error } }
+  }
+
+  return { output: normalizeToolOutput('hook-analyzer', result) }
+}
+
+const dmIntelligenceEngineRunner = async (req: RunRequest) => {
+  const leadMessage = String(req.input.leadMessage ?? '').trim()
+  const goal = String(req.input.goal ?? '').trim()
+  const tone = String(req.input.tone ?? 'calm').trim()
+  const offerOneLiner = String(req.input.offerOneLiner ?? '').trim()
+
+  if (!leadMessage) {
+    return {
+      output: normalizeToolOutput('dm-intelligence-engine', {
+        context: { leadType: 'unknown', intent: 'unknown' },
+        bestReply: {
+          message: 'Paste the lead message so I can draft a response.',
+          tone: 'calm',
+          length: 'short',
+        },
+        alternatives: [
+          { label: 'softer', message: 'Paste the lead message for a softer reply.' },
+          { label: 'firmer', message: 'Paste the lead message for a firmer reply.' },
+          { label: 'qualify', message: 'Paste the lead message to qualify them.' },
+        ],
+        nextQuestions: ['What did they say?', 'What is their goal?', 'What have they tried?'],
+        doNotSay: ['Generic pitches without context', 'Hard closes without qualification', 'Vague promises'],
+        followUpPlan: [
+          { when: 'same_day', message: 'Send the lead message so I can help.' },
+        ],
+      }),
+    }
+  }
+
+  const system = [
+    'You are a DM conversion strategist in 2026.',
+    'Return ONLY valid JSON matching the schema below.',
+    'No markdown, no extra keys, no backticks.',
+    '',
+    'Output schema:',
+    '{',
+    '  "context": { "leadType": "cold|warm|hot|unknown", "intent": "info|price|proof|objection|ready|unknown" },',
+    '  "bestReply": { "message": string, "tone": "calm|direct|friendly|professional", "length": "short|medium" },',
+    '  "alternatives": [',
+    '    { "label": "softer", "message": string },',
+    '    { "label": "firmer", "message": string },',
+    '    { "label": "qualify", "message": string }',
+    '  ],',
+    '  "nextQuestions": [string,string,string],',
+    '  "doNotSay": [string,string,string],',
+    '  "followUpPlan": [',
+    '    { "when": "same_day|24h|48h", "message": string }',
+    '  ]',
+    '}',
+  ].join('\n')
+
+  const user = [
+    `Goal: ${goal || '(missing)'}`,
+    `Tone: ${tone || 'calm'}`,
+    `Offer one-liner: ${offerOneLiner || '(missing)'}`,
+    '',
+    'Lead message:',
+    leadMessage,
+  ].join('\n')
+
+  const result = await runAIJson({
+    system,
+    user,
+    temperature: 0.3,
+    model: pickModel('heavy'),
+  })
+
+  if ('error' in result) {
+    return { output: { error: result.error } }
+  }
+
+  return { output: normalizeToolOutput('dm-intelligence-engine', result) }
+}
+
+const offerClarityCheckRunner = async (req: RunRequest) => {
+  const offer = String(req.input.offer ?? '').trim()
+  const audience = String(req.input.audience ?? '').trim()
+  const price = String(req.input.price ?? '').trim()
+
+  if (!offer) {
+    return {
+      output: normalizeToolOutput('offer-clarity-check', {
+        score: { clarity: 10, specificity: 10, believability: 10 },
+        diagnosis: {
+          confusingParts: ['Offer text is missing.'],
+          missingInfo: ['Who it is for', 'What they get', 'Timeframe/results'],
+          risk: 'high',
+        },
+        rewrites: [
+          { format: 'one_liner', text: 'Paste your offer so I can clarify it.' },
+          { format: 'two_lines', text: 'Paste your offer so I can rewrite it.' },
+          { format: 'bullet_offer', text: 'Paste your offer to structure it.' },
+        ],
+        proofToAdd: ['Specific outcomes', 'Timeframe', 'Proof/examples'],
+        pricingFrame: ['Anchor value vs price', 'Risk reversal'],
+        ctaOptions: ['Comment “details”', 'DM “offer”', 'Book a call'],
+      }),
+    }
+  }
+
+  const system = [
+    'You are a direct-response offer clarity strategist in 2026.',
+    'Return ONLY valid JSON matching the schema below.',
+    'No markdown, no extra keys, no backticks.',
+    '',
+    'Output schema:',
+    '{',
+    '  "score": { "clarity": 0-100, "specificity": 0-100, "believability": 0-100 },',
+    '  "diagnosis": { "confusingParts": string[], "missingInfo": string[], "risk": "low|med|high" },',
+    '  "rewrites": [',
+    '    { "format": "one_liner", "text": string },',
+    '    { "format": "two_lines", "text": string },',
+    '    { "format": "bullet_offer", "text": string }',
+    '  ],',
+    '  "proofToAdd": [string,string,string],',
+    '  "pricingFrame": [string,string],',
+    '  "ctaOptions": [string,string,string]',
+    '}',
+  ].join('\n')
+
+  const user = [
+    `Audience: ${audience || '(missing)'}`,
+    `Price: ${price || '(missing)'}`,
+    '',
+    'Offer:',
+    offer,
+  ].join('\n')
+
+  const result = await runAIJson({
+    system,
+    user,
+    temperature: 0.3,
+    model: pickModel('heavy'),
+  })
+
+  if ('error' in result) {
+    return { output: { error: result.error } }
+  }
+
+  return { output: normalizeToolOutput('offer-clarity-check', result) }
+}
+
+const reelScriptBuilderRunner = async (req: RunRequest) => {
+  const topic = String(req.input.topic ?? '').trim()
+  const angle = String(req.input.angle ?? '').trim()
+  const lengthSeconds = Number(req.input.lengthSeconds ?? 15)
+
+  if (!topic) {
+    return {
+      output: normalizeToolOutput('reel-script-builder', {
+        hookOptions: ['Paste a topic so I can generate hooks.'],
+        script: {
+          onScreen: ['Add a topic', 'Add a topic', 'Add a topic', 'Add a topic'],
+          voiceover: ['Add a topic', 'Add a topic', 'Add a topic', 'Add a topic'],
+        },
+        shotPlan: ['Provide a topic', 'Provide a topic', 'Provide a topic', 'Provide a topic'],
+        loopEnding: 'Paste a topic to craft a loop.',
+        caption: 'Paste a topic to draft a caption.',
+        cta: 'save',
+        hashtags: ['topic', 'niche', 'reels', 'creator', 'growth', 'content', 'marketing', 'tips', 'strategy', 'social'],
+      }),
+    }
+  }
+
+  const system = [
+    'You are a Reels scriptwriter in 2026 focused on retention.',
+    'Return ONLY valid JSON matching the schema below.',
+    'No markdown, no extra keys, no backticks.',
+    '',
+    'Output schema:',
+    '{',
+    '  "hookOptions": [string,string,string],',
+    '  "script": {',
+    '    "onScreen": [string,string,string,string],',
+    '    "voiceover": [string,string,string,string]',
+    '  },',
+    '  "shotPlan": [string,string,string,string],',
+    '  "loopEnding": string,',
+    '  "caption": string,',
+    '  "cta": "save|follow|comment|dm",',
+    '  "hashtags": [string,string,string,string,string,string,string,string,string,string]',
+    '}',
+  ].join('\n')
+
+  const user = [
+    `Topic: ${topic}`,
+    `Angle: ${angle || 'truth'}`,
+    `Length (seconds): ${Number.isFinite(lengthSeconds) ? lengthSeconds : 15}`,
+  ].join('\n')
+
+  const result = await runAIJson({
+    system,
+    user,
+    temperature: 0.3,
+    model: pickModel('heavy'),
+  })
+
+  if ('error' in result) {
+    return { output: { error: result.error } }
+  }
+
+  return { output: normalizeToolOutput('reel-script-builder', result) }
+}
+
+const TOOL_DESCRIPTIONS: Record<string, string> = {
+  'cta-match-analyzer': 'a CTA alignment auditor for short-form content',
+  'retention-leak-finder': 'a retention leak analyst for Reels scripts',
+  'positioning-knife': 'a positioning strategist who sharpens differentiation',
+  'content-repurpose-machine': 'a content repurposing strategist',
+  'comment-magnet': 'a comment-driving prompt strategist',
+  'profile-clarity-scan': 'a profile clarity auditor for Instagram',
+  'bio-to-cta': 'a bio-to-CTA conversion editor',
+  'carousel-blueprint': 'a carousel outline strategist',
+  'story-sequence-planner': 'an Instagram story sequence planner',
+  'hashtag-support-pack': 'a hashtag research assistant',
+  'competitor-lunch-money': 'a competitor gap analyst',
+  'audience-mirror': 'an audience research strategist',
+  'objection-crusher': 'an objection-handling copywriter',
+  'launch-plan-sprinter': 'a launch plan strategist',
+  'content-calendar-minimal': 'a minimalist content calendar strategist',
+}
+
+function formatInputForPrompt(input: Record<string, any>) {
+  return Object.entries(input)
+    .map(([key, value]) => {
+      if (value === null || value === undefined || value === '') return `${key}: (missing)`
+      if (typeof value === 'string') return `${key}: ${value}`
+      return `${key}: ${JSON.stringify(value)}`
+    })
+    .join('\n')
+}
+
+async function runStructuredToolRunner(toolId: string, req: RunRequest, ctx: RunContext) {
+  const description = TOOL_DESCRIPTIONS[toolId] || 'a strategy assistant'
+  const toolFields = TOOL_OUTPUT_FIELDS[toolId] ?? []
+  const model = pickModel(TOOL_SPECS[toolId]?.aiLevel === 'none' ? 'light' : TOOL_SPECS[toolId]?.aiLevel || 'heavy')
+
+  const system = [
+    `You are ${description}.`,
+    'Return ONLY valid JSON. No markdown, no extra keys, no backticks.',
+    'Output schema:',
+    '{',
+    '  "summary": "1-2 sentences",',
+    '  "recommendations": [5-10 actionable strings],',
+    '  "nextSteps": { "steps": string[] },',
+    '  "stopDoing": [3 strings],',
+    '  "experiment": { "name": string, "hypothesis": string, "steps": string[], "successMetric": string },',
+    '  "toolOutput": { ... }',
+    '}',
+    toolFields.length
+      ? `toolOutput must include fields: ${toolFields.join(', ')}`
+      : 'toolOutput can include any relevant structured fields for this tool.',
+    'If inputs are weak or missing, say so in summary and still provide best-effort guidance.',
+  ].join('\n')
+
+  const user = [
+    'Inputs (messy allowed):',
+    formatInputForPrompt(req.input ?? {}),
+  ].join('\n')
+
+  const result = await runAIJson({
+    system,
+    user,
+    temperature: 0.3,
+    model,
+  })
+
+  if ('error' in result) {
+    return { output: { error: result.error } }
+  }
+
+  return { output: normalizeToolOutput(toolId, result) }
+}
+
+const ctaMatchAnalyzerRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('cta-match-analyzer', req, ctx)
+const retentionLeakFinderRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('retention-leak-finder', req, ctx)
+const positioningKnifeRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('positioning-knife', req, ctx)
+const contentRepurposeMachineRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('content-repurpose-machine', req, ctx)
+const commentMagnetRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('comment-magnet', req, ctx)
+const profileClarityScanRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('profile-clarity-scan', req, ctx)
+const bioToCtaRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('bio-to-cta', req, ctx)
+const carouselBlueprintRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('carousel-blueprint', req, ctx)
+const storySequencePlannerRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('story-sequence-planner', req, ctx)
+const hashtagSupportPackRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('hashtag-support-pack', req, ctx)
+const competitorLunchMoneyRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('competitor-lunch-money', req, ctx)
+const audienceMirrorRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('audience-mirror', req, ctx)
+const objectionCrusherRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('objection-crusher', req, ctx)
+const launchPlanSprinterRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('launch-plan-sprinter', req, ctx)
+const contentCalendarMinimalRunner = (req: RunRequest, ctx: RunContext) =>
+  runStructuredToolRunner('content-calendar-minimal', req, ctx)
+
+const customRunners: Record<string, (req: RunRequest, ctx: RunContext) => Promise<{ output: any }>> = {
+  'analytics-signal-reader': analyticsSignalReaderRunner,
+  'hook-analyzer': hookAnalyzerRunner,
+  'dm-intelligence-engine': dmIntelligenceEngineRunner,
+  'offer-clarity-check': offerClarityCheckRunner,
+  'reel-script-builder': reelScriptBuilderRunner,
+  'cta-match-analyzer': ctaMatchAnalyzerRunner,
+  'retention-leak-finder': retentionLeakFinderRunner,
+  'positioning-knife': positioningKnifeRunner,
+  'content-repurpose-machine': contentRepurposeMachineRunner,
+  'comment-magnet': commentMagnetRunner,
+  'profile-clarity-scan': profileClarityScanRunner,
+  'bio-to-cta': bioToCtaRunner,
+  'carousel-blueprint': carouselBlueprintRunner,
+  'story-sequence-planner': storySequencePlannerRunner,
+  'hashtag-support-pack': hashtagSupportPackRunner,
+  'competitor-lunch-money': competitorLunchMoneyRunner,
+  'audience-mirror': audienceMirrorRunner,
+  'objection-crusher': objectionCrusherRunner,
+  'launch-plan-sprinter': launchPlanSprinterRunner,
+  'content-calendar-minimal': contentCalendarMinimalRunner,
 }
 
 export const runnerRegistry: Record<string, (req: RunRequest, ctx: RunContext) => Promise<{ output: any }>> =
   Object.fromEntries(
     EXPECTED_TOOL_IDS.map((toolId) => [
       toolId,
-      async (req: RunRequest, ctx: RunContext) =>
-        toolId === 'analytics-signal-reader'
-          ? analyticsSignalReaderRunner(req)
-          : runToolWithAIJson(req, ctx),
+      async (req: RunRequest, ctx: RunContext) => {
+        const runner = customRunners[toolId]
+        return runner ? runner(req, ctx) : runToolWithAIJson(req, ctx)
+      },
     ])
   )

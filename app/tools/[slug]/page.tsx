@@ -84,6 +84,7 @@ export default async function ToolPage({
         toolId={tool.id}
         toolSlug={tool.id}
         toolName={tool.name}
+        toolMeta={tool}
         fields={fields}
         tokensCost={tool.tokensPerRun}
       />

@@ -142,6 +142,11 @@ export default function AccountPage() {
                   </Button>
                 </div>
               )}
+              <div className="mt-4">
+                <Button asChild variant="outline">
+                  <Link href="/account/usage">View usage</Link>
+                </Button>
+              </div>
             </AppCardContent>
           </AppCard>
 

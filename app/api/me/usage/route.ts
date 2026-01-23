@@ -40,14 +40,27 @@ export async function GET() {
 
   const usage = await ensureUsageWindow(userId)
   const tokenBalance = await getTokenBalance(userId)
+  const safeBalance = Math.max(0, tokenBalance)
 
   return NextResponse.json({
+    user: { planId: personalPlan },
+    tokens: {
+      balance: safeBalance,
+      planDailyAllowance: planTokenCap,
+      nextResetAt: usage.resets_at.toISOString(),
+      spentToday: usage.ai_tokens_used,
+    },
+    actions: {
+      pricingUrl: '/pricing',
+      buyTokensUrl: '/pricing?tab=tokens&reason=tokens',
+      managePlanUrl: '/api/billing/portal',
+    },
     dailyRunsUsed: usage.runs_used,
     dailyRunCap: planRunCap,
     aiTokensUsed: usage.ai_tokens_used,
     aiTokenCap: planTokenCap,
-    tokensRemaining: tokenBalance,
-    purchasedTokensRemaining: tokenBalance,
+    tokensRemaining: safeBalance,
+    purchasedTokensRemaining: safeBalance,
     resetsAtISO: usage.resets_at.toISOString(),
     perToolRunsUsed: (usage.per_tool_runs_used as Record<string, number>) || {},
   })

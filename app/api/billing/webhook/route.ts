@@ -1,14 +1,109 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { getStripe } from '@/lib/stripe'
 import { prisma } from '@/src/lib/prisma'
-import { getTokenPackById, getTokenPackByPriceId } from '@/src/lib/billing/tokenPacks'
-import { getPlanByPriceId } from '@/src/lib/billing/planPrices'
-import { logAudit } from '@/src/lib/orgs/orgs'
+import { getStripe } from '@/src/lib/billing/stripe'
+import { getSkuByPriceId, getSku } from '@/src/lib/billing/skus'
 
 export const dynamic = 'force-dynamic'
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
+
+const ACTIVE_STATUSES = new Set(['active', 'trialing'])
+const INACTIVE_STATUSES = new Set(['canceled', 'unpaid', 'incomplete_expired'])
+
+async function resolveUserIdFromCustomer(customerId?: string | null) {
+  if (!customerId) return null
+  const record = await prisma.billingCustomer.findUnique({
+    where: { stripeCustomerId: customerId },
+  })
+  return record?.userId ?? null
+}
+
+async function upsertEntitlementPlan(userId: string, planId: string) {
+  await prisma.entitlement.upsert({
+    where: { user_id: userId },
+    update: { plan: planId },
+    create: { user_id: userId, plan: planId, resets_at: new Date() },
+  })
+  await prisma.adminAuditLog.create({
+    data: {
+      actorId: userId,
+      action: 'billing_plan_updated',
+      meta: { planId },
+    },
+  })
+}
+
+async function handleTokenPurchase(userId: string, skuId: string, paymentIntentId?: string | null) {
+  const sku = getSku(skuId)
+  if (!sku || !('tokensGranted' in sku)) return
+  try {
+    await prisma.tokenLedger.create({
+      data: {
+        user_id: userId,
+        event_type: 'purchase',
+        tokens_delta: sku.tokensGranted,
+        reason: 'purchase',
+        stripe_payment_intent_id: paymentIntentId || undefined,
+      },
+    })
+  } catch {
+    // idempotent: ignore duplicates
+  }
+}
+
+async function recordPurchase(userId: string, sku: string, sessionId: string, paymentIntentId?: string | null) {
+  await prisma.purchase.upsert({
+    where: { stripeCheckoutSessionId: sessionId },
+    update: {
+      sku,
+      stripePaymentIntentId: paymentIntentId || undefined,
+      status: paymentIntentId ? 'paid' : 'pending',
+    },
+    create: {
+      userId,
+      sku,
+      stripeCheckoutSessionId: sessionId,
+      stripePaymentIntentId: paymentIntentId || undefined,
+      status: paymentIntentId ? 'paid' : 'pending',
+    },
+  })
+}
+
+async function updateSubscriptionFromStripe(subscription: Stripe.Subscription) {
+  const priceId = subscription.items.data[0]?.price?.id
+  const sku = priceId ? getSkuByPriceId(priceId) : null
+  const userId = subscription.metadata?.userId || (await resolveUserIdFromCustomer(subscription.customer as string))
+  if (!userId || !sku || !('planId' in sku)) return
+
+  await prisma.billingSubscription.upsert({
+    where: { stripeSubscriptionId: subscription.id },
+    update: {
+      stripePriceId: priceId || '',
+      status: subscription.status,
+      currentPeriodEnd: subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000)
+        : null,
+      cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
+    },
+    create: {
+      userId,
+      stripeSubscriptionId: subscription.id,
+      stripePriceId: priceId || '',
+      status: subscription.status,
+      currentPeriodEnd: subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000)
+        : null,
+      cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
+    },
+  })
+
+  if (ACTIVE_STATUSES.has(subscription.status)) {
+    await upsertEntitlementPlan(userId, sku.planId)
+  } else if (INACTIVE_STATUSES.has(subscription.status)) {
+    await upsertEntitlementPlan(userId, 'free')
+  }
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -26,10 +121,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await prisma.stripeEvent.create({
+    await prisma.billingEvent.create({
       data: {
-        eventId: event.id,
+        stripeEventId: event.id,
         type: event.type,
+        payloadJson: event as any,
       },
     })
   } catch {
@@ -41,121 +137,80 @@ export async function POST(request: NextRequest) {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session
-      const purchaseType = session.metadata?.purchaseType
+      const skuId = session.metadata?.sku || ''
+      const userId = session.metadata?.userId || (await resolveUserIdFromCustomer(session.customer as string))
+      const paymentIntentId =
+        typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null
 
-      if (purchaseType === 'token_pack') {
-        const expanded = await stripe.checkout.sessions.retrieve(session.id, {
-          expand: ['line_items'],
-        })
-        const priceId = expanded.line_items?.data?.[0]?.price?.id
-        const pack = priceId ? getTokenPackByPriceId(priceId) : null
-        const userId = session.metadata?.userId
-
-        if (userId && pack) {
-          await prisma.tokenLedger.create({
-            data: {
-              user_id: userId,
-              event_type: 'purchase_pack',
-              tokens_delta: pack.tokensGranted,
-              tool_id: pack.packId,
-              reason: `stripe_session:${session.id}`,
-            },
-          })
-        }
+      if (userId && skuId) {
+        await recordPurchase(userId, skuId, session.id, paymentIntentId)
       }
+
+      if (session.mode === 'payment' && userId && skuId) {
+        await handleTokenPurchase(userId, skuId, paymentIntentId)
+      }
+    }
+
+    if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
+      await updateSubscriptionFromStripe(event.data.object as Stripe.Subscription)
+    }
+
+    if (event.type === 'customer.subscription.deleted') {
+      const subscription = event.data.object as Stripe.Subscription
+      await updateSubscriptionFromStripe(subscription)
     }
 
     if (event.type === 'invoice.payment_succeeded') {
       const invoice = event.data.object as Stripe.Invoice
       const subscriptionId = invoice.subscription as string | null
-      const subscription = subscriptionId
-        ? await stripe.subscriptions.retrieve(subscriptionId)
-        : null
-      const userId = subscription?.metadata?.userId || invoice.metadata?.userId
-      const planId = subscription?.metadata?.plan || invoice.metadata?.plan
-      const priceId = invoice.lines.data[0]?.price?.id
-      const plan = planId ? { planId } : priceId ? getPlanByPriceId(priceId) : null
-      const orgId = subscription?.metadata?.orgId || invoice.metadata?.orgId
-
-      if (userId && plan) {
-        const mappedPlan = plan.planId === 'business' ? 'team' : 'pro_monthly'
-        await prisma.entitlement.upsert({
-          where: { user_id: userId },
-          update: { plan: mappedPlan },
-          create: {
-            user_id: userId,
-            plan: mappedPlan,
-            resets_at: new Date(),
-          },
-        })
-      }
-
-      if (orgId && plan) {
-        await prisma.organization.update({
-          where: { id: orgId },
-          data: {
-            plan: plan.planId,
-            stripeSubscriptionId: subscriptionId || undefined,
-            stripeCustomerId: invoice.customer as string,
-          },
-        })
-        await logAudit({ orgId, action: 'billing_plan_changed', meta: { plan: plan.planId } })
+      if (subscriptionId) {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        await updateSubscriptionFromStripe(subscription)
       }
     }
 
-    if (event.type === 'customer.subscription.updated') {
-      const subscription = event.data.object as Stripe.Subscription
-      const orgId = subscription.metadata?.orgId
-      const plan = subscription.metadata?.plan
-      if (orgId && plan) {
-        await prisma.organization.update({
-          where: { id: orgId },
-          data: {
-            plan,
-            stripeSubscriptionId: subscription.id,
-            stripeCustomerId: subscription.customer as string,
-          },
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as Stripe.Invoice
+      const subscriptionId = invoice.subscription as string | null
+      if (subscriptionId) {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        await prisma.billingSubscription.update({
+          where: { stripeSubscriptionId: subscription.id },
+          data: { status: subscription.status },
         })
-        await logAudit({ orgId, action: 'billing_plan_changed', meta: { plan } })
       }
     }
 
-    if (event.type === 'customer.subscription.deleted') {
-      const subscription = event.data.object as Stripe.Subscription
-      const orgId = subscription.metadata?.orgId
-      if (orgId) {
-        await prisma.organization.update({
-          where: { id: orgId },
-          data: {
-            plan: 'business',
-            stripeSubscriptionId: null,
-          },
-        })
-        await logAudit({ orgId, action: 'billing_subscription_deleted', meta: { subId: subscription.id } })
-      }
-    }
-
-    if (event.type === 'charge.refunded' || event.type === 'charge.dispute.created') {
+    if (event.type === 'charge.refunded') {
       const charge = event.data.object as Stripe.Charge
-      const userId = charge.metadata?.userId
-      const packId = charge.metadata?.packId
-      const pack = packId ? getTokenPackById(packId) : null
-
-      if (userId && pack) {
-        await prisma.tokenLedger.create({
-          data: {
-            user_id: userId,
-            event_type: 'reversal',
-            tokens_delta: -pack.tokensGranted,
-            tool_id: pack.packId,
-            reason: `stripe_charge:${charge.id}`,
-          },
+      const paymentIntentId = charge.payment_intent as string | null
+      if (paymentIntentId) {
+        const purchase = await prisma.purchase.findUnique({
+          where: { stripePaymentIntentId: paymentIntentId },
         })
+        if (purchase) {
+          const sku = getSku(purchase.sku)
+          if (sku && 'tokensGranted' in sku) {
+            await prisma.tokenLedger.create({
+              data: {
+                user_id: purchase.userId,
+                event_type: 'refund',
+                tokens_delta: -sku.tokensGranted,
+                reason: 'refund',
+                stripe_payment_intent_id: paymentIntentId,
+              },
+            })
+          }
+          await prisma.purchase.update({
+            where: { stripePaymentIntentId: paymentIntentId },
+            data: { status: 'refunded' },
+          })
+        }
       }
     }
 
     return NextResponse.json({ received: true })
-  } catch {
+  } catch (error) {
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }

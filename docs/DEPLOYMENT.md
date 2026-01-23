@@ -107,6 +107,14 @@ Add all variables from `.env` to Vercel dashboard:
 - Verify `DATABASE_URL` format
 - Check Supabase connection settings
 - Ensure database is accessible from Vercel IPs
+- DNS failures mean the host cannot be resolved locally:
+  - Switch DNS to `1.1.1.1` or `8.8.8.8`, or use a hotspot
+  - Verify reachability:
+    - `Test-NetConnection <host> -Port 5432`
+    - Must show an IP and `TcpTestSucceeded True`
+  - Then rerun:
+    - `npx prisma migrate deploy` (prod)
+    - `npx prisma migrate dev` (local)
 
 ### Stripe Webhook Not Working
 - Verify webhook URL is correct

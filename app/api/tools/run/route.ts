@@ -76,11 +76,25 @@ export async function POST(request: NextRequest) {
 
   const runId = data.runId || crypto.randomUUID()
 
+  const summarizeValue = (value: unknown, limit = 180) => {
+    try {
+      if (typeof value === 'string') return value.slice(0, limit)
+      const json = JSON.stringify(value)
+      return json.length > limit ? `${json.slice(0, limit)}…` : json
+    } catch {
+      return ''
+    }
+  }
+
+  const inputSummary = summarizeValue(data.input)
+
   const recordRun = async (params: {
     status: 'ok' | 'locked' | 'error'
     lockCode?: string | null
     meteringMode?: string
     tokensCharged?: number
+    errorCode?: string | null
+    outputSummary?: string | null
   }) => {
     await logToolRun({
       orgId: activeOrg?.id,
@@ -92,7 +106,24 @@ export async function POST(request: NextRequest) {
       status: params.status,
       lockCode: params.lockCode || null,
       durationMs: Date.now() - startedAt,
+      inputSummary,
+      outputSummary: params.outputSummary || null,
+      errorCode: params.errorCode || null,
     })
+  }
+
+  const logProductEvent = async (eventName: string, meta: Record<string, any>) => {
+    try {
+      await prisma.productEvent.create({
+        data: {
+          userId,
+          eventName,
+          metaJson: meta,
+        },
+      })
+    } catch {
+      // ignore
+    }
   }
 
   // Helper to return JSON with requestId header consistently
@@ -103,7 +134,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (!tool) {
-    await recordRun({ status: 'locked', lockCode: 'locked_plan' })
+    await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -121,7 +153,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (membership?.role === 'viewer') {
-    await recordRun({ status: 'locked', lockCode: 'locked_role' })
+    await recordRun({ status: 'locked', lockCode: 'locked_role', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_role' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -141,7 +174,7 @@ export async function POST(request: NextRequest) {
   if (data.runId) {
     const existing = await prisma.tokenLedger.findFirst({ where: { run_id: data.runId } })
     if (existing) {
-      await recordRun({ status: 'error', lockCode: 'duplicate' })
+      await recordRun({ status: 'error', lockCode: 'duplicate', errorCode: 'DUPLICATE_RUN' })
       return jsonWithRequestId(
         { status: 'error', error: { message: 'Duplicate run_id; request already processed.', code: 'DUPLICATE_RUN' }, requestId },
         { status: 409 }
@@ -151,7 +184,7 @@ export async function POST(request: NextRequest) {
 
   const validation = validateInput(data.toolId, data.input)
   if (!validation.valid) {
-    await recordRun({ status: 'error', lockCode: 'validation' })
+    await recordRun({ status: 'error', lockCode: 'validation', errorCode: 'VALIDATION_ERROR' })
     return jsonWithRequestId(
       {
         status: 'error',
@@ -169,7 +202,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (!tool.enabled) {
-    await recordRun({ status: 'locked', lockCode: 'locked_plan' })
+    await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -186,7 +220,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (personalPlan === 'free' && (tool.category === 'Analytics' || tool.category === 'Competitive')) {
-    await recordRun({ status: 'locked', lockCode: 'locked_plan' })
+    await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -205,7 +240,8 @@ export async function POST(request: NextRequest) {
   const toolCapForPlan = tool.dailyRunsByPlan?.[personalPlan] ?? 0
 
   if (data.mode === 'paid' && toolCapForPlan <= 0) {
-    await recordRun({ status: 'locked', lockCode: 'locked_plan' })
+    await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -226,7 +262,8 @@ export async function POST(request: NextRequest) {
   const toolRunsUsed = (usage.per_tool_runs_used as Record<string, number>)?.[tool.id] ?? 0
 
   if (usage.runs_used >= planRunCap) {
-    await recordRun({ status: 'locked', lockCode: 'locked_usage_daily' })
+    await recordRun({ status: 'locked', lockCode: 'locked_usage_daily', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_usage_daily' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -253,7 +290,8 @@ export async function POST(request: NextRequest) {
 
   // NOTE: If your ToolMeta doesn't have aiLevel, consider adding it.
   if (usage.ai_tokens_used >= planTokenCap && (tool as any).aiLevel !== 'none') {
-    await recordRun({ status: 'locked', lockCode: 'locked_tokens' })
+    await recordRun({ status: 'locked', lockCode: 'locked_tokens', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_tokens' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -279,7 +317,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (toolRunsUsed >= toolCap) {
-    await recordRun({ status: 'locked', lockCode: 'locked_tool_daily' })
+    await recordRun({ status: 'locked', lockCode: 'locked_tool_daily', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_tool_daily' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -308,7 +347,8 @@ export async function POST(request: NextRequest) {
   const bonusRemaining = await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
 
   if (data.mode === 'trial' && !trial.allowed && bonusRemaining <= 0) {
-    await recordRun({ status: 'locked', lockCode: 'locked_trial', meteringMode: 'trial' })
+    await recordRun({ status: 'locked', lockCode: 'locked_trial', meteringMode: 'trial', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_trial' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -331,7 +371,8 @@ export async function POST(request: NextRequest) {
     bonusRemaining > 0 && data.mode !== 'trial' ? 'bonus_run' : data.mode === 'trial' ? 'trial' : 'tokens'
 
   if (meteringMode === 'tokens' && tokenBalance < requiredTokens) {
-    await recordRun({ status: 'locked', lockCode: 'locked_tokens', meteringMode: 'tokens' })
+    await recordRun({ status: 'locked', lockCode: 'locked_tokens', meteringMode: 'tokens', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_tokens' })
     return jsonWithRequestId(
       {
         status: 'locked',
@@ -351,7 +392,7 @@ export async function POST(request: NextRequest) {
 
   const runner = runnerRegistry[data.toolId]
   if (!runner) {
-    await recordRun({ status: 'error', lockCode: 'tool_error' })
+    await recordRun({ status: 'error', lockCode: 'tool_error', errorCode: 'TOOL_ERROR' })
     return jsonWithRequestId(
       {
         status: 'error',
@@ -479,13 +520,14 @@ export async function POST(request: NextRequest) {
       meteringMode,
       tokensCharged: chargedTokens,
       lockCode: null,
+      outputSummary: summarizeValue(output.output),
     })
 
     return jsonWithRequestId(response)
   } catch (err: any) {
     const normalized = isProviderError(err) ? err : normalizePrismaError(err)
 
-    await recordRun({ status: 'error', lockCode: 'tool_error' })
+    await recordRun({ status: 'error', lockCode: 'tool_error', errorCode: normalized.code || 'PROVIDER_ERROR' })
 
     return NextResponse.json<RunResponse>(
       {
