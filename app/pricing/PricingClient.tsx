@@ -285,13 +285,13 @@ export function PricingClient() {
                 return (
                   <TokenPackCard
                     key={pack.id}
-                    title={pack.name}
+                    title={pack.title}
                     tokens={pack.tokensGranted}
-                    price={pack.price}
                     bestFor={bestFor}
-                    runsEstimate={Math.round(pack.tokensGranted / avgTokensPerRun)}
-                    onBuy={() => checkoutSku(pack.id)}
-                  />
+                    runsEstimate={`≈ ${Math.round(pack.tokensGranted / avgTokensPerRun)} runs`}
+                  >
+                    <Button onClick={() => checkoutSku(pack.id)}>Buy tokens</Button>
+                  </TokenPackCard>
                 )
               })}
             </div>
