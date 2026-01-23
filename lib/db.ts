@@ -14,11 +14,16 @@ const createPrismaClient = () => {
   // Clean up any trailing newlines/whitespace
   databaseUrl = databaseUrl.trim().replace(/[\r\n]+/g, '').replace(/^["']|["']$/g, '')
   
-  // Add pgbouncer=true if using pooler (port 6543) and not already present
-  if (databaseUrl.includes(':6543') && !databaseUrl.includes('pgbouncer=')) {
+  // Add pooler-safe params when using port 6543
+  if (databaseUrl.includes(':6543')) {
     const separator = databaseUrl.includes('?') ? '&' : '?'
     const poolLimit = process.env.DATABASE_POOL_SIZE || '1'
-    databaseUrl += `${separator}pgbouncer=true&connection_limit=${poolLimit}`
+    if (!databaseUrl.includes('pgbouncer=')) {
+      databaseUrl += `${separator}pgbouncer=true&connection_limit=${poolLimit}`
+    }
+    if (!databaseUrl.includes('sslmode=')) {
+      databaseUrl += `${databaseUrl.includes('?') ? '&' : '?'}sslmode=require`
+    }
   }
 
   if (!loggedDbHost) {
