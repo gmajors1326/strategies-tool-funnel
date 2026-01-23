@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { PLAN_CONFIG } from '@/src/lib/billing/planConfig'
+import { PLAN_CONFIG, type PlanKey } from '@/src/lib/billing/planConfig'
 import { PLAN_SKUS, TOKEN_PACK_SKUS } from '@/src/lib/billing/skus'
 import { PricingCard } from '@/src/components/billing/PricingCard'
 import { FeatureList } from '@/src/components/billing/FeatureList'
@@ -43,6 +43,13 @@ const PLAN_FEATURES = {
     'Admin controls',
     'Priority support',
   ],
+  business: [
+    'Highest limits',
+    'Shared workspace',
+    'Central billing',
+    'Admin controls',
+    'Priority support',
+  ],
 }
 
 const PLAN_LIMITS = {
@@ -57,6 +64,11 @@ const PLAN_LIMITS = {
     'Exports/Save: Included',
   ],
   team: (tokens: number) => [
+    `Daily AI tokens: ${tokens.toLocaleString()}`,
+    'Cooldowns: Fastest',
+    'Exports/Save: Included',
+  ],
+  business: (tokens: number) => [
     `Daily AI tokens: ${tokens.toLocaleString()}`,
     'Cooldowns: Fastest',
     'Exports/Save: Included',
@@ -193,7 +205,8 @@ export function PricingClient() {
           <TabsContent value="plans">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {PLAN_SKUS.filter((plan) => plan.planId !== 'lifetime').map((plan) => {
-                const planKey = plan.planId === 'team' ? 'team' : plan.planId === 'pro_monthly' ? 'pro' : 'free'
+                const planKey: PlanKey =
+                  plan.planId === 'team' ? 'business' : plan.planId === 'pro_monthly' ? 'pro' : 'free'
                 const features = PLAN_FEATURES[planKey]
                 const limits = PLAN_LIMITS[planKey](PLAN_CONFIG[planKey].tokensPerDay)
                 const isCurrent = uiConfig?.user?.planId === plan.planId
