@@ -13,6 +13,10 @@ const ALLOWED_EVENTS = new Set([
   'usage_viewed',
   'tool_run_locked',
   'token_low_banner_shown',
+  'export_started',
+  'export_completed',
+  'print_opened',
+  'vault_exported',
 ])
 
 async function getUserIdOptional() {

@@ -80,6 +80,19 @@ export async function GET(req: Request) {
     const csv = toCsv(table)
     const filename = `${run.toolSlug || 'tool'}-${runId}.csv`
 
+    try {
+      await prisma.exportEvent.create({
+        data: {
+          userId: user.id,
+          toolId: run.toolSlug || undefined,
+          runId,
+          type: 'csv',
+        },
+      })
+    } catch {
+      // ignore logging failures
+    }
+
     return new NextResponse(csv, {
       status: 200,
       headers: {

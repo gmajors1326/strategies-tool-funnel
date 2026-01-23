@@ -13,6 +13,10 @@ import { computeToolLock } from '@/src/lib/locks/lockCompute'
 import { LockBanner } from '@/src/components/locks/LockBanner'
 import { ToolRunToolbar } from '@/src/components/tools/ToolRunToolbar'
 import { HelpTooltip } from '@/components/tools/HelpTooltip'
+import { TOOL_REGISTRY } from '@/src/lib/tools/registry'
+import { getLaunchHeader, getRecommendedNextToolId, isLaunchTool } from '@/src/lib/tools/launchTools'
+import { ToolPageHeader } from '@/src/components/tools/ToolPageHeader'
+import { useRouter } from 'next/navigation'
 
 type ToolField = {
   key: string
@@ -73,6 +77,110 @@ function pushLocalRun(toolSlug: string, input: any, output: any) {
 function readLocalRuns(toolSlug: string) {
   const key = lsKey(toolSlug)
   return safeJsonParse(localStorage.getItem(key) || '[]') || []
+}
+
+const TOOL_MEMORY_KEY = 'tool_memory_v1'
+const TOOL_PRESETS_KEY = 'tool_presets_v1'
+const TOOL_LAST_INPUT_KEY = 'tool_last_input_v1'
+
+type ToolMemory = {
+  input: Record<string, any>
+  output: any
+  outputSummary: string
+  createdAt: string
+}
+
+type ToolPreset = {
+  id: string
+  name: string
+  input: Record<string, any>
+  createdAt: string
+}
+
+function readToolMemory(): Record<string, ToolMemory> {
+  if (typeof window === 'undefined') return {}
+  return safeJsonParse(localStorage.getItem(TOOL_MEMORY_KEY) || '{}') || {}
+}
+
+function writeToolMemory(toolId: string, payload: ToolMemory) {
+  if (typeof window === 'undefined') return
+  const existing = readToolMemory()
+  const next = { ...existing, [toolId]: payload }
+  localStorage.setItem(TOOL_MEMORY_KEY, JSON.stringify(next))
+}
+
+function readToolPresets(toolId: string): ToolPreset[] {
+  if (typeof window === 'undefined') return []
+  const all = safeJsonParse(localStorage.getItem(TOOL_PRESETS_KEY) || '{}') || {}
+  return Array.isArray(all[toolId]) ? all[toolId] : []
+}
+
+function writeToolPresets(toolId: string, presets: ToolPreset[]) {
+  if (typeof window === 'undefined') return
+  const all = safeJsonParse(localStorage.getItem(TOOL_PRESETS_KEY) || '{}') || {}
+  const next = { ...all, [toolId]: presets }
+  localStorage.setItem(TOOL_PRESETS_KEY, JSON.stringify(next))
+}
+
+function readLastInput(toolId: string): Record<string, any> | null {
+  if (typeof window === 'undefined') return null
+  const all = safeJsonParse(localStorage.getItem(TOOL_LAST_INPUT_KEY) || '{}') || {}
+  return all[toolId] ?? null
+}
+
+function writeLastInput(toolId: string, input: Record<string, any>) {
+  if (typeof window === 'undefined') return
+  const all = safeJsonParse(localStorage.getItem(TOOL_LAST_INPUT_KEY) || '{}') || {}
+  const next = { ...all, [toolId]: input }
+  localStorage.setItem(TOOL_LAST_INPUT_KEY, JSON.stringify(next))
+}
+
+function isEmptyValue(value: any) {
+  return (
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0)
+  )
+}
+
+function getConfidenceScore(output: any): number | null {
+  const summary = output?.summary
+  const value = typeof summary?.confidence === 'number' ? summary.confidence : typeof output?.confidence === 'number' ? output.confidence : null
+  if (value === null || Number.isNaN(value)) return null
+  return Math.max(0, Math.min(1, value))
+}
+
+function mapGoalToDesiredAction(goal?: string) {
+  switch (goal) {
+    case 'follows':
+      return 'follow'
+    case 'saves':
+      return 'save'
+    case 'comments':
+      return 'comment'
+    case 'dm_clicks':
+      return 'dm'
+    default:
+      return undefined
+  }
+}
+
+function mapDesiredToCtaGoal(action?: string) {
+  switch (action) {
+    case 'follow':
+      return 'follow'
+    case 'save':
+      return 'save'
+    case 'comment':
+      return 'comment'
+    case 'dm':
+      return 'dm'
+    case 'click_link':
+      return 'click_link'
+    default:
+      return undefined
+  }
 }
 
 function summarizeText(value: unknown, limit = 120) {
@@ -145,6 +253,7 @@ export function ToolRunner(props: {
 }) {
   const { toolId, toolSlug, toolName, toolMeta, fields, access, tokensCost, ui } = props
 
+  const router = useRouter()
   const [input, setInput] = React.useState<Record<string, any>>({})
   const [busy, setBusy] = React.useState(false)
   const [result, setResult] = React.useState<RunResponse | null>(null)
@@ -154,6 +263,10 @@ export function ToolRunner(props: {
   const [lockReason, setLockReason] = React.useState<LockReason>({ type: 'none' })
   const [latestRunId, setLatestRunId] = React.useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({})
+  const [prefillNote, setPrefillNote] = React.useState<string | null>(null)
+  const [softWarning, setSoftWarning] = React.useState<string | null>(null)
+  const [presets, setPresets] = React.useState<ToolPreset[]>([])
+  const [selectedPreset, setSelectedPreset] = React.useState<string>('')
   const [tokensRemaining, setTokensRemaining] = React.useState<number | null>(null)
   const [tokensAllowance, setTokensAllowance] = React.useState<number | null>(null)
   const [tokensResetAt, setTokensResetAt] = React.useState<string | null>(null)
@@ -163,6 +276,8 @@ export function ToolRunner(props: {
   const canSaveToVault = Boolean(ui?.entitlements?.canSaveToVault)
   const canExportTemplates = Boolean(ui?.entitlements?.canExportTemplates)
   const planLocked = !canExport || !canSaveToVault || !canExportTemplates
+  const nextToolId = getRecommendedNextToolId(toolId)
+  const header = isLaunchTool(toolId) ? getLaunchHeader(toolId) : null
 
   const isLocked =
     access === 'locked_tokens' || access === 'locked_time' || access === 'locked_plan' || lockReason.type !== 'none'
@@ -221,6 +336,7 @@ export function ToolRunner(props: {
     return String(value)
   }
 
+
   function validateInputs() {
     const errors: Record<string, string> = {}
     for (const field of fields) {
@@ -252,6 +368,12 @@ export function ToolRunner(props: {
     }
     setFieldErrors(errors)
     return Object.keys(errors).length === 0
+  }
+
+  function missingCriticalFields() {
+    return fields
+      .filter((field) => field.required && isEmptyValue(input[field.key]))
+      .map((field) => field.label)
   }
 
   React.useEffect(() => {
@@ -352,16 +474,87 @@ export function ToolRunner(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolSlug, canSeeHistory])
 
+  React.useEffect(() => {
+    setPresets(readToolPresets(toolId))
+  }, [toolId])
+
+  React.useEffect(() => {
+    if (Object.keys(input).length > 0) return
+    const memory = readToolMemory()
+    const sequence = ['hook-analyzer', 'cta-match-analyzer', 'caption-optimizer', 'engagement-diagnostic']
+    const idx = sequence.indexOf(toolId)
+    const prevToolId = idx > 0 ? sequence[idx - 1] : null
+    if (!prevToolId) return
+    const prev = memory[prevToolId]
+    if (!prev) return
+
+    const prevInput = prev.input ?? {}
+    const nextInput: Record<string, any> = {}
+
+    if (toolId === 'cta-match-analyzer') {
+      if (isEmptyValue(input.contentSummary)) {
+        const summary = prevInput.hookText || prevInput.topic
+        if (summary) nextInput.contentSummary = summary
+      }
+      if (isEmptyValue(input.desiredAction)) {
+        const mapped = mapGoalToDesiredAction(prevInput.goal)
+        if (mapped) nextInput.desiredAction = mapped
+      }
+    }
+
+    if (toolId === 'caption-optimizer') {
+      if (isEmptyValue(input.hook)) {
+        const hook = prevInput.hookText || prevInput.ctaText
+        if (hook) nextInput.hook = hook
+      }
+      if (isEmptyValue(input.ctaGoal)) {
+        const mapped = mapDesiredToCtaGoal(prevInput.desiredAction)
+        if (mapped) nextInput.ctaGoal = mapped
+      }
+    }
+
+    if (toolId === 'engagement-diagnostic') {
+      if (isEmptyValue(input.contentLinkOrTranscript)) {
+        const transcript = prevInput.rawCaption || prev.outputSummary || prevInput.hookText
+        if (transcript) nextInput.contentLinkOrTranscript = transcript
+      }
+      if (isEmptyValue(input.goal)) {
+        const mapped = mapDesiredToCtaGoal(prevInput.ctaGoal) || mapGoalToDesiredAction(prevInput.goal)
+        if (mapped === 'follow') nextInput.goal = 'more_follows'
+        if (mapped === 'save') nextInput.goal = 'more_saves'
+        if (mapped === 'dm') nextInput.goal = 'more_dms'
+        if (mapped === 'click_link') nextInput.goal = 'more_clicks'
+        if (mapped === 'comment') nextInput.goal = 'more_comments'
+      }
+    }
+
+    if (Object.keys(nextInput).length > 0) {
+      setInput(nextInput)
+      const prevName = (TOOL_REGISTRY as Record<string, ToolMeta>)[prevToolId]?.name || 'last run'
+      setPrefillNote(`Pulled from your last ${prevName} run.`)
+    }
+  }, [toolId, input])
+
+  React.useEffect(() => {
+    if (Object.keys(input).length > 0) return
+    const last = readLastInput(toolId)
+    if (last && Object.keys(last).length > 0) {
+      setInput(last)
+      setPrefillNote('Loaded your last inputs.')
+    }
+  }, [toolId, input])
+
   async function runTool() {
     setBusy(true)
     setResult(null)
     setMsg(null)
     setFieldErrors({})
+    setSoftWarning(null)
 
-    if (!validateInputs()) {
-      setMsg('Please fix the highlighted fields before running.')
-      setBusy(false)
-      return
+    validateInputs()
+    const missing = missingCriticalFields()
+    if (missing.length) {
+      setSoftWarning(`Results may be weak without ${missing.join(', ')}.`)
     }
 
     if (lockReason.type !== 'none') {
@@ -398,6 +591,13 @@ export function ToolRunner(props: {
       setResult(data)
       setLatestRunId(data.runId ?? null)
       pushLocalRun(toolSlug, input, data.output)
+      writeToolMemory(toolId, {
+        input,
+        output: data.output,
+        outputSummary: summarizeText(data.output),
+        createdAt: new Date().toISOString(),
+      })
+      writeLastInput(toolId, input)
 
       await loadHistory()
     } catch (e: any) {
@@ -419,6 +619,8 @@ export function ToolRunner(props: {
   }
 
   function renderJsonFallback(output: any) {
+    const confidence = getConfidenceScore(output)
+    const lowConfidence = confidence !== null && confidence < 0.5
     if (!output || typeof output !== 'object') {
       return (
         <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
@@ -452,7 +654,12 @@ export function ToolRunner(props: {
           </div>
         </div>
         {entries.map(([key, value]) => (
-          <SectionBlock key={key} title={key} value={value} onCopy={copy} />
+          <details key={key} open={!lowConfidence} className="rounded-md border bg-muted/10 p-2">
+            <summary className="cursor-pointer list-none">
+              <div className="text-sm font-semibold">{key}</div>
+            </summary>
+            <SectionBlock title={key} value={value} onCopy={copy} />
+          </details>
         ))}
       </div>
     )
@@ -658,6 +865,8 @@ export function ToolRunner(props: {
     const signals = Array.isArray(output?.signals) ? output.signals : []
     const fixes = Array.isArray(output?.prioritizedFixes) ? output.prioritizedFixes.slice(0, 5) : []
     const plan = Array.isArray(output?.next7Days) ? output.next7Days : []
+    const confidence = getConfidenceScore(output)
+    const lowConfidence = confidence !== null && confidence < 0.5
 
     return (
       <div className="space-y-4">
@@ -681,19 +890,29 @@ export function ToolRunner(props: {
               Confidence: <span className="text-foreground">{summary?.confidence ?? '—'}</span>
             </div>
           </div>
+          {lowConfidence ? (
+            <div className="mt-2 text-xs text-muted-foreground">
+              Improve accuracy: add more metrics or context to your input.
+            </div>
+          ) : null}
         </div>
 
-        <div>
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Signals</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => copy(JSON.stringify(signals, null, 2), 'Copied signals')}
-            >
-              Copy
-            </Button>
-          </div>
+        <details className="rounded-md border bg-muted/10 p-2" open={!lowConfidence}>
+          <summary className="cursor-pointer list-none">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Signals</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(event) => {
+                  event.preventDefault()
+                  copy(JSON.stringify(signals, null, 2), 'Copied signals')
+                }}
+              >
+                Copy
+              </Button>
+            </div>
+          </summary>
           <ul className="mt-2 space-y-2 text-sm">
             {signals.map((item: any, idx: number) => (
               <li key={`signal-${idx}`} className="rounded-md border bg-muted/20 p-2">
@@ -703,15 +922,24 @@ export function ToolRunner(props: {
               </li>
             ))}
           </ul>
-        </div>
+        </details>
 
-        <div>
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Prioritized Fixes</h3>
-            <Button variant="ghost" size="sm" onClick={() => copy(JSON.stringify(fixes, null, 2), 'Copied fixes')}>
-              Copy
-            </Button>
-          </div>
+        <details className="rounded-md border bg-muted/10 p-2" open={!lowConfidence}>
+          <summary className="cursor-pointer list-none">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Prioritized Fixes</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(event) => {
+                  event.preventDefault()
+                  copy(JSON.stringify(fixes, null, 2), 'Copied fixes')
+                }}
+              >
+                Copy
+              </Button>
+            </div>
+          </summary>
           <div className="mt-2 space-y-2 text-sm">
             {fixes.map((item: any, idx: number) => (
               <div key={`fix-${idx}`} className="rounded-md border bg-muted/20 p-3">
@@ -729,15 +957,24 @@ export function ToolRunner(props: {
               </div>
             ))}
           </div>
-        </div>
+        </details>
 
-        <div>
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Next 7 Days</h3>
-            <Button variant="ghost" size="sm" onClick={() => copy(JSON.stringify(plan, null, 2), 'Copied plan')}>
-              Copy
-            </Button>
-          </div>
+        <details className="rounded-md border bg-muted/10 p-2" open={!lowConfidence}>
+          <summary className="cursor-pointer list-none">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Next 7 Days</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(event) => {
+                  event.preventDefault()
+                  copy(JSON.stringify(plan, null, 2), 'Copied plan')
+                }}
+              >
+                Copy
+              </Button>
+            </div>
+          </summary>
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {plan.map((item: any, idx: number) => (
               <div key={`day-${idx}`} className="rounded-md border bg-muted/20 p-3 text-xs">
@@ -753,24 +990,35 @@ export function ToolRunner(props: {
               </div>
             ))}
           </div>
-        </div>
+        </details>
 
-        <div>
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Stop Doing</h3>
-            <Button variant="ghost" size="sm" onClick={() => copy(JSON.stringify(output?.stopDoing ?? [], null, 2), 'Copied stop doing')}>
-              Copy
-            </Button>
-          </div>
+        <details className="rounded-md border bg-muted/10 p-2" open={!lowConfidence}>
+          <summary className="cursor-pointer list-none">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Stop Doing</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(event) => {
+                  event.preventDefault()
+                  copy(JSON.stringify(output?.stopDoing ?? [], null, 2), 'Copied stop doing')
+                }}
+              >
+                Copy
+              </Button>
+            </div>
+          </summary>
           <ul className="mt-2 list-disc pl-5 text-sm">
             {(output?.stopDoing || []).map((item: string, idx: number) => (
               <li key={`stop-${idx}`}>{item}</li>
             ))}
           </ul>
-        </div>
+        </details>
 
-        <div>
-          <h3 className="text-sm font-semibold">Experiment</h3>
+        <details className="rounded-md border bg-muted/10 p-2" open={!lowConfidence}>
+          <summary className="cursor-pointer list-none">
+            <h3 className="text-sm font-semibold">Experiment</h3>
+          </summary>
           <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm">
             <div className="font-medium">{output?.experiment?.name ?? '—'}</div>
             <div className="text-xs text-muted-foreground">{output?.experiment?.hypothesis ?? '—'}</div>
@@ -783,7 +1031,7 @@ export function ToolRunner(props: {
               Success metric: <span className="text-foreground">{output?.experiment?.successMetric ?? '—'}</span>
             </div>
           </div>
-        </div>
+        </details>
       </div>
     )
   }
@@ -808,6 +1056,7 @@ export function ToolRunner(props: {
 
   return (
     <div className="space-y-4">
+      {header ? <ToolPageHeader title={header.title} description={header.description} /> : null}
       <div className="flex flex-col gap-2">
         <ToolRunToolbar
           toolId={toolId}
@@ -844,9 +1093,7 @@ export function ToolRunner(props: {
             />
           ) : null}
           <div className="rounded-md border bg-muted/20 p-3 text-sm">
-            <div className="font-semibold">{toolName}</div>
-            <p className="text-xs text-muted-foreground">{toolMeta.description}</p>
-            <div className="mt-2 text-xs">
+            <div className="mt-1 text-xs">
               <span className="text-muted-foreground">Best for: </span>
               <span className="text-foreground">
                 {toolMeta.microcopy?.whoFor?.[0] || toolMeta.tags.slice(0, 2).join(', ') || 'Short-form creators'}
@@ -875,6 +1122,7 @@ export function ToolRunner(props: {
               </div>
             ) : null}
           </div>
+          {prefillNote ? <div className="text-xs text-muted-foreground">{prefillNote}</div> : null}
           {showLowTokens ? (
             <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
               <div className="font-semibold">Running low on tokens</div>
@@ -895,6 +1143,74 @@ export function ToolRunner(props: {
             </div>
           ) : null}
           {fields.length ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs text-muted-foreground">Presets</div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (!input || Object.keys(input).length === 0) {
+                      setMsg('Add inputs before saving a preset.')
+                      return
+                    }
+                    if (!canSaveToVault) {
+                      router.push('/pricing?reason=plan&tab=plans&feature=save')
+                      return
+                    }
+                    const nextName = `Preset ${presets.length + 1}`
+                    const nextPreset: ToolPreset = {
+                      id: crypto.randomUUID(),
+                      name: nextName,
+                      input,
+                      createdAt: new Date().toISOString(),
+                    }
+                    const next = [nextPreset, ...presets].slice(0, 10)
+                    setPresets(next)
+                    writeToolPresets(toolId, next)
+                    setSelectedPreset(nextPreset.id)
+                    setMsg(`Saved ${nextName}.`)
+                  }}
+                  title={canSaveToVault ? 'Save preset' : 'Available on Pro'}
+                >
+                  Save preset
+                </Button>
+              </div>
+              <Select
+                value={selectedPreset}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setSelectedPreset(value)
+                  if (value === 'example' && getExampleInput()) {
+                    setInput(getExampleInput() ?? {})
+                    setPrefillNote('Loaded example preset.')
+                    return
+                  }
+                  if (value === 'last') {
+                    const last = readLastInput(toolId)
+                    if (last) {
+                      setInput(last)
+                      setPrefillNote('Loaded your last inputs.')
+                    }
+                    return
+                  }
+                  const preset = presets.find((p) => p.id === value)
+                  if (preset) {
+                    setInput(preset.input)
+                    setPrefillNote(`Loaded ${preset.name}.`)
+                  }
+                }}
+              >
+                <option value="">Choose preset</option>
+                {readLastInput(toolId) ? <option value="last">Last used</option> : null}
+                {getExampleInput() ? <option value="example">Example</option> : null}
+                {presets.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
             fields.map((f) => (
               <div key={f.key} className="space-y-1.5">
                 <div className="flex items-center justify-between gap-3">
@@ -982,6 +1298,7 @@ export function ToolRunner(props: {
               </p>
             ) : null}
 
+            {softWarning ? <p className="text-xs text-muted-foreground">{softWarning}</p> : null}
             {msg ? <p className="text-xs text-muted-foreground">{msg}</p> : null}
             {copied ? <p className="text-xs text-muted-foreground">{copied}</p> : null}
           </div>
@@ -1002,6 +1319,17 @@ export function ToolRunner(props: {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {(() => {
+            const confidence = getConfidenceScore(result?.output)
+            if (confidence === null) return null
+            const label = confidence >= 0.75 ? 'High' : confidence >= 0.5 ? 'Medium' : 'Low'
+            return (
+              <div className="text-xs text-muted-foreground">
+                Confidence: <span className="text-foreground">{label}</span>
+                {confidence < 0.5 ? ' · Improve accuracy by adding more context.' : null}
+              </div>
+            )
+          })()}
           {result?.error ? (
             <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
               <div className="font-medium">
@@ -1076,6 +1404,29 @@ export function ToolRunner(props: {
         </CardContent>
       </Card>
       </div>
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[hsl(var(--border))] bg-[hsl(var(--bg))] p-3 lg:hidden">
+        <Button className="w-full" onClick={runTool} disabled={busy || isLocked}>
+          {isLocked
+            ? access === 'locked_tokens'
+              ? 'Locked - Buy tokens'
+              : access === 'locked_time'
+                ? 'Locked - Wait for reset'
+                : 'Locked - Upgrade'
+            : busy
+              ? 'Running...'
+              : tokensCost && tokensCost > 0
+                ? `Run (${tokensCost} tokens)`
+                : 'Run'}
+        </Button>
+      </div>
+      {nextToolId ? (
+        <div className="text-xs text-muted-foreground">
+          Next recommended tool:{' '}
+          <span className="text-foreground">
+            {(TOOL_REGISTRY as Record<string, ToolMeta>)[nextToolId]?.name || 'Next tool'}
+          </span>
+        </div>
+      ) : null}
     </div>
   )
 }

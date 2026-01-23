@@ -64,6 +64,19 @@ export async function GET(req: Request) {
     const payload = kind === 'checklist' ? toChecklist(output) : toTemplate(output)
     const filename = `${run.toolSlug || 'tool'}-${kind}.json`
 
+    try {
+      await prisma.exportEvent.create({
+        data: {
+          userId: user.id,
+          toolId: run.toolSlug || undefined,
+          runId,
+          type: kind === 'checklist' ? 'checklist' : 'template',
+        },
+      })
+    } catch {
+      // ignore logging failures
+    }
+
     return new NextResponse(
       JSON.stringify(
         {

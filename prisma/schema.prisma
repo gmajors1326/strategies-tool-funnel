@@ -331,6 +331,22 @@ model VaultItem {
   @@index([userId, kind, createdAt])
 }
 
+model ExportEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  toolId      String?
+  runId       String?
+  vaultItemId String?
+  type        String
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([toolId])
+  @@index([runId])
+  @@index([vaultItemId])
+  @@index([createdAt])
+}
+
 model Organization {
   id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                 String

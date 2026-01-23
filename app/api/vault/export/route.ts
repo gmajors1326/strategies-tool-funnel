@@ -33,6 +33,18 @@ export async function GET(req: Request) {
     const output = body.output ?? {}
 
     if (type === 'json') {
+      try {
+        await prisma.exportEvent.create({
+          data: {
+            userId: user.id,
+            toolId: item.toolSlug || undefined,
+            vaultItemId: id,
+            type: 'json',
+          },
+        })
+      } catch {
+        // ignore logging failures
+      }
       const filename = `${item.toolSlug || 'tool'}-${id}.json`
       return new NextResponse(JSON.stringify({ input, output }, null, 2), {
         status: 200,
@@ -60,6 +72,18 @@ export async function GET(req: Request) {
 
       const pdfBuffer = doc.output('arraybuffer')
       const filename = `${item.toolSlug || 'tool'}-${id}.pdf`
+      try {
+        await prisma.exportEvent.create({
+          data: {
+            userId: user.id,
+            toolId: item.toolSlug || undefined,
+            vaultItemId: id,
+            type: 'pdf',
+          },
+        })
+      } catch {
+        // ignore logging failures
+      }
       return new NextResponse(Buffer.from(pdfBuffer), {
         status: 200,
         headers: {

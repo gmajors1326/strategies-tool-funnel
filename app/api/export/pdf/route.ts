@@ -66,6 +66,19 @@ export async function GET(req: Request) {
     const pdfBuffer = doc.output('arraybuffer')
     const filename = `${toolName}-${runId}.pdf`
 
+    try {
+      await prisma.exportEvent.create({
+        data: {
+          userId: user.id,
+          toolId: run.toolSlug || undefined,
+          runId,
+          type: 'pdf',
+        },
+      })
+    } catch {
+      // ignore logging failures
+    }
+
     return new NextResponse(Buffer.from(pdfBuffer), {
       status: 200,
       headers: {

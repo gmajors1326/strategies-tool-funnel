@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { prisma } from '@/src/lib/db/prisma'
 import { getUserOrThrow } from '@/src/lib/auth/getUser'
 import { Button } from '@/components/ui/button'
@@ -18,6 +17,11 @@ export default async function VaultItemPage({ params }: { params: { id: string }
   const body = (item.body as any) || {}
   const input = body.input ?? {}
   const output = body.output ?? {}
+  const exports = await prisma.exportEvent.findMany({
+    where: { vaultItemId: item.id, userId: user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 5,
+  })
 
   return (
     <div className="space-y-4">
@@ -42,6 +46,20 @@ export default async function VaultItemPage({ params }: { params: { id: string }
       </div>
 
       <div className="space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold">Export history</h2>
+          {exports.length ? (
+            <div className="space-y-1 text-xs text-muted-foreground">
+              {exports.map((entry) => (
+                <div key={entry.id}>
+                  {entry.type.toUpperCase()} · {new Date(entry.createdAt).toLocaleString()}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">No exports yet.</p>
+          )}
+        </div>
         <div>
           <h2 className="text-sm font-semibold">Inputs</h2>
           <pre className="mt-2 max-h-[320px] overflow-auto rounded-md border bg-muted/20 p-3 text-xs">

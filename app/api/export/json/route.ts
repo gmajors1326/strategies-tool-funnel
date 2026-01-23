@@ -29,6 +29,19 @@ export async function GET(req: Request) {
     const payload = run.output ?? run.outputsJson ?? {}
     const filename = `${run.toolSlug || 'tool'}-${runId}.json`
 
+    try {
+      await prisma.exportEvent.create({
+        data: {
+          userId: user.id,
+          toolId: run.toolSlug || undefined,
+          runId,
+          type: 'json',
+        },
+      })
+    } catch {
+      // ignore logging failures
+    }
+
     return new NextResponse(JSON.stringify(payload, null, 2), {
       status: 200,
       headers: {

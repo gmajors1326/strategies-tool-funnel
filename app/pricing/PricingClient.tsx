@@ -92,6 +92,7 @@ export function PricingClient() {
   const searchParams = useSearchParams()
   const reason = searchParams.get('reason')
   const tabParam = searchParams.get('tab')
+  const feature = searchParams.get('feature')
 
   const [activeTab, setActiveTab] = React.useState<'plans' | 'tokens'>('plans')
   const [uiConfig, setUiConfig] = React.useState<UiConfigSummary | null>(null)
@@ -151,6 +152,17 @@ export function PricingClient() {
         : reason === 'cooldown'
           ? 'Pro skips most cooldowns.'
           : null
+
+  const comparisonRef = React.useRef<HTMLDivElement | null>(null)
+
+  React.useEffect(() => {
+    if (reason === 'plan') {
+      comparisonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [reason])
+
+  const rowClass = (key: string) =>
+    feature === key ? 'ring-1 ring-[hsl(var(--ring))] border-[hsl(var(--ring))]' : 'border-[hsl(var(--border))]'
 
   async function checkoutSku(sku: string) {
     void fetch('/api/events', {
@@ -241,26 +253,79 @@ export function PricingClient() {
               })}
             </div>
 
-            <div className="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 text-sm">
-              <div className="text-xs uppercase text-[hsl(var(--muted))] mb-2">Plan comparison</div>
-              <div className="grid gap-2 md:grid-cols-3">
-                <div className="rounded-lg border border-[hsl(var(--border))] p-3">
-                  <div className="text-xs text-[hsl(var(--muted))]">Daily tokens</div>
-                  <div className="text-sm">Free {PLAN_CONFIG.free.tokensPerDay.toLocaleString()}</div>
-                  <div className="text-sm">Pro {PLAN_CONFIG.pro.tokensPerDay.toLocaleString()}</div>
-                  <div className="text-sm">Team {PLAN_CONFIG.business.tokensPerDay.toLocaleString()}</div>
-                </div>
-                <div className="rounded-lg border border-[hsl(var(--border))] p-3">
-                  <div className="text-xs text-[hsl(var(--muted))]">Cooldowns</div>
-                  <div className="text-sm">Free Standard</div>
-                  <div className="text-sm">Pro Faster</div>
-                  <div className="text-sm">Team Fastest</div>
-                </div>
-                <div className="rounded-lg border border-[hsl(var(--border))] p-3">
-                  <div className="text-xs text-[hsl(var(--muted))]">Save / Export</div>
-                  <div className="text-sm">Free Limited</div>
-                  <div className="text-sm">Pro Included</div>
-                  <div className="text-sm">Team Included</div>
+            <div
+              ref={comparisonRef}
+              id="comparison"
+              className="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 text-sm"
+            >
+              <div className="text-xs uppercase text-[hsl(var(--muted))] mb-3">Plan comparison</div>
+              <div className="overflow-x-auto">
+                <div className="min-w-[640px] space-y-2 text-xs">
+                  <div className="grid grid-cols-4 gap-2">
+                    <div />
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2 text-center">Free</div>
+                    <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 py-2 text-center font-semibold shadow-[0_0_0_1px_hsl(var(--ring))]">
+                      Pro
+                    </div>
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2 text-center">Team</div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">Daily tokens</div>
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">1,000 / day</div>
+                    <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 py-2 shadow-[0_0_0_1px_hsl(var(--ring))]">
+                      10,000 / day
+                    </div>
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">30,000 / day</div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">Tool access</div>
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">Core tools</div>
+                    <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 py-2 shadow-[0_0_0_1px_hsl(var(--ring))]">
+                      All tools
+                    </div>
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">All tools</div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2" id="compare-save">
+                    <div className={`rounded-md border px-3 py-2 ${rowClass('save')}`}>Save to Vault</div>
+                    <div className={`rounded-md border px-3 py-2 text-muted-foreground ${rowClass('save')}`}>—</div>
+                    <div className={`rounded-md border bg-[hsl(var(--surface-3))] px-3 py-2 shadow-[0_0_0_1px_hsl(var(--ring))] ${rowClass('save')}`}>✓</div>
+                    <div className={`rounded-md border px-3 py-2 ${rowClass('save')}`}>✓</div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2" id="compare-export">
+                    <div className={`rounded-md border px-3 py-2 ${rowClass('export')}`}>Export (JSON / CSV / Template)</div>
+                    <div className={`rounded-md border px-3 py-2 text-muted-foreground ${rowClass('export')}`}>—</div>
+                    <div className={`rounded-md border bg-[hsl(var(--surface-3))] px-3 py-2 shadow-[0_0_0_1px_hsl(var(--ring))] ${rowClass('export')}`}>✓</div>
+                    <div className={`rounded-md border px-3 py-2 ${rowClass('export')}`}>✓</div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2" id="compare-pdf">
+                    <div className={`rounded-md border px-3 py-2 ${rowClass('pdf')}`}>Export PDF</div>
+                    <div className={`rounded-md border px-3 py-2 text-muted-foreground ${rowClass('pdf')}`}>—</div>
+                    <div className={`rounded-md border bg-[hsl(var(--surface-3))] px-3 py-2 shadow-[0_0_0_1px_hsl(var(--ring))] ${rowClass('pdf')}`}>✓</div>
+                    <div className={`rounded-md border px-3 py-2 ${rowClass('pdf')}`}>✓</div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">Cooldowns</div>
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">Standard</div>
+                    <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 py-2 shadow-[0_0_0_1px_hsl(var(--ring))]">
+                      Reduced / none
+                    </div>
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">None</div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">Usage history depth</div>
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">Last 3 runs</div>
+                    <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 py-2 shadow-[0_0_0_1px_hsl(var(--ring))]">
+                      Last 20 runs
+                    </div>
+                    <div className="rounded-md border border-[hsl(var(--border))] px-3 py-2">Unlimited</div>
+                  </div>
                 </div>
               </div>
             </div>

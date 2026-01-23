@@ -38,8 +38,21 @@ export function ToolRunToolbar({
     pdf: !canExport,
   }
 
-  const routeToPricing = () => {
-    router.push('/pricing?reason=plan&tab=plans')
+  const routeToPricing = (feature?: 'save' | 'export' | 'pdf') => {
+    const featureParam = feature ? `&feature=${feature}` : ''
+    router.push(`/pricing?reason=plan&tab=plans${featureParam}`)
+  }
+
+  async function logEvent(eventName: string, meta: Record<string, any>) {
+    try {
+      await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventName, meta }),
+      })
+    } catch {
+      // ignore
+    }
   }
 
   async function downloadFromUrl(url: string, filename: string) {
@@ -60,7 +73,7 @@ export function ToolRunToolbar({
 
   async function handleSave() {
     if (missingRun) return
-    if (planLocked.save) return routeToPricing()
+    if (planLocked.save) return routeToPricing('save')
     setBusy('save')
     onMessage(null)
     try {
@@ -82,11 +95,12 @@ export function ToolRunToolbar({
   async function handleExport() {
     if (missingRun) return
     if ((exportKind === 'template' && planLocked.template) || (exportKind !== 'template' && planLocked.export)) {
-      return routeToPricing()
+      return routeToPricing('export')
     }
     setBusy('export')
     onMessage(null)
     try {
+      await logEvent('export_started', { type: exportKind, toolId, runId })
       if (exportKind === 'json') {
         await downloadFromUrl(`/api/export/json?runId=${runId}`, `${toolSlug}-${runId}.json`)
       } else if (exportKind === 'csv') {
@@ -97,6 +111,7 @@ export function ToolRunToolbar({
           `${toolSlug}-${runId}-template.json`
         )
       }
+      await logEvent('export_completed', { type: exportKind, toolId, runId })
       onMessage(`Exported ${exportKind}.`)
     } catch (err: any) {
       onMessage(err?.message || 'Export failed.')
@@ -107,11 +122,13 @@ export function ToolRunToolbar({
 
   async function handleExportPdf() {
     if (missingRun) return
-    if (planLocked.pdf) return routeToPricing()
+    if (planLocked.pdf) return routeToPricing('pdf')
     setBusy('pdf')
     onMessage(null)
     try {
+      await logEvent('export_started', { type: 'pdf', toolId, runId })
       await downloadFromUrl(`/api/export/pdf?runId=${runId}`, `${toolSlug}-${runId}.pdf`)
+      await logEvent('export_completed', { type: 'pdf', toolId, runId })
       onMessage('Exported PDF.')
     } catch (err: any) {
       onMessage(err?.message || 'Export failed.')
@@ -122,6 +139,7 @@ export function ToolRunToolbar({
 
   function handlePrint() {
     if (missingRun) return
+    void logEvent('print_opened', { toolId, runId })
     const url = `/tools/${toolSlug}/print?runId=${runId}`
     window.open(url, '_blank', 'noopener,noreferrer')
   }
