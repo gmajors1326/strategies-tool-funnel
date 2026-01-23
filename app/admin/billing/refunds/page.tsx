@@ -1,12 +1,12 @@
 import Link from 'next/link'
-import { getMockRefunds } from '@/src/lib/mock/data'
+import { getMockRefunds, type RefundSummary } from '@/src/lib/mock/data'
 import { Table } from '@/components/app/Table'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminRefundsPage() {
   // TODO: replace (billing): load refunds from billing provider.
-  let refunds = []
+  let refunds: RefundSummary[] = []
   let errorMessage: string | null = null
   try {
     refunds = await getMockRefunds()

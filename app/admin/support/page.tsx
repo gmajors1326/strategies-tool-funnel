@@ -1,11 +1,11 @@
-import { listTicketsForAdmin } from '@/src/lib/support/tickets'
+import { listTicketsForAdmin, type TicketSummary } from '@/src/lib/support/tickets'
 import { Table } from '@/components/app/Table'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminSupportPage() {
-  let tickets = []
+  let tickets: TicketSummary[] = []
   let errorMessage: string | null = null
   try {
     tickets = await listTicketsForAdmin()

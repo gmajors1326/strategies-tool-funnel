@@ -78,7 +78,7 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+      <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 shadow-[0_24px_40px_rgba(0,0,0,0.35)]">
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex gap-2">
             {presets.map((p) => (
@@ -88,8 +88,8 @@ export default function AnalyticsDashboard() {
                 className={classNames(
                   'rounded-lg px-3 py-2 text-xs font-medium transition',
                   preset === p.id
-                    ? 'bg-red-600 text-white'
-                    : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800'
+                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                    : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted))] hover:bg-[hsl(var(--surface-2))]'
                 )}
               >
                 {p.label}
@@ -99,51 +99,51 @@ export default function AnalyticsDashboard() {
 
           <div className={classNames('flex gap-2', preset !== 'custom' && 'opacity-40 pointer-events-none')}>
             <div>
-              <div className="mb-1 text-xs text-zinc-400">From</div>
+              <div className="mb-1 text-xs text-[hsl(var(--muted))]">From</div>
               <input
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
                 type="date"
-                className="h-9 rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-200"
+                className="h-9 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 text-xs text-[hsl(var(--text))]"
               />
             </div>
             <div>
-              <div className="mb-1 text-xs text-zinc-400">To</div>
+              <div className="mb-1 text-xs text-[hsl(var(--muted))]">To</div>
               <input
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
                 type="date"
-                className="h-9 rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-200"
+                className="h-9 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 text-xs text-[hsl(var(--text))]"
               />
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <div>
-              <div className="mb-1 text-xs text-zinc-400">Tool</div>
+              <div className="mb-1 text-xs text-[hsl(var(--muted))]">Tool</div>
               <input
                 value={toolId}
                 onChange={(e) => setToolId(e.target.value)}
                 placeholder="e.g. hook-analyzer"
-                className="h-9 w-48 rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-200 placeholder:text-zinc-600"
+                className="h-9 w-48 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 text-xs text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted-2))]"
               />
             </div>
             <div>
-              <div className="mb-1 text-xs text-zinc-400">Plan</div>
+              <div className="mb-1 text-xs text-[hsl(var(--muted))]">Plan</div>
               <input
                 value={plan}
                 onChange={(e) => setPlan(e.target.value)}
                 placeholder="free / pro / team"
-                className="h-9 w-36 rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-200 placeholder:text-zinc-600"
+                className="h-9 w-36 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 text-xs text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted-2))]"
               />
             </div>
             <div>
-              <div className="mb-1 text-xs text-zinc-400">Country</div>
+              <div className="mb-1 text-xs text-[hsl(var(--muted))]">Country</div>
               <input
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 placeholder="US"
-                className="h-9 w-24 rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-xs text-zinc-200 placeholder:text-zinc-600"
+                className="h-9 w-24 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 text-xs text-[hsl(var(--text))] placeholder:text-[hsl(var(--muted-2))]"
               />
             </div>
           </div>
@@ -151,19 +151,19 @@ export default function AnalyticsDashboard() {
           <div className="ml-auto flex items-center gap-2">
             <a
               href={exportHrefCsv}
-              className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 hover:bg-zinc-800"
+              className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 py-2 text-xs text-[hsl(var(--text))] hover:bg-[hsl(var(--surface-2))]"
             >
               Export CSV
             </a>
             <a
               href={exportHrefJson}
-              className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-200 hover:bg-zinc-800"
+              className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-3 py-2 text-xs text-[hsl(var(--text))] hover:bg-[hsl(var(--surface-2))]"
             >
               Export JSON
             </a>
             <button
               onClick={load}
-              className="rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-500"
+              className="rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-xs font-medium text-[hsl(var(--primary-foreground))] hover:opacity-90"
             >
               Refresh
             </button>
@@ -171,13 +171,13 @@ export default function AnalyticsDashboard() {
         </div>
 
         {state === 'loading' && (
-          <div className="mt-3 text-xs text-zinc-500">Loading analytics…</div>
+          <div className="mt-3 text-xs text-[hsl(var(--muted))]">Loading analytics…</div>
         )}
         {state === 'error' && (
           <div className="mt-3 text-xs text-red-300">Error: {error}</div>
         )}
         {state === 'success' && data && (
-          <div className="mt-3 text-xs text-zinc-500">
+          <div className="mt-3 text-xs text-[hsl(var(--muted))]">
             Range: {data.range.from} → {data.range.to} ({data.range.preset})
           </div>
         )}
@@ -186,13 +186,13 @@ export default function AnalyticsDashboard() {
       {data && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           {data.kpis.map((k) => (
-            <div key={k.label} className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-              <div className="text-xs text-zinc-500">{k.label}</div>
-              <div className="mt-1 text-lg font-semibold text-zinc-100">{k.value.toLocaleString()}</div>
+            <div key={k.label} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+              <div className="text-xs text-[hsl(var(--muted))]">{k.label}</div>
+              <div className="mt-1 text-lg font-semibold text-[hsl(var(--text))]">{k.value.toLocaleString()}</div>
               <div
                 className={classNames(
                   'mt-1 text-xs',
-                  (k.deltaPct ?? 0) >= 0 ? 'text-primary' : 'text-red-300'
+                  (k.deltaPct ?? 0) >= 0 ? 'text-[hsl(var(--primary))]' : 'text-red-300'
                 )}
               >
                 {k.deltaPct != null ? `${k.deltaPct >= 0 ? '+' : ''}${k.deltaPct}%` : '—'}
@@ -305,8 +305,8 @@ export default function AnalyticsDashboard() {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-      <div className="mb-3 text-sm font-medium text-zinc-200">{title}</div>
+    <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+      <div className="mb-3 text-sm font-medium text-[hsl(var(--text))]">{title}</div>
       <div className="h-56">{children}</div>
     </div>
   )
@@ -314,8 +314,8 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function TableCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-      <div className="mb-3 text-sm font-medium text-zinc-200">{title}</div>
+    <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+      <div className="mb-3 text-sm font-medium text-[hsl(var(--text))]">{title}</div>
       {children}
     </div>
   )
@@ -346,12 +346,12 @@ function SimpleTable({
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-xs">
         <thead>
-          <tr className="border-b border-zinc-800">
+          <tr className="border-b border-[hsl(var(--border))]">
             {columns.map((c) => (
               <th
                 key={c.key}
                 className={classNames(
-                  'px-2 py-2 text-left font-medium text-zinc-400',
+                  'px-2 py-2 text-left font-medium text-[hsl(var(--muted))]',
                   c.right && 'text-right'
                 )}
               >
@@ -362,12 +362,12 @@ function SimpleTable({
         </thead>
         <tbody>
           {rows.map((r, idx) => (
-            <tr key={idx} className="border-b border-zinc-900 hover:bg-zinc-900/40">
+            <tr key={idx} className="border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))]">
               {columns.map((c) => (
                 <td
                   key={c.key}
                   className={classNames(
-                    'px-2 py-2 text-zinc-200',
+                    'px-2 py-2 text-[hsl(var(--text))]',
                     c.right && 'text-right'
                   )}
                 >

@@ -72,6 +72,33 @@
     --destructive: 4 72% 55%;
     --destructive-foreground: 0 0% 100%;
   }
+
+  .admin-theme {
+    --bg: 210 20% 18%;
+    --surface-1: 210 20% 18%;
+    --surface-2: 210 18% 24%;
+    --surface-3: 210 16% 28%;
+    --text: 210 30% 92%;
+    --muted: 210 16% 70%;
+    --muted-2: 210 12% 60%;
+    --border: 210 18% 30%;
+    --input: 210 18% 26%;
+    --primary: 151 55% 52%;
+    --primary-foreground: 210 20% 18%;
+    --ring: 151 55% 52%;
+
+    --background: var(--bg);
+    --foreground: var(--text);
+    --card: var(--surface-2);
+    --card-foreground: var(--text);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--text);
+    --secondary: 210 18% 26%;
+    --secondary-foreground: var(--text);
+    --muted-foreground: var(--muted);
+    --accent: 210 18% 26%;
+    --accent-foreground: var(--text);
+  }
 }
 
 @layer base {

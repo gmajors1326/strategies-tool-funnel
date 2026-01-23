@@ -85,8 +85,8 @@ export default function WebhookDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-        <div className="text-sm font-medium text-zinc-200 mb-3">Rotate Secret</div>
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+        <div className="text-sm font-medium text-[hsl(var(--text))] mb-3">Rotate Secret</div>
         <form onSubmit={handleRotate} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] items-end">
           <div className="space-y-1">
             <Label htmlFor="customerId">Customer ID</Label>
@@ -115,12 +115,12 @@ export default function WebhookDashboard() {
         {error && <p className="text-sm text-red-300 mt-3">{error}</p>}
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-        <div className="text-sm font-medium text-zinc-200 mb-3">Secrets</div>
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+        <div className="text-sm font-medium text-[hsl(var(--text))] mb-3">Secrets</div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-zinc-800 text-zinc-400">
+              <tr className="border-b border-[hsl(var(--border))] text-[hsl(var(--muted))]">
                 <th className="py-2 text-left">Customer</th>
                 <th className="py-2 text-left">Secret</th>
                 <th className="py-2 text-left">Active</th>
@@ -129,7 +129,7 @@ export default function WebhookDashboard() {
             </thead>
             <tbody>
               {secrets.map((secretRow) => (
-                <tr key={secretRow.id} className="border-b border-zinc-900">
+                <tr key={secretRow.id} className="border-b border-[hsl(var(--border))]">
                   <td className="py-2">{secretRow.customerId}</td>
                   <td className="py-2">{secretRow.secret}</td>
                   <td className="py-2">{secretRow.active ? 'Yes' : 'No'}</td>
@@ -140,7 +140,7 @@ export default function WebhookDashboard() {
               ))}
               {secrets.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-3 text-zinc-500">
+                  <td colSpan={4} className="py-3 text-[hsl(var(--muted))]">
                     No secrets configured.
                   </td>
                 </tr>
@@ -150,12 +150,12 @@ export default function WebhookDashboard() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-        <div className="text-sm font-medium text-zinc-200 mb-3">Recent Deliveries</div>
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
+        <div className="text-sm font-medium text-[hsl(var(--text))] mb-3">Recent Deliveries</div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-zinc-800 text-zinc-400">
+              <tr className="border-b border-[hsl(var(--border))] text-[hsl(var(--muted))]">
                 <th className="py-2 text-left">Time</th>
                 <th className="py-2 text-left">Event ID</th>
                 <th className="py-2 text-left">Type</th>
@@ -166,7 +166,7 @@ export default function WebhookDashboard() {
             </thead>
             <tbody>
               {deliveries.map((delivery) => (
-                <tr key={delivery.id} className="border-b border-zinc-900">
+                <tr key={delivery.id} className="border-b border-[hsl(var(--border))]">
                   <td className="py-2">{new Date(delivery.receivedAt).toLocaleString()}</td>
                   <td className="py-2">{delivery.eventId}</td>
                   <td className="py-2">{delivery.type}</td>
@@ -177,7 +177,7 @@ export default function WebhookDashboard() {
               ))}
               {deliveries.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-3 text-zinc-500">
+                  <td colSpan={6} className="py-3 text-[hsl(var(--muted))]">
                     No deliveries recorded.
                   </td>
                 </tr>

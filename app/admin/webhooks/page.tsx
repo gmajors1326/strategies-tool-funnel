@@ -7,7 +7,7 @@ export default async function AdminWebhooksPage() {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Webhook Admin</h1>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-[hsl(var(--muted))]">
           Replay protection, per-customer secrets, and delivery history.
         </p>
       </div>

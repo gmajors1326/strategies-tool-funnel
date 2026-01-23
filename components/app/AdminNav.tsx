@@ -27,9 +27,9 @@ export function AdminNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              'block rounded-md px-3 py-2 text-sm',
+              'block rounded-lg px-3 py-2 text-sm transition',
               isActive
-                ? 'bg-red-600/20 text-red-200'
+                ? 'bg-[hsl(var(--primary))/0.18] text-[hsl(var(--text))]'
                 : 'text-[hsl(var(--muted))] hover:text-[hsl(var(--text))] hover:bg-[hsl(var(--surface-3))]'
             )}
           >

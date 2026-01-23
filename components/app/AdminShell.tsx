@@ -7,12 +7,12 @@ type AdminShellProps = {
 
 export function AdminShell({ children }: AdminShellProps) {
   return (
-    <div className="min-h-screen bg-[hsl(var(--bg))] text-[hsl(var(--text))]">
-      <div className="mx-auto flex max-w-6xl gap-6 px-6 py-6">
-        <aside className="hidden w-56 flex-shrink-0 lg:block">
-          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
-            <p className="mb-4 text-xs uppercase tracking-wide text-[hsl(var(--muted))]">
-              Admin Control
+    <div className="admin-theme min-h-screen bg-[hsl(var(--bg))] text-[hsl(var(--text))]">
+      <div className="mx-auto flex max-w-7xl gap-6 px-6 py-6">
+        <aside className="hidden w-64 flex-shrink-0 lg:block">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-5 shadow-[0_24px_40px_rgba(0,0,0,0.35)]">
+            <p className="mb-4 text-xs uppercase tracking-[0.18em] text-[hsl(var(--muted))]">
+              Admin Console
             </p>
             <AdminNav />
           </div>
