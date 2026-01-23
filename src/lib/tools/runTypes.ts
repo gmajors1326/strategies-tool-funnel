@@ -47,6 +47,10 @@ export type RunResponse = {
   status: 'ok' | 'locked' | 'error'
   lock?: RunLock
   output?: any
+  degraded?: boolean
+  degradedReason?: string
+  disabledFeatures?: Array<'tokens' | 'history' | 'vault' | 'exports'>
+  message?: string
   requestId?: string
   metering?: {
     chargedTokens: number

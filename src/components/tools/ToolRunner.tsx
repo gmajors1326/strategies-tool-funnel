@@ -46,6 +46,10 @@ type RunResponse = {
   lock?: { code?: string; message?: string; resetsAtISO?: string; remainingTokens?: number }
   error?: string | { message?: string; code?: string; cta?: { label: string; href: string } }
   requestId?: string
+  degraded?: boolean
+  degradedReason?: string
+  disabledFeatures?: Array<'tokens' | 'history' | 'vault' | 'exports'>
+  message?: string
 }
 
 function safeJsonParse(s: string) {
@@ -286,7 +290,12 @@ export function ToolRunner(props: {
   const canSeeHistory = Boolean(ui?.entitlements?.canSeeHistory)
   const canSaveToVault = Boolean(ui?.entitlements?.canSaveToVault)
   const canExportTemplates = Boolean(ui?.entitlements?.canExportTemplates)
-  const planLocked = !canExport || !canSaveToVault || !canExportTemplates
+  const degraded = Boolean(result?.degraded)
+  const canExportEffective = canExport && !degraded
+  const canSeeHistoryEffective = canSeeHistory && !degraded
+  const canSaveToVaultEffective = canSaveToVault && !degraded
+  const canExportTemplatesEffective = canExportTemplates && !degraded
+  const planLocked = !canExportEffective || !canSaveToVaultEffective || !canExportTemplatesEffective
   const nextToolId = getRecommendedNextToolId(toolId)
   const header = isLaunchTool(toolId) ? getLaunchHeader(toolId) : null
 
@@ -449,6 +458,10 @@ export function ToolRunner(props: {
   }, [showLowTokens, toolId, tokensRemaining, tokensAllowance])
 
   async function loadHistory() {
+    if (!canSeeHistoryEffective) {
+      setHistory(readLocalRuns(toolSlug))
+      return
+    }
     const res = await fetch(`/api/tools/runs/recent?toolId=${encodeURIComponent(toolId)}`, {
       cache: 'no-store',
     })
@@ -483,7 +496,7 @@ export function ToolRunner(props: {
   React.useEffect(() => {
     loadHistory().catch(() => setHistory(readLocalRuns(toolSlug)))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toolSlug, canSeeHistory])
+  }, [toolSlug, canSeeHistoryEffective])
 
   React.useEffect(() => {
     setPresets(readToolPresets(toolId))
@@ -1100,9 +1113,9 @@ export function ToolRunner(props: {
           toolId={toolId}
           toolSlug={toolSlug}
           runId={latestRunId}
-          canExport={canExport}
-          canSaveToVault={canSaveToVault}
-          canExportTemplates={canExportTemplates}
+          canExport={canExportEffective}
+          canSaveToVault={canSaveToVaultEffective}
+          canExportTemplates={canExportTemplatesEffective}
           onMessage={setMsg}
         />
         {planLocked ? (
@@ -1370,6 +1383,14 @@ export function ToolRunner(props: {
               </div>
             )
           })()}
+          {degraded ? (
+            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
+              <div className="font-medium">
+                {result?.message ||
+                  'Temporary database outage — results are available, but saving/export/history is disabled.'}
+              </div>
+            </div>
+          ) : null}
           {result?.error ? (
             <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
               <div className="font-medium">
@@ -1396,7 +1417,7 @@ export function ToolRunner(props: {
 
           <div className="pt-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Recent runs {canSeeHistory ? '' : '(free: last 3)'}</p>
+              <p className="text-sm font-medium">Recent runs {canSeeHistoryEffective ? '' : '(free: last 3)'}</p>
 
               <Button
                 variant="ghost"
@@ -1410,7 +1431,7 @@ export function ToolRunner(props: {
               </Button>
             </div>
 
-            {history?.length ? (
+            {canSeeHistoryEffective && history?.length ? (
               <div className="mt-2 space-y-2">
                 {history.map((h) => {
                   const runId = h.runId || h.id
@@ -1441,7 +1462,9 @@ export function ToolRunner(props: {
                 })}
               </div>
             ) : (
-              <p className="mt-2 text-sm text-muted-foreground">No runs yet.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {degraded ? 'History is unavailable during database outage.' : 'No runs yet.'}
+              </p>
             )}
           </div>
         </CardContent>

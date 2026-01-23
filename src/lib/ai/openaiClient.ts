@@ -82,7 +82,7 @@ async function callResponsesApi(
     store: false,
     temperature: args.temperature ?? 0.2,
     max_output_tokens: args.maxOutputTokens ?? 1200,
-    response_format: responseFormat,
+    ...(responseFormat ? { text: { format: responseFormat } } : {}),
     input: [
       { role: 'system', content: [{ type: 'input_text', text: prompt.system }] },
       { role: 'user', content: [{ type: 'input_text', text: prompt.user }] },
@@ -99,11 +99,9 @@ export async function generateStructuredOutput<T>(
   const responseFormat = args.jsonSchema
     ? {
         type: 'json_schema',
-        json_schema: {
-          name: `${args.toolId.replace(/[^a-z0-9_]/gi, '_')}_schema`,
-          schema: args.jsonSchema,
-          strict: true,
-        },
+        name: `${args.toolId.replace(/[^a-z0-9_]/gi, '_')}_schema`,
+        schema: args.jsonSchema,
+        strict: true,
       }
     : { type: 'json_object' }
 
@@ -175,16 +173,19 @@ async function repairStructuredOutput<T>(
   ].join('\n\n')
 
   try {
-    const response = await callResponsesApi(client, args, { system: repairSystem, user: repairUser }, args.jsonSchema
-      ? {
-          type: 'json_schema',
-          json_schema: {
+    const response = await callResponsesApi(
+      client,
+      args,
+      { system: repairSystem, user: repairUser },
+      args.jsonSchema
+        ? {
+            type: 'json_schema',
             name: `${args.toolId.replace(/[^a-z0-9_]/gi, '_')}_schema`,
             schema: args.jsonSchema,
             strict: true,
-          },
-        }
-      : { type: 'json_object' })
+          }
+        : { type: 'json_object' }
+    )
 
     const text = extractTextFromResponse(response)
     if (!text) {

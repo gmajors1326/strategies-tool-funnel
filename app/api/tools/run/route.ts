@@ -19,6 +19,7 @@ import { getActiveOrg, getMembership, logToolRun } from '@/src/lib/orgs/orgs'
 import { requireUser } from '@/src/lib/auth/requireUser'
 import { validateInput } from '@/src/lib/tools/validate'
 import { assertDbReadyOnce, isProviderError, normalizePrismaError } from '@/src/lib/prisma/guards'
+import { dbHealthCheck } from '@/src/lib/db/dbHealth'
 
 const requestSchema = z.object({
   toolId: z.string(),
@@ -67,17 +68,162 @@ export async function POST(request: NextRequest) {
   log('request_start', { dryRun: data.dryRun ?? false })
 
   const leadCaptured = request.cookies.get('leadCaptured')?.value === 'true'
+  const dbHealth = await dbHealthCheck()
+  const degraded = !dbHealth.ok
+  log('db_health', { ok: dbHealth.ok, error: dbHealth.error })
   let session: Awaited<ReturnType<typeof requireUser>> | null = null
 
-  if (!leadCaptured) {
-    await assertDbReadyOnce()
-    session = await requireUser()
-  } else {
-    try {
+  if (!degraded) {
+    if (!leadCaptured) {
       await assertDbReadyOnce()
       session = await requireUser()
+    } else {
+      try {
+        await assertDbReadyOnce()
+        session = await requireUser()
+      } catch {
+        session = null
+      }
+    }
+  }
+
+  if (degraded) {
+    let tool: ReturnType<typeof getToolMeta> | null = null
+    try {
+      tool = getToolMeta(data.toolId)
     } catch {
-      session = null
+      tool = null
+    }
+
+    if (!tool) {
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'error',
+          error: { message: 'Tool not found.', code: 'TOOL_ERROR' },
+          requestId,
+          degraded: true,
+          degradedReason: 'DB_UNAVAILABLE',
+          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
+          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+        },
+        { status: 404, headers: { 'x-request-id': requestId } }
+      )
+    }
+
+    const validation = validateInput(data.toolId, data.input)
+    if (!validation.valid) {
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'error',
+          error: {
+            message: validation.errors?.message || 'Validation failed',
+            code: 'VALIDATION_ERROR',
+            details: validation.errors?.details,
+          },
+          requestId,
+          degraded: true,
+          degradedReason: 'DB_UNAVAILABLE',
+          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
+          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+        },
+        { status: 400, headers: { 'x-request-id': requestId } }
+      )
+    }
+
+    const allowDevGuest = process.env.NODE_ENV !== 'production'
+    if (!leadCaptured && !allowDevGuest) {
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'error',
+          error: { message: 'Unauthorized.', code: 'AUTH_ERROR' },
+          requestId,
+          degraded: true,
+          degradedReason: 'DB_UNAVAILABLE',
+          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
+          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+        },
+        { status: 401, headers: { 'x-request-id': requestId } }
+      )
+    }
+
+    const runner = runnerRegistry[tool.id]
+    if (!runner) {
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'error',
+          error: { message: 'Runner not implemented.', code: 'TOOL_ERROR' },
+          requestId,
+          degraded: true,
+          degradedReason: 'DB_UNAVAILABLE',
+          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
+          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+        },
+        { status: 500, headers: { 'x-request-id': requestId } }
+      )
+    }
+
+    try {
+      log('runner_start', { degraded: true })
+      const result = await runner(data, {
+        user: { id: leadCaptured ? 'lead_guest' : 'dev_guest', planId: 'free' },
+        toolMeta: tool,
+        usage: { aiTokensRemaining: 0 },
+        logger: { info: () => {}, error: () => {} },
+      })
+      log('runner_finish', { degraded: true })
+
+      const outputError = (result as any)?.output?.error
+      if (outputError) {
+        return NextResponse.json<RunResponse>(
+          {
+            status: 'error',
+            error: { message: outputError.message || 'AI output error.', code: outputError.errorCode || 'AI_ERROR' },
+            requestId,
+            degraded: true,
+            degradedReason: 'DB_UNAVAILABLE',
+            disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
+            message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+          },
+          { status: 502, headers: { 'x-request-id': requestId } }
+        )
+      }
+
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'ok',
+          output: result.output,
+          runId,
+          requestId,
+          degraded: true,
+          degradedReason: 'DB_UNAVAILABLE',
+          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
+          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+          metering: {
+            chargedTokens: 0,
+            remainingTokens: 0,
+            aiTokensUsed: 0,
+            aiTokensCap: 0,
+            runsUsed: 0,
+            runsCap: 0,
+            resetsAtISO: new Date().toISOString(),
+            meteringMode: 'trial',
+          },
+        },
+        { status: 200, headers: { 'x-request-id': requestId } }
+      )
+    } catch (err: any) {
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'error',
+          error: { message: err?.message || 'Tool error.', code: 'TOOL_ERROR' },
+          requestId,
+          degraded: true,
+          degradedReason: 'DB_UNAVAILABLE',
+          disabledFeatures: ['tokens', 'history', 'vault', 'exports'],
+          message: 'Temporary database outage — results are available, but saving/export/history is disabled.',
+        },
+        { status: 502, headers: { 'x-request-id': requestId } }
+      )
     }
   }
 
@@ -628,38 +774,47 @@ export async function POST(request: NextRequest) {
     let remainingBonusRuns = bonusRemaining
     let chargedTokens = 0
 
-    await prisma.$transaction(async (tx) => {
-      if (meteringMode === 'bonus_run') {
-        const consumed = await consumeOneBonusRun({ userId, toolId: tool.id })
-        remainingBonusRuns = consumed.ok
-          ? await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
-          : bonusRemaining
-      }
+    try {
+      await prisma.$transaction(async (tx) => {
+        if (meteringMode === 'bonus_run') {
+          const consumed = await consumeOneBonusRun({ userId, toolId: tool.id })
+          remainingBonusRuns = consumed.ok
+            ? await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
+            : bonusRemaining
+        }
 
-      if (meteringMode === 'tokens') {
-        await tx.tokenLedger.create({
-          data: {
-            user_id: userId,
-            event_type: 'spend_tool',
-            tokens_delta: -requiredTokens,
-            tool_id: tool.id,
-            run_id: runId,
-            reason: 'tool_run',
-          },
+        if (meteringMode === 'tokens') {
+          await tx.tokenLedger.create({
+            data: {
+              user_id: userId,
+              event_type: 'spend_tool',
+              tokens_delta: -requiredTokens,
+              tool_id: tool.id,
+              run_id: runId,
+              reason: 'tool_run',
+            },
+          })
+          chargedTokens = requiredTokens
+        }
+
+        await incrementUsageTx({
+          tx,
+          userId,
+          windowEnd: usage.window_end,
+          toolId: tool.id,
+          tokensUsed: meteringMode === 'tokens' ? requiredTokens : 0,
         })
-        chargedTokens = requiredTokens
-      }
-
-      await incrementUsageTx({
-        tx,
-        userId,
-        windowEnd: usage.window_end,
-        toolId: tool.id,
-        tokensUsed: meteringMode === 'tokens' ? requiredTokens : 0,
       })
-    })
+    } catch (err: any) {
+      log('metering_write_failed', { message: err?.message || 'Unknown error' })
+    }
 
-    const updatedBalance = await getTokenBalance(userId)
+    let updatedBalance = tokenBalance
+    try {
+      updatedBalance = await getTokenBalance(userId)
+    } catch (err: any) {
+      log('metering_read_failed', { message: err?.message || 'Unknown error' })
+    }
 
     const response: RunResponse & { inputEcho?: any; requestId?: string; usage?: any } = {
       status: 'ok',
@@ -684,7 +839,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Persist recent runs (DB-backed now)
-    await addRun(userId, tool.id, runId, response)
+    try {
+      await addRun(userId, tool.id, runId, response)
+    } catch (err: any) {
+      log('add_run_failed', { message: err?.message || 'Unknown error' })
+    }
 
     try {
       const sanitizedInput = sanitizeInputPayload(data.input ?? {}) as Prisma.InputJsonValue
@@ -703,17 +862,21 @@ export async function POST(request: NextRequest) {
       })
     } catch (err: any) {
       if (err?.code !== 'P2002' && err?.code !== 'P2021') {
-        throw err
+        log('tool_run_write_failed', { message: err?.message || 'Unknown error' })
       }
     }
 
-    await recordRun({
-      status: 'ok',
-      meteringMode,
-      tokensCharged: chargedTokens,
-      lockCode: null,
-      outputSummary: summarizeValue(output.output),
-    })
+    try {
+      await recordRun({
+        status: 'ok',
+        meteringMode,
+        tokensCharged: chargedTokens,
+        lockCode: null,
+        outputSummary: summarizeValue(output.output),
+      })
+    } catch (err: any) {
+      log('record_run_failed', { message: err?.message || 'Unknown error' })
+    }
 
     return jsonWithRequestId(response)
   } catch (err: any) {

@@ -39,9 +39,9 @@ export async function GET() {
       store: false,
       temperature: 0,
       max_output_tokens: 120,
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
+      text: {
+        format: {
+          type: 'json_schema',
           name: 'ai_health_check',
           schema: {
             type: 'object',
