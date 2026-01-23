@@ -63,7 +63,12 @@ function verifySessionToken(token: string): Session | null {
 
 export async function getSessionFromCookieValue(cookieValue?: string | null): Promise<Session | null> {
   if (!cookieValue) return null
-  const parsed = verifySessionToken(cookieValue)
+  let parsed: Session | null = null
+  try {
+    parsed = verifySessionToken(cookieValue)
+  } catch {
+    return null
+  }
   if (!parsed?.userId) return null
 
   const user = await prisma.user.findUnique({
