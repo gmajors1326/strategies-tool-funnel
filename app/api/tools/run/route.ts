@@ -114,6 +114,17 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if (!session) {
+    return NextResponse.json<RunResponse>(
+      {
+        status: 'error',
+        error: { message: 'Unauthorized.', code: 'AUTH_ERROR' },
+        requestId,
+      },
+      { status: 401, headers: { 'x-request-id': requestId } }
+    )
+  }
+
   const userId = session.id
 
   const entitlement = await getOrCreateEntitlement(userId)
