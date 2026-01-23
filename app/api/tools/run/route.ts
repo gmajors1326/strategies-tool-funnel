@@ -37,13 +37,84 @@ export async function POST(request: NextRequest) {
   // ✅ NEW: requestId for tracing (also echoed in JSON)
   const requestId = crypto.randomUUID()
 
-  await assertDbReadyOnce()
-
-  const session = await requireUser()
-  const userId = session.id
-
   const body = await request.json()
   const data = requestSchema.parse(body) as RunRequest & { dryRun?: boolean }
+  const runId = data.runId || crypto.randomUUID()
+
+  const leadCaptured = request.cookies.get('leadCaptured')?.value === 'true'
+  let session: Awaited<ReturnType<typeof requireUser>> | null = null
+
+  if (!leadCaptured) {
+    await assertDbReadyOnce()
+    session = await requireUser()
+  } else {
+    try {
+      await assertDbReadyOnce()
+      session = await requireUser()
+    } catch {
+      session = null
+    }
+  }
+
+  if (!session && leadCaptured) {
+    let tool: ReturnType<typeof getToolMeta> | null = null
+    try {
+      tool = getToolMeta(data.toolId)
+    } catch {
+      tool = null
+    }
+
+    if (!tool) {
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'error',
+          error: { message: 'Tool not found.', code: 'TOOL_ERROR' },
+          requestId,
+        },
+        { status: 404, headers: { 'x-request-id': requestId } }
+      )
+    }
+
+    try {
+      const result = await runnerRegistry[tool.id](data, {
+        user: { id: 'lead_guest', planId: 'free' },
+        toolMeta: tool,
+        usage: { aiTokensRemaining: 100000 },
+        logger: { info: () => {}, error: () => {} },
+      })
+
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'ok',
+          output: result.output,
+          runId,
+          requestId,
+          metering: {
+            chargedTokens: 0,
+            remainingTokens: 0,
+            aiTokensUsed: 0,
+            aiTokensCap: 0,
+            runsUsed: 0,
+            runsCap: 0,
+            resetsAtISO: new Date().toISOString(),
+            meteringMode: 'trial',
+          },
+        },
+        { status: 200, headers: { 'x-request-id': requestId } }
+      )
+    } catch (err: any) {
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'error',
+          error: { message: err?.message || 'Tool error.', code: 'TOOL_ERROR' },
+          requestId,
+        },
+        { status: 500, headers: { 'x-request-id': requestId } }
+      )
+    }
+  }
+
+  const userId = session.id
 
   const entitlement = await getOrCreateEntitlement(userId)
   const personalPlan = entitlement.plan as 'free' | 'pro_monthly' | 'team' | 'lifetime'
@@ -74,8 +145,6 @@ export async function POST(request: NextRequest) {
     : orgPlan === 'enterprise'
       ? orgAiTokenCapByPlan.enterprise
       : personalCaps.tokensPerDay
-
-  const runId = data.runId || crypto.randomUUID()
 
   const summarizeValue = (value: unknown, limit = 180) => {
     try {

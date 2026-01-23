@@ -67,7 +67,7 @@ const FAQ_ITEMS = [
 
 export function FaqBlock({ title = "FAQ" }: { title?: string }) {
   return (
-    <section className="space-y-4 rounded-xl bg-[#355a45] p-6">
+    <section className="space-y-4 rounded-xl bg-gradient-to-br from-[#2f4f3a] via-[#3f6a4d] to-[#5b8a60] p-6">
       <div>
         <h2 className="text-lg font-semibold text-[hsl(var(--text))]">{title}</h2>
         <p className="text-sm text-[hsl(var(--muted))]">Clear answers to how the tools work and when to use them.</p>

@@ -36,6 +36,7 @@ export const HookAnalyzerOutputSchema = z.object({
     line: z.string(),
   }),
   avoid: z.array(z.string()),
+  evidence: z.array(z.string()),
 })
 
 export const CtaMatchOutputSchema = z.object({
@@ -56,6 +57,7 @@ export const CtaMatchOutputSchema = z.object({
     })
   ),
   bestNextAction: z.string(),
+  evidence: z.array(z.string()),
 })
 
 export const ContentAngleOutputSchema = z.object({
@@ -68,6 +70,7 @@ export const ContentAngleOutputSchema = z.object({
     })
   ),
   notes: z.array(z.string()),
+  evidence: z.array(z.string()),
 })
 
 export const CaptionOptimizerOutputSchema = z.object({
@@ -77,6 +80,7 @@ export const CaptionOptimizerOutputSchema = z.object({
   ctaLine: z.string(),
   doNotUse: z.array(z.string()),
   notes: z.array(z.string()),
+  evidence: z.array(z.string()),
 })
 
 export const EngagementDiagnosticOutputSchema = z.object({
@@ -110,6 +114,7 @@ export const EngagementDiagnosticOutputSchema = z.object({
     successMetric: z.string(),
   }),
   notes: z.array(z.string()),
+  evidence: z.array(z.string()),
 })
 
 export const TOOL_OUTPUT_ZOD = {
@@ -192,8 +197,9 @@ export const TOOL_OUTPUT_JSON_SCHEMA = {
         required: ['recommended', 'line'],
       },
       avoid: { type: 'array', items: { type: 'string' } },
+      evidence: { type: 'array', items: { type: 'string' } },
     },
-    required: ['score', 'hookType', 'bestFor', 'diagnosis', 'rewrites', '6secReelPlan', 'cta', 'avoid'],
+    required: ['score', 'hookType', 'bestFor', 'diagnosis', 'rewrites', '6secReelPlan', 'cta', 'avoid', 'evidence'],
   },
   'cta-match-analyzer': {
     type: 'object',
@@ -232,8 +238,9 @@ export const TOOL_OUTPUT_JSON_SCHEMA = {
         },
       },
       bestNextAction: { type: 'string' },
+      evidence: { type: 'array', items: { type: 'string' } },
     },
-    required: ['score', 'diagnosis', 'rewrites', 'bestNextAction'],
+    required: ['score', 'diagnosis', 'rewrites', 'bestNextAction', 'evidence'],
   },
   'content-angle-generator': {
     type: 'object',
@@ -254,8 +261,9 @@ export const TOOL_OUTPUT_JSON_SCHEMA = {
         },
       },
       notes: { type: 'array', items: { type: 'string' } },
+      evidence: { type: 'array', items: { type: 'string' } },
     },
-    required: ['angles', 'notes'],
+    required: ['angles', 'notes', 'evidence'],
   },
   'caption-optimizer': {
     type: 'object',
@@ -267,8 +275,9 @@ export const TOOL_OUTPUT_JSON_SCHEMA = {
       ctaLine: { type: 'string' },
       doNotUse: { type: 'array', items: { type: 'string' } },
       notes: { type: 'array', items: { type: 'string' } },
+      evidence: { type: 'array', items: { type: 'string' } },
     },
-    required: ['optimizedCaption', 'openingLine', 'structure', 'ctaLine', 'doNotUse', 'notes'],
+    required: ['optimizedCaption', 'openingLine', 'structure', 'ctaLine', 'doNotUse', 'notes', 'evidence'],
   },
   'engagement-diagnostic': {
     type: 'object',
@@ -326,8 +335,9 @@ export const TOOL_OUTPUT_JSON_SCHEMA = {
         required: ['name', 'hypothesis', 'steps', 'successMetric'],
       },
       notes: { type: 'array', items: { type: 'string' } },
+      evidence: { type: 'array', items: { type: 'string' } },
     },
-    required: ['summary', 'signals', 'prioritizedFixes', 'nextSteps', 'stopDoing', 'experiment', 'notes'],
+    required: ['summary', 'signals', 'prioritizedFixes', 'nextSteps', 'stopDoing', 'experiment', 'notes', 'evidence'],
   },
 } as const
 

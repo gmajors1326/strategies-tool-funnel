@@ -73,7 +73,10 @@ export default function HomePage() {
               {tools.map((tool) => {
                 const meta = getLaunchMeta(tool.id)
                 return (
-                  <AppCard key={tool.id} className="p-4 space-y-3">
+                  <AppCard
+                    key={tool.id}
+                    className="p-4 space-y-3 bg-gradient-to-br from-[#2f4f3a] via-[#3f6a4d] to-[#5b8a60]"
+                  >
                     <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted))]">
                       {meta?.label ? (
                         <span className="rounded-full border border-[hsl(var(--border))] px-2 py-0.5">
@@ -114,7 +117,7 @@ export default function HomePage() {
                   </AppCard>
                 )
               })}
-              <AppCard className="p-4 space-y-2 text-sm text-[hsl(var(--muted))]">
+              <AppCard className="p-4 space-y-2 text-sm text-[hsl(var(--muted))] bg-gradient-to-br from-[#2f4f3a] via-[#3f6a4d] to-[#5b8a60]">
                 <p className="text-[hsl(var(--text))] font-semibold">More tools coming soon</p>
                 <p>We&apos;re launching in tight batches.</p>
               </AppCard>

@@ -33,7 +33,7 @@ export function ToolCard({ tool }: ToolCardProps) {
   const meta = getLaunchMeta(tool.id)
 
   return (
-    <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-3">
+    <div className="rounded-xl border border-[hsl(var(--border))] bg-gradient-to-br from-[#2f4f3a] via-[#3f6a4d] to-[#5b8a60] p-4 space-y-3">
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted))]">

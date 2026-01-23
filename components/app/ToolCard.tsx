@@ -9,7 +9,7 @@ type ToolCardProps = {
 
 export function ToolCard({ tool }: ToolCardProps) {
   return (
-    <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-3">
+    <div className="rounded-xl border border-[hsl(var(--border))] bg-gradient-to-br from-[#2f4f3a] via-[#3f6a4d] to-[#5b8a60] p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-[hsl(var(--text))]">{tool.name}</p>

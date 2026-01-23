@@ -1,7 +1,13 @@
 import { z } from 'zod'
 import type { RunRequest } from '@/src/lib/tools/runTypes'
 import type { ToolMeta } from '@/src/lib/tools/registry'
-import { pickModel, generateStructuredOutput } from '@/src/lib/ai/openaiClient'
+import { pickModel } from '@/src/lib/ai/openaiClient'
+import { runToolAI } from '@/src/lib/ai/runToolAI'
+import { hookAnalyzerBrief } from '@/src/lib/ai/toolBriefs/hook-analyzer'
+import { ctaMatchAnalyzerBrief } from '@/src/lib/ai/toolBriefs/cta-match-analyzer'
+import { contentAngleGeneratorBrief } from '@/src/lib/ai/toolBriefs/content-angle-generator'
+import { captionOptimizerBrief } from '@/src/lib/ai/toolBriefs/caption-optimizer'
+import { engagementDiagnosticBrief } from '@/src/lib/ai/toolBriefs/engagement-diagnostic'
 import { EXPECTED_TOOL_IDS } from '@/src/lib/tools/registry'
 import { runAIJson } from '@/src/lib/ai/openai'
 import { normalizeToolOutput } from '@/src/lib/ai/normalizeOutput'
@@ -83,39 +89,32 @@ async function runResponsesTool(toolId: string, req: RunRequest) {
       ? process.env.OPENAI_MODEL_LIGHT || 'gpt-4.1-mini'
       : process.env.OPENAI_MODEL_HEAVY || 'gpt-4.1-mini'
 
-  const system = [
-    config?.system || '',
-    'Return ONLY valid JSON. No markdown. No extra keys.',
-    'If missing info, infer conservatively and lower confidence.',
-  ]
-    .filter(Boolean)
-    .join('\n')
+  const briefs: Record<string, string> = {
+    'hook-analyzer': hookAnalyzerBrief,
+    'cta-match-analyzer': ctaMatchAnalyzerBrief,
+    'content-angle-generator': contentAngleGeneratorBrief,
+    'caption-optimizer': captionOptimizerBrief,
+    'engagement-diagnostic': engagementDiagnosticBrief,
+  }
 
-  const user = [
-    'User inputs (JSON):',
-    JSON.stringify(req.input ?? {}, null, 2),
-    'Output schema:',
-    JSON.stringify(jsonSchema, null, 2),
-  ].join('\n\n')
+  const temperature = toolId === 'content-angle-generator' || toolId === 'caption-optimizer' ? 0.5 : 0.2
+  const brief = briefs[toolId] || config?.system || ''
 
-  const result = await generateStructuredOutput<any>(
-    {
-      toolId,
-      input: req.input ?? {},
-      schema: schema as z.ZodSchema<any>,
-      jsonSchema: jsonSchema as Record<string, any> | undefined,
-      model,
-      temperature: 0.2,
-      maxOutputTokens: 1200,
-    },
-    { system, user }
-  )
+  const result = await runToolAI({
+    toolId,
+    input: req.input ?? {},
+    schema: schema as z.ZodSchema<any>,
+    jsonSchema: jsonSchema as Record<string, any> | undefined,
+    model,
+    temperature,
+    brief,
+  })
 
-  if ('error' in result) {
+  if (!result.ok) {
     return { output: { error: result.error }, usage: { model } }
   }
 
-  return { output: result.output, usage: result.usage }
+  return { output: result.output, usage: result.aiMeta }
 }
 // 7) positioning-knife
 const PositioningKnifeSchema = z.object({
