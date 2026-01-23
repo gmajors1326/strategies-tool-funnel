@@ -5,6 +5,8 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
+let loggedDbHost = false
+
 // Serverless-friendly Prisma Client configuration
 const createPrismaClient = () => {
   let databaseUrl = process.env.DATABASE_URL || ''
@@ -17,6 +19,22 @@ const createPrismaClient = () => {
     const separator = databaseUrl.includes('?') ? '&' : '?'
     const poolLimit = process.env.DATABASE_POOL_SIZE || '1'
     databaseUrl += `${separator}pgbouncer=true&connection_limit=${poolLimit}`
+  }
+
+  if (!loggedDbHost) {
+    loggedDbHost = true
+    try {
+      const parsed = new URL(databaseUrl)
+      const isPooler = parsed.port === '6543'
+      logger.info('Database connection target', {
+        host: parsed.hostname,
+        port: parsed.port || '5432',
+        isPooler,
+        hasPgbouncer: parsed.searchParams.has('pgbouncer'),
+      })
+    } catch {
+      logger.warn('Database connection target unavailable')
+    }
   }
 
   const prisma = new PrismaClient({
