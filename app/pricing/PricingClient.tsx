@@ -248,7 +248,7 @@ export function PricingClient() {
                   <div className="text-xs text-[hsl(var(--muted))]">Daily tokens</div>
                   <div className="text-sm">Free {PLAN_CONFIG.free.tokensPerDay.toLocaleString()}</div>
                   <div className="text-sm">Pro {PLAN_CONFIG.pro.tokensPerDay.toLocaleString()}</div>
-                  <div className="text-sm">Team {PLAN_CONFIG.team.tokensPerDay.toLocaleString()}</div>
+                  <div className="text-sm">Team {PLAN_CONFIG.business.tokensPerDay.toLocaleString()}</div>
                 </div>
                 <div className="rounded-lg border border-[hsl(var(--border))] p-3">
                   <div className="text-xs text-[hsl(var(--muted))]">Cooldowns</div>
