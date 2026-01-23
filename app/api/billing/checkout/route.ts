@@ -23,6 +23,7 @@ async function createSession(request: NextRequest, skuId: string) {
       : `${request.nextUrl.protocol}//${request.nextUrl.host}`
 
   const isSubscription = sku.mode === 'subscription'
+  const planId = 'planId' in sku ? sku.planId : null
   const session = await stripe.checkout.sessions.create({
     mode: isSubscription ? 'subscription' : 'payment',
     customer: customer.stripeCustomerId,
@@ -33,11 +34,11 @@ async function createSession(request: NextRequest, skuId: string) {
     metadata: {
       userId: user.id,
       sku: sku.id,
-      planId: 'planId' in sku ? sku.planId : undefined,
+      planId,
     },
     subscription_data: isSubscription
       ? {
-          metadata: { userId: user.id, sku: sku.id, planId: 'planId' in sku ? sku.planId : '' },
+          metadata: { userId: user.id, sku: sku.id, planId: planId ?? '' },
         }
       : undefined,
     payment_intent_data: !isSubscription
