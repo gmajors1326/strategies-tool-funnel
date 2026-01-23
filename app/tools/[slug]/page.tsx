@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import { TOOL_REGISTRY, type ToolMeta } from '@/src/lib/tools/registry'
 import { ToolRunner } from '@/src/components/tools/ToolRunner'
 import { isLaunchTool } from '@/src/lib/tools/launchTools'
