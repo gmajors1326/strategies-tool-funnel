@@ -213,11 +213,12 @@ export function PricingClient() {
                 return (
                   <PricingCard
                     key={plan.id}
-                    title={PLAN_CONFIG[planKey].title}
-                    subtitle={PLAN_CONFIG[planKey].subtitle}
-                    price={PLAN_CONFIG[planKey].price}
-                    featured={planKey === 'pro'}
-                    badge={planKey === 'pro' ? 'Most popular' : undefined}
+                    title={plan.title}
+                    subtitle={plan.subtitle}
+                    price={plan.priceDisplay}
+                    interval={plan.billingInterval}
+                    featured={Boolean(plan.featured)}
+                    badge={plan.featured ? 'Most popular' : undefined}
                     features={<FeatureList items={features} />}
                     limits={limits}
                     footer={
