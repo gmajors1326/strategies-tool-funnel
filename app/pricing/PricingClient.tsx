@@ -213,7 +213,7 @@ export function PricingClient() {
                 return (
                   <PricingCard
                     key={plan.id}
-                    title={PLAN_CONFIG[planKey].name}
+                    title={PLAN_CONFIG[planKey].title}
                     subtitle={PLAN_CONFIG[planKey].subtitle}
                     price={PLAN_CONFIG[planKey].price}
                     featured={planKey === 'pro'}
