@@ -28,13 +28,12 @@ function getPrimaryHref(lock: LockReason) {
 }
 
 export function LockBanner({ lock, context, showChips = false, showUpgradeCta = true }: LockBannerProps) {
-  if (lock.type === 'none') return null
-  const resetAt = getLockResetAt(lock)
-  const copy = getLockCopy(lock, resetAt, showUpgradeCta)
-  if (!copy) return null
-
   const hasTracked = React.useRef(false)
+  const resetAt = getLockResetAt(lock)
+  const copy = lock.type === 'none' ? null : getLockCopy(lock, resetAt, showUpgradeCta)
+
   React.useEffect(() => {
+    if (!copy || lock.type === 'none') return
     if (hasTracked.current) return
     hasTracked.current = true
     void fetch('/api/events', {
@@ -45,7 +44,9 @@ export function LockBanner({ lock, context, showChips = false, showUpgradeCta = 
         meta: { type: lock.type, context },
       }),
     })
-  }, [lock.type, context])
+  }, [copy, lock.type, context])
+
+  if (lock.type === 'none' || !copy) return null
 
   const primaryHref = getPrimaryHref(lock)
   const showPrimary =

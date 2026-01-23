@@ -89,7 +89,7 @@ export function BillingSuccessClient({ expectedType, confirmedLabel }: Props) {
       activeRef.current = false
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
-  }, [])
+  }, [expectedType])
 
   if (status === 'confirmed') {
     return (
