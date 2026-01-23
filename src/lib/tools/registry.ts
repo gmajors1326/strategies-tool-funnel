@@ -1332,6 +1332,24 @@ const TOOL_MICROCOPY: Record<ToolId, ToolMicrocopy> = {
     youInput: ['Post context', 'Current CTA'],
     youGet: ['CTA alignment score', 'Better CTA options', 'Mismatch reason'],
   },
+  'content-angle-generator': {
+    oneLiner: 'Generate angles that stop scroll without sounding recycled.',
+    whoFor: ['Creators who post weekly', 'Teams building content banks', 'Founders testing positioning'],
+    youInput: ['Topic + audience', 'Voice + constraints'],
+    youGet: ['10–30 angle ideas', 'Fresh hooks', 'Angle variety'],
+  },
+  'caption-optimizer': {
+    oneLiner: 'Tighten captions for clarity and conversion.',
+    whoFor: ['Reels creators', 'Carousel writers', 'Teams refining CTAs'],
+    youInput: ['Current caption', 'CTA goal'],
+    youGet: ['Cleaner caption', 'Stronger opening', 'Conversion-focused CTA'],
+  },
+  'engagement-diagnostic': {
+    oneLiner: 'Diagnose why content isn’t converting.',
+    whoFor: ['Creators stuck on growth', 'Marketers testing reels', 'Teams reviewing performance'],
+    youInput: ['Link or transcript', 'Goal + audience'],
+    youGet: ['Primary issue', 'Fix list', 'Next steps'],
+  },
   'dm-intelligence-engine': {
     oneLiner: 'Turn cold DMs into warm conversations fast.',
     whoFor: ['Closers doing daily outreach', 'Founders selling services', 'Teams booking calls'],

@@ -102,22 +102,21 @@ export const logToolRun = async (params: {
   errorCode?: string | null
 }) => {
   try {
-    return prisma.toolRunLog.create({
-      data: {
-        orgId: params.orgId || null,
-        userId: params.userId,
-        toolId: params.toolId,
-        runId: params.runId,
-        meteringMode: params.meteringMode,
-        tokensCharged: params.tokensCharged,
-        status: params.status,
-        lockCode: params.lockCode || null,
-        durationMs: params.durationMs || null,
-        inputSummary: params.inputSummary || null,
-        outputSummary: params.outputSummary || null,
-        errorCode: params.errorCode || null,
-      },
-    })
+    const data: any = {
+      orgId: params.orgId || null,
+      userId: params.userId,
+      toolId: params.toolId,
+      runId: params.runId,
+      meteringMode: params.meteringMode,
+      tokensCharged: params.tokensCharged,
+      status: params.status,
+      lockCode: params.lockCode || null,
+      durationMs: params.durationMs || null,
+      inputSummary: params.inputSummary || null,
+      outputSummary: params.outputSummary || null,
+      errorCode: params.errorCode || null,
+    }
+    return prisma.toolRunLog.create({ data })
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2021') {
       return null

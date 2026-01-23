@@ -1203,7 +1203,7 @@ function formatInputForPrompt(input: Record<string, any>) {
     .join('\n')
 }
 
-async function runStructuredToolRunner(toolId: string, req: RunRequest, ctx: RunContext) {
+async function runStructuredToolRunner(toolId: string, req: RunRequest) {
   const description = TOOL_DESCRIPTIONS[toolId] || 'a strategy assistant'
   const toolFields = TOOL_OUTPUT_FIELDS[toolId] ?? []
   const model = pickModel(TOOL_SPECS[toolId]?.aiLevel === 'none' ? 'light' : TOOL_SPECS[toolId]?.aiLevel || 'heavy')
@@ -1245,36 +1245,21 @@ async function runStructuredToolRunner(toolId: string, req: RunRequest, ctx: Run
   return { output: normalizeToolOutput(toolId, result) }
 }
 
-const ctaMatchAnalyzerRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('cta-match-analyzer', req, ctx)
-const retentionLeakFinderRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('retention-leak-finder', req, ctx)
-const positioningKnifeRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('positioning-knife', req, ctx)
-const contentRepurposeMachineRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('content-repurpose-machine', req, ctx)
-const commentMagnetRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('comment-magnet', req, ctx)
-const profileClarityScanRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('profile-clarity-scan', req, ctx)
-const bioToCtaRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('bio-to-cta', req, ctx)
-const carouselBlueprintRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('carousel-blueprint', req, ctx)
-const storySequencePlannerRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('story-sequence-planner', req, ctx)
-const hashtagSupportPackRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('hashtag-support-pack', req, ctx)
-const competitorLunchMoneyRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('competitor-lunch-money', req, ctx)
-const audienceMirrorRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('audience-mirror', req, ctx)
-const objectionCrusherRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('objection-crusher', req, ctx)
-const launchPlanSprinterRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('launch-plan-sprinter', req, ctx)
-const contentCalendarMinimalRunner = (req: RunRequest, ctx: RunContext) =>
-  runStructuredToolRunner('content-calendar-minimal', req, ctx)
+const ctaMatchAnalyzerRunner = (req: RunRequest) => runStructuredToolRunner('cta-match-analyzer', req)
+const retentionLeakFinderRunner = (req: RunRequest) => runStructuredToolRunner('retention-leak-finder', req)
+const positioningKnifeRunner = (req: RunRequest) => runStructuredToolRunner('positioning-knife', req)
+const contentRepurposeMachineRunner = (req: RunRequest) => runStructuredToolRunner('content-repurpose-machine', req)
+const commentMagnetRunner = (req: RunRequest) => runStructuredToolRunner('comment-magnet', req)
+const profileClarityScanRunner = (req: RunRequest) => runStructuredToolRunner('profile-clarity-scan', req)
+const bioToCtaRunner = (req: RunRequest) => runStructuredToolRunner('bio-to-cta', req)
+const carouselBlueprintRunner = (req: RunRequest) => runStructuredToolRunner('carousel-blueprint', req)
+const storySequencePlannerRunner = (req: RunRequest) => runStructuredToolRunner('story-sequence-planner', req)
+const hashtagSupportPackRunner = (req: RunRequest) => runStructuredToolRunner('hashtag-support-pack', req)
+const competitorLunchMoneyRunner = (req: RunRequest) => runStructuredToolRunner('competitor-lunch-money', req)
+const audienceMirrorRunner = (req: RunRequest) => runStructuredToolRunner('audience-mirror', req)
+const objectionCrusherRunner = (req: RunRequest) => runStructuredToolRunner('objection-crusher', req)
+const launchPlanSprinterRunner = (req: RunRequest) => runStructuredToolRunner('launch-plan-sprinter', req)
+const contentCalendarMinimalRunner = (req: RunRequest) => runStructuredToolRunner('content-calendar-minimal', req)
 
 const customRunners: Record<string, (req: RunRequest, ctx: RunContext) => Promise<{ output: any }>> = {
   'analytics-signal-reader': analyticsSignalReaderRunner,

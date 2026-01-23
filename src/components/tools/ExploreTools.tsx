@@ -119,7 +119,6 @@ export default function ExploreTools({ tools }: Props) {
         }
       } catch (err) {
         setPreflightMap({})
-        setPreflightReqId(null)
         setPreflightError(err instanceof Error ? err.message : 'Preflight failed.')
       } finally {
         // no-op

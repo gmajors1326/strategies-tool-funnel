@@ -19,9 +19,12 @@ export default async function AccountPage() {
         <p className="text-sm">Plan: {uiConfig.user.planId}</p>
         <div className="flex flex-wrap gap-2">
           <Button>Manage Profile</Button>
-          <Button variant="outline" asChild>
-            <Link href="/account/usage">Usage</Link>
-          </Button>
+          <Link
+            href="/account/usage"
+            className="inline-flex items-center justify-center rounded-md border border-[hsl(var(--border))] px-3 py-2 text-sm font-medium text-[hsl(var(--text))] transition-colors hover:bg-[hsl(var(--surface-3))]"
+          >
+            Usage
+          </Link>
         </div>
       </div>
     </section>

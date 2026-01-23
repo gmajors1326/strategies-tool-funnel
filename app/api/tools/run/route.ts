@@ -112,9 +112,10 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  const prismaAny = prisma as any
   const logProductEvent = async (eventName: string, meta: Record<string, any>) => {
     try {
-      await prisma.productEvent.create({
+      await prismaAny.productEvent.create({
         data: {
           userId,
           eventName,
