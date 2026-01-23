@@ -1,5 +1,6 @@
 import type { UiConfig } from '@/src/lib/ui/types'
 import { listTools } from '@/src/lib/tools/registry'
+import { isLaunchTool } from '@/src/lib/tools/launchTools'
 import { getBonusRunsSummary } from '@/src/lib/tool/bonusRuns'
 import { getTrialState } from '@/src/lib/tool/trialLedger'
 import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
@@ -46,7 +47,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
   const tokenBalance = await getTokenBalance(user.id)
 
   const catalog = await Promise.all(
-    listTools().map(async (tool) => {
+    listTools().filter((tool) => isLaunchTool(tool.id)).map(async (tool) => {
       const trial = getTrialState(user.id, tool.id)
       const bonus = await getBonusRunsSummary({ userId: user.id, toolId: tool.id })
       const toolCap = tool.dailyRunsByPlan?.[user.planId] ?? 0

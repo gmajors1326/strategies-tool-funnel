@@ -35,8 +35,7 @@ export async function POST(request: NextRequest) {
 
   const userId = await getUserIdOptional()
 
-  const prismaAny = prisma as any
-  await prismaAny.productEvent.create({
+  await prisma.productEvent.create({
     data: {
       userId: userId || undefined,
       eventName,

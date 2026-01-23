@@ -1,10 +1,11 @@
 import { z } from 'zod'
 import type { RunRequest } from '@/src/lib/tools/runTypes'
 import type { ToolMeta } from '@/src/lib/tools/registry'
-import { pickModel } from '@/src/lib/ai/openaiClient'
+import { pickModel, generateStructuredOutput } from '@/src/lib/ai/openaiClient'
 import { EXPECTED_TOOL_IDS } from '@/src/lib/tools/registry'
 import { runAIJson } from '@/src/lib/ai/openai'
 import { normalizeToolOutput } from '@/src/lib/ai/normalizeOutput'
+import { TOOL_AI_CONFIG, TOOL_OUTPUT_JSON_SCHEMA, TOOL_OUTPUT_ZOD } from '@/src/lib/ai/toolAiRegistry'
 
 export type RunContext = {
   user: { id: string; planId: 'free' | 'pro_monthly' | 'team' | 'lifetime' }
@@ -15,11 +16,11 @@ export type RunContext = {
 
 /**
  * IMPORTANT:
- * - Each tool uses Structured Outputs (Zod) so you ALWAYS get valid JSON.
- * - Your /api/tools/run already meters tokens; this file just makes outputs real.
+ * - Responses API is used for selected tools with strict JSON validation.
+ * - /api/tools/run already meters tokens; this file returns structured outputs only.
  */
 
-// ---------- Shared Output Schemas (locked 20) ----------
+// ---------- Shared Output Schemas (legacy) ----------
 
 // 1) hook-analyzer
 const HookAnalyzerSchema = z.object({
@@ -73,6 +74,57 @@ const OfferClarityCheckSchema = z.object({
   strongerOfferVersion: z.string(),
 })
 
+const RESPONSE_API_TOOLS = new Set([
+  'hook-analyzer',
+  'cta-match-analyzer',
+  'content-angle-generator',
+  'caption-optimizer',
+  'engagement-diagnostic',
+])
+
+async function runResponsesTool(toolId: string, req: RunRequest) {
+  const config = TOOL_AI_CONFIG[toolId as keyof typeof TOOL_AI_CONFIG]
+  const schema = TOOL_OUTPUT_ZOD[toolId as keyof typeof TOOL_OUTPUT_ZOD]
+  const jsonSchema = TOOL_OUTPUT_JSON_SCHEMA[toolId as keyof typeof TOOL_OUTPUT_JSON_SCHEMA]
+  const model =
+    config?.model === 'mini'
+      ? process.env.OPENAI_MODEL_LIGHT || 'gpt-4.1-mini'
+      : process.env.OPENAI_MODEL_HEAVY || 'gpt-4.1-mini'
+
+  const system = [
+    config?.system || '',
+    'Return ONLY valid JSON. No markdown. No extra keys.',
+    'If missing info, infer conservatively and lower confidence.',
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  const user = [
+    'User inputs (JSON):',
+    JSON.stringify(req.input ?? {}, null, 2),
+    'Output schema:',
+    JSON.stringify(jsonSchema, null, 2),
+  ].join('\n\n')
+
+  const result = await generateStructuredOutput(
+    {
+      toolId,
+      input: req.input ?? {},
+      schema,
+      jsonSchema,
+      model,
+      temperature: 0.2,
+      maxOutputTokens: 1200,
+    },
+    { system, user }
+  )
+
+  if ('error' in result) {
+    return { output: { error: result.error }, usage: { model } }
+  }
+
+  return { output: result.output, usage: result.usage }
+}
 // 7) positioning-knife
 const PositioningKnifeSchema = z.object({
   positioningStatement: z.string(),
@@ -1245,7 +1297,7 @@ async function runStructuredToolRunner(toolId: string, req: RunRequest) {
   return { output: normalizeToolOutput(toolId, result) }
 }
 
-const ctaMatchAnalyzerRunner = (req: RunRequest) => runStructuredToolRunner('cta-match-analyzer', req)
+const ctaMatchAnalyzerRunner = (req: RunRequest) => runResponsesTool('cta-match-analyzer', req)
 const retentionLeakFinderRunner = (req: RunRequest) => runStructuredToolRunner('retention-leak-finder', req)
 const positioningKnifeRunner = (req: RunRequest) => runStructuredToolRunner('positioning-knife', req)
 const contentRepurposeMachineRunner = (req: RunRequest) => runStructuredToolRunner('content-repurpose-machine', req)
@@ -1261,9 +1313,14 @@ const objectionCrusherRunner = (req: RunRequest) => runStructuredToolRunner('obj
 const launchPlanSprinterRunner = (req: RunRequest) => runStructuredToolRunner('launch-plan-sprinter', req)
 const contentCalendarMinimalRunner = (req: RunRequest) => runStructuredToolRunner('content-calendar-minimal', req)
 
+const hookAnalyzerResponsesRunner = (req: RunRequest) => runResponsesTool('hook-analyzer', req)
+const contentAngleGeneratorRunner = (req: RunRequest) => runResponsesTool('content-angle-generator', req)
+const captionOptimizerRunner = (req: RunRequest) => runResponsesTool('caption-optimizer', req)
+const engagementDiagnosticRunner = (req: RunRequest) => runResponsesTool('engagement-diagnostic', req)
+
 const customRunners: Record<string, (req: RunRequest, ctx: RunContext) => Promise<{ output: any }>> = {
   'analytics-signal-reader': analyticsSignalReaderRunner,
-  'hook-analyzer': hookAnalyzerRunner,
+  'hook-analyzer': hookAnalyzerResponsesRunner,
   'dm-intelligence-engine': dmIntelligenceEngineRunner,
   'offer-clarity-check': offerClarityCheckRunner,
   'reel-script-builder': reelScriptBuilderRunner,
@@ -1282,6 +1339,9 @@ const customRunners: Record<string, (req: RunRequest, ctx: RunContext) => Promis
   'objection-crusher': objectionCrusherRunner,
   'launch-plan-sprinter': launchPlanSprinterRunner,
   'content-calendar-minimal': contentCalendarMinimalRunner,
+  'content-angle-generator': contentAngleGeneratorRunner,
+  'caption-optimizer': captionOptimizerRunner,
+  'engagement-diagnostic': engagementDiagnosticRunner,
 }
 
 export const runnerRegistry: Record<string, (req: RunRequest, ctx: RunContext) => Promise<{ output: any }>> =

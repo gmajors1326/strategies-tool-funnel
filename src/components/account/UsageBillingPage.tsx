@@ -6,6 +6,7 @@ import { Button } from '@/src/components/ui/Button'
 import { Card } from '@/src/components/ui/Card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { TOOL_REGISTRY } from '@/src/lib/tools/registry'
+import { isLaunchTool } from '@/src/lib/tools/launchTools'
 
 type UsageSummary = {
   user: { planId: 'free' | 'pro_monthly' | 'team' | 'lifetime' }
@@ -44,7 +45,9 @@ type ToolRunItem = {
 }
 
 const TOOL_OPTIONS = [{ id: 'all', name: 'All tools' }].concat(
-  Object.values(TOOL_REGISTRY).map((tool) => ({ id: tool.id, name: tool.name }))
+  Object.values(TOOL_REGISTRY)
+    .filter((tool) => isLaunchTool(tool.id))
+    .map((tool) => ({ id: tool.id, name: tool.name }))
 )
 
 export function UsageBillingPage() {

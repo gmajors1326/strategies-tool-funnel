@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { requireUser } from '@/src/lib/auth/requireUser'
 import { TOOL_REGISTRY, type ToolMeta } from '@/src/lib/tools/registry'
 import { ToolRunner } from '@/src/components/tools/ToolRunner'
+import { isLaunchTool } from '@/src/lib/tools/launchTools'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,7 +68,19 @@ export default async function ToolPage({
   const { slug } = await params
   const tool = (TOOL_REGISTRY as Record<string, ToolMeta>)[slug]
 
-  if (!tool) return notFound()
+  if (!tool || !isLaunchTool(tool.id)) {
+    return (
+      <div className="space-y-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-6">
+        <h1 className="text-lg font-semibold">Tool not available yet</h1>
+        <p className="text-sm text-[hsl(var(--muted))]">
+          This tool isn&apos;t part of the current launch set.
+        </p>
+        <a href="/app/explore" className="text-sm font-semibold underline">
+          Back to Explore
+        </a>
+      </div>
+    )
+  }
 
   const fields = mapFields(tool.fields)
 

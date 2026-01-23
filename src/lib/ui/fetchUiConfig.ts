@@ -8,6 +8,7 @@ import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@
 import { orgAiTokenCapByPlan, orgRunCapByPlan } from '@/src/lib/usage/caps'
 
 import { listTools, type ToolMeta } from '@/src/lib/tools/registry'
+import { isLaunchTool } from '@/src/lib/tools/launchTools'
 import { computeToolStatus, type ToolAccessStatus } from '@/src/lib/usage/limits'
 import type { ToolUiItem, UiConfig, UiLockState } from '@/src/lib/ui/types'
 
@@ -83,7 +84,9 @@ export async function fetchUiConfig(): Promise<UiConfig> {
     role: session.role ?? 'user',
   }
 
-  const catalogTools: ToolUiItem[] = listTools().map((tool) => {
+  const catalogTools: ToolUiItem[] = listTools()
+    .filter((tool) => isLaunchTool(tool.id))
+    .map((tool) => {
     const decision = computeToolStatus(tool, user.planId, usage)
     return {
       id: tool.id,
@@ -95,6 +98,7 @@ export async function fetchUiConfig(): Promise<UiConfig> {
       cta: decision.cta,
       tokensPerRun: tool.tokensPerRun,
       runsRemainingToday: decision.runsRemainingForTool,
+    }
     }
   })
 

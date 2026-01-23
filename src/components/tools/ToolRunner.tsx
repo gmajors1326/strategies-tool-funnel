@@ -11,6 +11,8 @@ import type { ToolMeta, PlanId } from '@/src/lib/tools/registry'
 import type { LockReason } from '@/src/lib/locks/lockTypes'
 import { computeToolLock } from '@/src/lib/locks/lockCompute'
 import { LockBanner } from '@/src/components/locks/LockBanner'
+import { ToolRunToolbar } from '@/src/components/tools/ToolRunToolbar'
+import { HelpTooltip } from '@/components/tools/HelpTooltip'
 
 type ToolField = {
   key: string
@@ -35,7 +37,7 @@ type RunResponse = {
   status?: 'ok' | 'locked' | 'error'
   output?: any
   lock?: { code?: string; message?: string; resetsAtISO?: string; remainingTokens?: number }
-  error?: string | { message?: string }
+  error?: string | { message?: string; code?: string; cta?: { label: string; href: string } }
 }
 
 function safeJsonParse(s: string) {
@@ -54,7 +56,14 @@ function pushLocalRun(toolSlug: string, input: any, output: any) {
   const key = lsKey(toolSlug)
   const existing = safeJsonParse(localStorage.getItem(key) || '[]') || []
   const next = [
-    { id: crypto.randomUUID(), at: new Date().toISOString(), input, output },
+    {
+      id: crypto.randomUUID(),
+      at: new Date().toISOString(),
+      input,
+      output,
+      inputSummary: summarizeText(input),
+      status: 'success',
+    },
     ...existing,
   ].slice(0, 10)
   localStorage.setItem(key, JSON.stringify(next))
@@ -64,6 +73,64 @@ function pushLocalRun(toolSlug: string, input: any, output: any) {
 function readLocalRuns(toolSlug: string) {
   const key = lsKey(toolSlug)
   return safeJsonParse(localStorage.getItem(key) || '[]') || []
+}
+
+function summarizeText(value: unknown, limit = 120) {
+  try {
+    if (typeof value === 'string') return value.slice(0, limit)
+    const json = JSON.stringify(value)
+    return json.length > limit ? `${json.slice(0, limit)}…` : json
+  } catch {
+    return ''
+  }
+}
+
+function SectionBlock({
+  title,
+  value,
+  onCopy,
+}: {
+  title: string
+  value: any
+  onCopy: (text: string, label: string) => void
+}) {
+  const [expanded, setExpanded] = React.useState(false)
+  const isArray = Array.isArray(value)
+  const items = isArray ? value : []
+  const visible = isArray ? (expanded ? items : items.slice(0, 3)) : []
+
+  return (
+    <div className="rounded-md border bg-muted/20 p-3 text-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <Button variant="ghost" size="sm" onClick={() => onCopy(JSON.stringify(value, null, 2), `Copied ${title}`)}>
+          Copy
+        </Button>
+      </div>
+      {isArray ? (
+        <div className="mt-2 space-y-2">
+          {visible.map((item: any, idx: number) => (
+            <div key={`${title}-${idx}`} className="rounded-md border bg-muted/30 p-2 text-xs">
+              {typeof item === 'string' ? item : JSON.stringify(item, null, 2)}
+            </div>
+          ))}
+          {items.length > 3 ? (
+            <button
+              type="button"
+              className="text-xs text-muted-foreground underline"
+              onClick={() => setExpanded((prev) => !prev)}
+            >
+              {expanded ? 'Show less' : `Show more (${items.length - 3})`}
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        <pre className="mt-2 max-h-[240px] overflow-auto rounded-md border bg-muted/30 p-2 text-xs">
+          {JSON.stringify(value ?? {}, null, 2)}
+        </pre>
+      )}
+    </div>
+  )
 }
 
 export function ToolRunner(props: {
@@ -85,6 +152,8 @@ export function ToolRunner(props: {
   const [copied, setCopied] = React.useState<string | null>(null)
   const [msg, setMsg] = React.useState<string | null>(null)
   const [lockReason, setLockReason] = React.useState<LockReason>({ type: 'none' })
+  const [latestRunId, setLatestRunId] = React.useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({})
   const [tokensRemaining, setTokensRemaining] = React.useState<number | null>(null)
   const [tokensAllowance, setTokensAllowance] = React.useState<number | null>(null)
   const [tokensResetAt, setTokensResetAt] = React.useState<string | null>(null)
@@ -93,6 +162,7 @@ export function ToolRunner(props: {
   const canSeeHistory = Boolean(ui?.entitlements?.canSeeHistory)
   const canSaveToVault = Boolean(ui?.entitlements?.canSaveToVault)
   const canExportTemplates = Boolean(ui?.entitlements?.canExportTemplates)
+  const planLocked = !canExport || !canSaveToVault || !canExportTemplates
 
   const isLocked =
     access === 'locked_tokens' || access === 'locked_time' || access === 'locked_plan' || lockReason.type !== 'none'
@@ -113,6 +183,75 @@ export function ToolRunner(props: {
       return { type: 'cooldown', availableAt: lock.resetsAtISO || '' }
     }
     return null
+  }
+
+  function mapErrorState(data: RunResponse, status: number) {
+    if (status === 401) {
+      return { message: 'Sign in to run tools.', cta: { label: 'Sign in', href: '/verify' } }
+    }
+    if (status === 403 && data?.lock?.code === 'locked_plan') {
+      return { message: 'Available on Pro.', cta: { label: 'View plans', href: '/pricing?reason=plan&tab=plans' } }
+    }
+    if (data?.lock?.code === 'locked_tokens') {
+      return {
+        message: 'You’re out of tokens for today.',
+        cta: { label: 'Buy tokens', href: '/pricing?tab=tokens&reason=tokens' },
+      }
+    }
+    if (data?.lock?.code === 'locked_usage_daily' || data?.lock?.code === 'locked_tool_daily') {
+      return {
+        message: 'This tool is on cooldown.',
+        cta: { label: 'See usage', href: '/account/usage' },
+      }
+    }
+    return { message: 'Run failed. Try again in a moment.' }
+  }
+
+  function getExampleInput() {
+    return toolMeta.examples?.[0]?.input ?? null
+  }
+
+  function getFieldExample(key: string) {
+    const example = getExampleInput()
+    if (!example) return null
+    const value = example[key]
+    if (value === undefined || value === null || value === '') return null
+    if (Array.isArray(value)) return value.join(', ')
+    if (typeof value === 'object') return JSON.stringify(value)
+    return String(value)
+  }
+
+  function validateInputs() {
+    const errors: Record<string, string> = {}
+    for (const field of fields) {
+      const value = input[field.key]
+      if (field.required) {
+        const empty =
+          value === undefined ||
+          value === null ||
+          value === '' ||
+          (Array.isArray(value) && value.length === 0)
+        if (empty) {
+          errors[field.key] = `${field.label} is required.`
+          continue
+        }
+      }
+      if (field.type === 'number' && value !== undefined && value !== null && value !== '') {
+        const num = Number(value)
+        if (Number.isNaN(num)) {
+          errors[field.key] = `${field.label} must be a number.`
+          continue
+        }
+        if (typeof field.min === 'number' && num < field.min) {
+          errors[field.key] = `${field.label} must be at least ${field.min}.`
+        }
+        if (typeof field.max === 'number' && num > field.max) {
+          errors[field.key] = `${field.label} must be at most ${field.max}.`
+        }
+      }
+    }
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   React.useEffect(() => {
@@ -177,17 +316,35 @@ export function ToolRunner(props: {
   }, [showLowTokens, toolId, tokensRemaining, tokensAllowance])
 
   async function loadHistory() {
-    if (canSeeHistory) {
-      const res = await fetch(`/api/tool-runs?toolSlug=${encodeURIComponent(toolSlug)}`, {
-        cache: 'no-store',
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setHistory(data.runs ?? [])
-        return
-      }
+    const res = await fetch(`/api/tools/runs/recent?toolId=${encodeURIComponent(toolId)}`, {
+      cache: 'no-store',
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setHistory(data.runs ?? [])
+      return
     }
     setHistory(readLocalRuns(toolSlug))
+  }
+
+  async function loadRun(runId: string, fallback?: { input?: any; output?: any }) {
+    try {
+      const res = await fetch(`/api/tools/runs/get?runId=${encodeURIComponent(runId)}`, { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        setInput(data.input ?? {})
+        setResult({ output: data.output })
+        setLatestRunId(data.runId ?? runId)
+        return
+      }
+    } catch {
+      // ignore
+    }
+    if (fallback?.input || fallback?.output) {
+      setInput(fallback.input ?? {})
+      setResult({ output: fallback.output })
+      setLatestRunId(runId)
+    }
   }
 
   React.useEffect(() => {
@@ -199,6 +356,13 @@ export function ToolRunner(props: {
     setBusy(true)
     setResult(null)
     setMsg(null)
+    setFieldErrors({})
+
+    if (!validateInputs()) {
+      setMsg('Please fix the highlighted fields before running.')
+      setBusy(false)
+      return
+    }
 
     if (lockReason.type !== 'none') {
       setMsg('This tool is temporarily unavailable. Review the lock details above.')
@@ -222,12 +386,17 @@ export function ToolRunner(props: {
         const message =
           data?.lock?.message ||
           (typeof errorValue === 'string' ? errorValue : errorValue?.message) ||
-          'Run failed.'
-        setResult({ error: message })
+          mapErrorState(data, res.status).message
+        const errorState = mapErrorState(data, res.status)
+        setResult({
+          status: 'error',
+          error: { message, code: data?.lock?.code || data?.error?.code, cta: errorState.cta },
+        })
         return
       }
 
       setResult(data)
+      setLatestRunId(data.runId ?? null)
       pushLocalRun(toolSlug, input, data.output)
 
       await loadHistory()
@@ -249,70 +418,43 @@ export function ToolRunner(props: {
     }
   }
 
-  function download(filename: string, content: string) {
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
-  }
-
-  async function saveToVault() {
-    if (!result?.output) return
-    setMsg(null)
-
-    const res = await fetch('/api/vault/save-run', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        toolSlug,
-        title: `${toolName} - saved run`,
-        input,
-        output: result.output,
-      }),
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      setMsg(data?.error || 'Save failed.')
-      return
-    }
-
-    setMsg('Saved to Vault.')
-    setTimeout(() => setMsg(null), 1200)
-  }
-
-  async function exportTemplate(kind: 'template' | 'checklist') {
-    if (!result?.output) return
-    setMsg(null)
-
-    const res = await fetch('/api/export/template', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toolSlug, kind, output: result.output }),
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      setMsg(data?.error || 'Export failed.')
-      return
-    }
-
-    const filename = `${toolSlug}-${kind}.json`
-    download(filename, JSON.stringify(data.payload, null, 2))
-    setMsg(`Exported ${kind}.`)
-    setTimeout(() => setMsg(null), 1200)
-  }
-
   function renderJsonFallback(output: any) {
+    if (!output || typeof output !== 'object') {
+      return (
+        <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
+          {JSON.stringify(output ?? {}, null, 2)}
+        </pre>
+      )
+    }
+
+    const entries = Object.entries(output)
+    const summaryPairs = entries.slice(0, 3)
+
     return (
-      <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
-        {JSON.stringify(output ?? {}, null, 2)}
-      </pre>
+      <div className="space-y-4">
+        <div className="rounded-md border bg-muted/20 p-3 text-sm">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Summary</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copy(JSON.stringify(summaryPairs, null, 2), 'Copied summary')}
+            >
+              Copy
+            </Button>
+          </div>
+          <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+            {summaryPairs.map(([key, value]) => (
+              <div key={key}>
+                <span className="text-foreground">{key}</span>: {String(value ?? '')}
+              </div>
+            ))}
+          </div>
+        </div>
+        {entries.map(([key, value]) => (
+          <SectionBlock key={key} title={key} value={value} onCopy={copy} />
+        ))}
+      </div>
     )
   }
 
@@ -324,8 +466,47 @@ export function ToolRunner(props: {
 
     return (
       <div className="space-y-4">
+        <div className="rounded-md border bg-muted/20 p-3 text-sm">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Summary</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                copy(
+                  JSON.stringify(
+                    {
+                      hookType: output?.hookType ?? '',
+                      topScore: scores?.hook ?? null,
+                      bestFor: (output?.bestFor || []).slice(0, 3),
+                    },
+                    null,
+                    2
+                  ),
+                  'Copied summary'
+                )
+              }
+            >
+              Copy
+            </Button>
+          </div>
+          <div className="mt-2 text-xs text-muted-foreground">
+            Hook type: <span className="text-foreground">{output?.hookType ?? '—'}</span>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Top score: <span className="text-foreground">{scores?.hook ?? '—'}</span>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Best for: <span className="text-foreground">{(output?.bestFor || []).slice(0, 3).join(', ')}</span>
+          </div>
+        </div>
         <div>
-          <h3 className="text-sm font-semibold">Scores</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Scores</h3>
+            <Button variant="ghost" size="sm" onClick={() => copy(JSON.stringify(scores, null, 2), 'Copied scores')}>
+              Copy
+            </Button>
+          </div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
             {['hook', 'clarity', 'curiosity', 'specificity'].map((key) => (
               <div key={key} className="rounded-md border bg-muted/20 p-2">
@@ -353,7 +534,16 @@ export function ToolRunner(props: {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Diagnosis</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Diagnosis</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copy(JSON.stringify(diagnosis, null, 2), 'Copied diagnosis')}
+            >
+              Copy
+            </Button>
+          </div>
           <div className="mt-2 space-y-2 text-sm">
             <div>
               <div className="text-muted-foreground">What works</div>
@@ -378,7 +568,16 @@ export function ToolRunner(props: {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Rewrites</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Rewrites</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copy(JSON.stringify(rewrites, null, 2), 'Copied rewrites')}
+            >
+              Copy
+            </Button>
+          </div>
           <div className="mt-2 space-y-2 text-sm">
             {rewrites.map((item: any, idx: number) => (
               <div key={`rewrite-${idx}`} className="rounded-md border bg-muted/20 p-2">
@@ -390,7 +589,16 @@ export function ToolRunner(props: {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">6-sec Reel Plan</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">6-sec Reel Plan</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copy(JSON.stringify(output?.['6secReelPlan'] ?? {}, null, 2), 'Copied plan')}
+            >
+              Copy
+            </Button>
+          </div>
           <div className="mt-2 space-y-2 text-sm">
             <div className="rounded-md border bg-muted/20 p-2">
               <div className="text-xs text-muted-foreground">Opening frame</div>
@@ -413,7 +621,18 @@ export function ToolRunner(props: {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">CTA + Avoid</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">CTA + Avoid</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                copy(JSON.stringify({ cta: output?.cta ?? {}, avoid: output?.avoid ?? [] }, null, 2), 'Copied CTA')
+              }
+            >
+              Copy
+            </Button>
+          </div>
           <div className="mt-2 space-y-2 text-sm">
             <div className="rounded-md border bg-muted/20 p-2">
               <div className="text-xs text-muted-foreground">CTA</div>
@@ -443,7 +662,16 @@ export function ToolRunner(props: {
     return (
       <div className="space-y-4">
         <div>
-          <h3 className="text-sm font-semibold">Summary</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Summary</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copy(JSON.stringify(summary, null, 2), 'Copied summary')}
+            >
+              Copy
+            </Button>
+          </div>
           <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm">
             <div className="text-xs text-muted-foreground">Primary issue</div>
             <div className="font-medium">{summary?.primaryIssue ?? '—'}</div>
@@ -456,7 +684,16 @@ export function ToolRunner(props: {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Signals</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Signals</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copy(JSON.stringify(signals, null, 2), 'Copied signals')}
+            >
+              Copy
+            </Button>
+          </div>
           <ul className="mt-2 space-y-2 text-sm">
             {signals.map((item: any, idx: number) => (
               <li key={`signal-${idx}`} className="rounded-md border bg-muted/20 p-2">
@@ -469,7 +706,12 @@ export function ToolRunner(props: {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Prioritized Fixes</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Prioritized Fixes</h3>
+            <Button variant="ghost" size="sm" onClick={() => copy(JSON.stringify(fixes, null, 2), 'Copied fixes')}>
+              Copy
+            </Button>
+          </div>
           <div className="mt-2 space-y-2 text-sm">
             {fixes.map((item: any, idx: number) => (
               <div key={`fix-${idx}`} className="rounded-md border bg-muted/20 p-3">
@@ -490,7 +732,12 @@ export function ToolRunner(props: {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Next 7 Days</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Next 7 Days</h3>
+            <Button variant="ghost" size="sm" onClick={() => copy(JSON.stringify(plan, null, 2), 'Copied plan')}>
+              Copy
+            </Button>
+          </div>
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {plan.map((item: any, idx: number) => (
               <div key={`day-${idx}`} className="rounded-md border bg-muted/20 p-3 text-xs">
@@ -509,7 +756,12 @@ export function ToolRunner(props: {
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold">Stop Doing</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Stop Doing</h3>
+            <Button variant="ghost" size="sm" onClick={() => copy(JSON.stringify(output?.stopDoing ?? [], null, 2), 'Copied stop doing')}>
+              Copy
+            </Button>
+          </div>
           <ul className="mt-2 list-disc pl-5 text-sm">
             {(output?.stopDoing || []).map((item: string, idx: number) => (
               <li key={`stop-${idx}`}>{item}</li>
@@ -555,7 +807,29 @@ export function ToolRunner(props: {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2">
+        <ToolRunToolbar
+          toolId={toolId}
+          toolSlug={toolSlug}
+          runId={latestRunId}
+          canExport={canExport}
+          canSaveToVault={canSaveToVault}
+          canExportTemplates={canExportTemplates}
+          onMessage={setMsg}
+        />
+        {planLocked ? (
+          <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2 text-xs text-[hsl(var(--muted))]">
+            Actions like Save, Export, and PDF are available on Pro.{' '}
+            <Link href="/pricing?reason=plan&tab=plans" className="text-[hsl(var(--text))] underline">
+              View plans
+            </Link>
+            .
+          </div>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle className="text-base">Run {toolName}</CardTitle>
@@ -569,6 +843,38 @@ export function ToolRunner(props: {
               showUpgradeCta={Boolean(toolMeta.planEntitlements?.pro_monthly)}
             />
           ) : null}
+          <div className="rounded-md border bg-muted/20 p-3 text-sm">
+            <div className="font-semibold">{toolName}</div>
+            <p className="text-xs text-muted-foreground">{toolMeta.description}</p>
+            <div className="mt-2 text-xs">
+              <span className="text-muted-foreground">Best for: </span>
+              <span className="text-foreground">
+                {toolMeta.microcopy?.whoFor?.[0] || toolMeta.tags.slice(0, 2).join(', ') || 'Short-form creators'}
+              </span>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground">How to use</div>
+            <ul className="mt-1 list-disc pl-4 text-xs">
+              <li>Fill the inputs clearly.</li>
+              <li>Run the tool and scan the summary.</li>
+              <li>Apply the top recommendations.</li>
+            </ul>
+            {getExampleInput() ? (
+              <div className="mt-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setInput(getExampleInput() ?? {})
+                    setFieldErrors({})
+                    setMsg('Loaded example input.')
+                    setTimeout(() => setMsg(null), 1200)
+                  }}
+                >
+                  Load example
+                </Button>
+              </div>
+            ) : null}
+          </div>
           {showLowTokens ? (
             <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
               <div className="font-semibold">Running low on tokens</div>
@@ -592,7 +898,10 @@ export function ToolRunner(props: {
             fields.map((f) => (
               <div key={f.key} className="space-y-1.5">
                 <div className="flex items-center justify-between gap-3">
-                  <label className="text-sm font-medium">{f.label}</label>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">{f.label}</label>
+                    {f.help ? <HelpTooltip content={f.help} /> : null}
+                  </div>
                   {f.required ? <span className="text-xs text-muted-foreground">required</span> : null}
                 </div>
 
@@ -600,12 +909,22 @@ export function ToolRunner(props: {
                   <Textarea
                     placeholder={f.placeholder}
                     value={input[f.key] ?? ''}
-                    onChange={(e) => setInput((p) => ({ ...p, [f.key]: e.target.value }))}
+                    onChange={(e) => {
+                      setInput((p) => ({ ...p, [f.key]: e.target.value }))
+                      if (fieldErrors[f.key]) {
+                        setFieldErrors((prev) => ({ ...prev, [f.key]: '' }))
+                      }
+                    }}
                   />
                 ) : f.type === 'select' ? (
                   <Select
                     value={input[f.key] ?? ''}
-                    onChange={(e) => setInput((p) => ({ ...p, [f.key]: e.target.value }))}
+                    onChange={(e) => {
+                      setInput((p) => ({ ...p, [f.key]: e.target.value }))
+                      if (fieldErrors[f.key]) {
+                        setFieldErrors((prev) => ({ ...prev, [f.key]: '' }))
+                      }
+                    }}
                   >
                     <option value="">{f.placeholder ?? 'Select'}</option>
                     {(f.options ?? []).map((opt) => (
@@ -619,16 +938,23 @@ export function ToolRunner(props: {
                     type={f.type === 'number' ? 'number' : 'text'}
                     placeholder={f.placeholder}
                     value={input[f.key] ?? ''}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setInput((p) => ({
                         ...p,
                         [f.key]: f.type === 'number' ? Number(e.target.value) : e.target.value,
                       }))
-                    }
+                      if (fieldErrors[f.key]) {
+                        setFieldErrors((prev) => ({ ...prev, [f.key]: '' }))
+                      }
+                    }}
                   />
                 )}
-
-                {f.help ? <p className="text-xs text-muted-foreground">{f.help}</p> : null}
+                {getFieldExample(f.key) ? (
+                  <p className="text-xs text-muted-foreground">Example: {getFieldExample(f.key)}</p>
+                ) : null}
+                {fieldErrors[f.key] ? (
+                  <p className="text-xs text-destructive">{fieldErrors[f.key]}</p>
+                ) : null}
               </div>
             ))
           ) : (
@@ -665,81 +991,29 @@ export function ToolRunner(props: {
       <Card className="lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle className="text-base">Result</CardTitle>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={!result?.output}
-              onClick={() => copy(JSON.stringify(result?.output ?? {}, null, 2), 'Copied JSON')}
-            >
-              Copy JSON
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={!result?.output || !canExport}
-              onClick={() =>
-                download(
-                  `${toolSlug}-output.txt`,
-                  typeof result?.output === 'string'
-                    ? result.output
-                    : JSON.stringify(result?.output ?? {}, null, 2)
-                )
-              }
-              title={canExport ? 'Download output' : 'Available on Pro'}
-            >
-              Export
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={!result?.output || !canSaveToVault}
-              onClick={saveToVault}
-              title={canSaveToVault ? 'Save this run' : 'Available on Pro'}
-            >
-              Save to Vault
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={!result?.output || !canExportTemplates}
-              onClick={() => exportTemplate('template')}
-              title={canExportTemplates ? 'Export template' : 'Available on Pro'}
-            >
-              Template
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={!result?.output || !canExportTemplates}
-              onClick={() => exportTemplate('checklist')}
-              title={canExportTemplates ? 'Export checklist' : 'Available on Pro'}
-            >
-              Checklist
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={!result?.output}
+            onClick={() => copy(JSON.stringify(result?.output ?? {}, null, 2), 'Copied JSON')}
+          >
+            Copy JSON
+          </Button>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {!canExport || !canSaveToVault || !canExportTemplates ? (
-            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-xs text-[hsl(var(--muted))]">
-              Pro unlocks exports and saved templates.
-            </div>
-          ) : null}
-          {!canExport ? (
-            <div className="rounded-md border p-3 text-xs text-muted-foreground">
-              Export is locked (paid perk). Copy JSON is still available.
-            </div>
-          ) : null}
-
           {result?.error ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
-              {typeof result.error === 'string' ? result.error : result.error?.message}
+            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
+              <div className="font-medium">
+                {typeof result.error === 'string' ? result.error : result.error?.message}
+              </div>
+              {'cta' in (result.error as any) && (result.error as any)?.cta?.href ? (
+                <div className="mt-2">
+                  <Link href={(result.error as any).cta.href}>
+                    <Button size="sm">{(result.error as any).cta.label}</Button>
+                  </Link>
+                </div>
+              ) : null}
             </div>
           ) : result?.output ? (
             renderOutput()
@@ -751,7 +1025,7 @@ export function ToolRunner(props: {
 
           <div className="pt-2">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Recent runs {canSeeHistory ? '' : '(local)'}</p>
+              <p className="text-sm font-medium">Recent runs {canSeeHistory ? '' : '(free: last 3)'}</p>
 
               <Button
                 variant="ghost"
@@ -767,24 +1041,33 @@ export function ToolRunner(props: {
 
             {history?.length ? (
               <div className="mt-2 space-y-2">
-                {history.map((h) => (
-                  <button
-                    key={h.id}
-                    className="w-full rounded-md border p-3 text-left transition hover:bg-muted/20"
-                    onClick={() => {
-                      setInput(h.input ?? {})
-                      setResult({ output: h.output })
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs text-muted-foreground">{new Date(h.at).toLocaleString()}</span>
-                      <span className="text-xs text-muted-foreground">Load</span>
+                {history.map((h) => {
+                  const runId = h.runId || h.id
+                  const createdAt = h.createdAt || h.at
+                  const summary = h.inputSummary || summarizeText(h.input)
+                  return (
+                    <div key={runId} className="w-full rounded-md border p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-medium">
+                            {createdAt ? new Date(createdAt).toLocaleString() : 'Recent run'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">{summary || 'Run summary unavailable.'}</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">{h.status || 'success'}</div>
+                      </div>
+                      <div className="mt-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => loadRun(runId, { input: h.input, output: h.output })}
+                        >
+                          Load
+                        </Button>
+                      </div>
                     </div>
-                    <div className="mt-2 line-clamp-2 text-xs text-muted-foreground">
-                      {JSON.stringify(h.output ?? {}).slice(0, 140)}
-                    </div>
-                  </button>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <p className="mt-2 text-sm text-muted-foreground">No runs yet.</p>
@@ -792,6 +1075,7 @@ export function ToolRunner(props: {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

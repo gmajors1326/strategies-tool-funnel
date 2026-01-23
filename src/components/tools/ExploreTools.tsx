@@ -1,11 +1,11 @@
 'use client'
 
 import * as React from 'react'
-import { deriveCategoryFromTags } from '@/src/lib/tools/registry'
 import type { ToolMeta, PlanId } from '@/src/lib/tools/registry'
 import type { LockReason } from '@/src/lib/locks/lockTypes'
 import { computeToolLock, getLockResetAt, getWorstLock } from '@/src/lib/locks/lockCompute'
 import { formatLocalTime, getLockCopy } from '@/src/lib/locks/lockCopy'
+import { LAUNCH_TOOL_IDS, getLaunchMeta, isLaunchTool } from '@/src/lib/tools/launchTools'
 
 type Props = { tools: ToolMeta[] }
 
@@ -76,12 +76,7 @@ export default function ExploreTools({ tools }: Props) {
   const [preflightError, setPreflightError] = React.useState<string | null>(null)
   const [uiConfig, setUiConfig] = React.useState<UiConfigSummary | null>(null)
 
-  const toolsWithCategory = React.useMemo(() => {
-    return tools.map((t) => ({
-      ...t,
-      __category: t.category || deriveCategoryFromTags(t.tags ?? []),
-    }))
-  }, [tools])
+  const launchTools = React.useMemo(() => tools.filter((t) => isLaunchTool(t.id)), [tools])
 
   const runPreflight = React.useCallback(
     async ({ force = false }: { force?: boolean } = {}) => {
@@ -168,7 +163,7 @@ export default function ExploreTools({ tools }: Props) {
     if (!uiConfig) return null
     const planId = uiConfig.user.planId
     const usage = uiConfig.usage
-    const locks = toolsWithCategory.map((tool) =>
+    const locks = launchTools.map((tool) =>
       computeToolLock({
         toolMeta: tool,
         userPlanId: planId,
@@ -183,24 +178,28 @@ export default function ExploreTools({ tools }: Props) {
       })
     )
     return getWorstLock(locks)
-  }, [uiConfig, toolsWithCategory])
+  }, [uiConfig, launchTools])
 
   const filtered = React.useMemo(() => {
-    const allowed = new Set([
-      'hook-analyzer',
-      'cta-match-analyzer',
-      'content-angle-generator',
-      'caption-optimizer',
-      'engagement-diagnostic',
-    ])
-
-    return toolsWithCategory
-      .filter((t) => allowed.has(t.id))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [toolsWithCategory])
+    const byId = new Map(launchTools.map((tool) => [tool.id, tool]))
+    return LAUNCH_TOOL_IDS.map((id) => byId.get(id)).filter(Boolean) as ToolMeta[]
+  }, [launchTools])
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-semibold">Tools</h1>
+          <p className="text-sm text-[hsl(var(--muted))]">The core toolkit.</p>
+        </div>
+        <a
+          href="/app/tools/hook-analyzer"
+          className="rounded-md border border-neutral-800 bg-neutral-950 px-3 py-1.5 text-xs font-semibold text-neutral-100 hover:bg-neutral-900"
+        >
+          Quick start
+        </a>
+      </div>
+
       {preflightError ? (
         <div className="rounded-lg border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-100">
           Could not check availability. {preflightError}
@@ -269,25 +268,25 @@ export default function ExploreTools({ tools }: Props) {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((t) => (
-            <ToolCard key={t.id} tool={t} category={t.__category} preflight={preflightMap[t.id]} />
+            <ToolCard key={t.id} tool={t} preflight={preflightMap[t.id]} />
           ))}
+          <div className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-4 text-sm text-neutral-400">
+            <div className="text-neutral-200 font-semibold">More tools coming soon</div>
+            <div className="text-xs text-neutral-500">We&apos;re launching in tight batches.</div>
+          </div>
         </div>
       )}
+      <div className="text-xs text-[hsl(var(--muted))]">
+        New? Start with Hook Analyzer → then CTA Match → then Caption.
+      </div>
     </div>
   )
 }
 
-function ToolCard({
-  tool,
-  category,
-  preflight,
-}: {
-  tool: ToolMeta
-  category: string
-  preflight?: ToolPreflightResult
-}) {
+function ToolCard({ tool, preflight }: { tool: ToolMeta; preflight?: ToolPreflightResult }) {
   const [showWhy, setShowWhy] = React.useState(false)
   const href = `/app/tools/${tool.id}`
+  const meta = getLaunchMeta(tool.id)
 
   const badge = badgeForPreflight(preflight)
   const badgeClass =
@@ -323,6 +322,20 @@ function ToolCard({
 
   const lockCopy = lockReason ? getLockCopy(lockReason, getLockResetAt(lockReason)) : null
 
+  const lockReasonText = (() => {
+    if (!preflight || preflight.status !== 'locked') return ''
+    if (preflight.lockCode === 'locked_plan') return 'Pro tool'
+    if (preflight.lockCode === 'locked_tokens') {
+      const resetAt = preflight.usage?.resetsAtISO
+      return resetAt ? `Tokens reset at ${formatLocalTime(resetAt)}` : 'Tokens locked'
+    }
+    if (preflight.lockCode === 'locked_usage_daily' || preflight.lockCode === 'locked_tool_daily') {
+      const resetAt = preflight.usage?.resetsAtISO
+      return resetAt ? `Resets at ${formatLocalTime(resetAt)}` : 'Cooldown active'
+    }
+    return 'Locked'
+  })()
+
   return (
     <a
       href={href}
@@ -330,9 +343,15 @@ function ToolCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
-            <span className="rounded-full border border-neutral-800 px-2 py-0.5">{category}</span>
-            <span className="rounded-full border border-neutral-800 px-2 py-0.5">{tool.difficulty}</span>
+          <div className="flex items-center gap-2 text-[11px] text-neutral-400">
+            {meta?.label ? (
+              <span className="rounded-full border border-neutral-800 px-2 py-0.5">{meta.label}</span>
+            ) : null}
+            {meta?.startHere ? (
+              <span className="rounded-full border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-neutral-200">
+                Start here
+              </span>
+            ) : null}
             {preflight?.status === 'locked' ? (
               <span className="rounded-full border border-yellow-900 bg-yellow-950/30 px-2 py-0.5 text-yellow-200">
                 Locked
@@ -340,7 +359,18 @@ function ToolCard({
             ) : null}
           </div>
           <div className="text-base font-semibold text-neutral-100 group-hover:text-white">{tool.name}</div>
-          <div className="line-clamp-2 text-sm text-neutral-400">{tool.description}</div>
+          <div className="line-clamp-2 text-sm text-neutral-400">{meta?.promise || tool.description}</div>
+          {meta?.outputs?.length ? (
+            <div className="text-xs text-neutral-500">
+              Outputs:{' '}
+              {meta.outputs.map((out) => (
+                <span key={out} className="mr-1 inline-flex items-center rounded-md border border-neutral-800 px-2 py-0.5">
+                  {out}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {lockReasonText ? <div className="text-xs text-neutral-500">{lockReasonText}</div> : null}
         </div>
         <span className={`rounded-md border px-2 py-1 text-xs ${badgeClass}`}>{badge.label}</span>
       </div>
@@ -349,19 +379,6 @@ function ToolCard({
         <span className="rounded-md border border-neutral-800 px-2 py-1">{tool.tokensPerRun} tokens</span>
         {sub ? <span className="rounded-md border border-neutral-800 px-2 py-1">{sub}</span> : null}
       </div>
-
-      {tool.tags?.length ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {tool.tags.slice(0, 5).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full border border-neutral-800 bg-neutral-950 px-2 py-1 text-[11px] text-neutral-400"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
-      ) : null}
 
       <div className="mt-4 flex items-center justify-between">
         <div className="text-sm font-semibold text-red-300 group-hover:text-red-200">Open tool {'->'}</div>

@@ -31,11 +31,11 @@ export async function GET(request: NextRequest) {
     ]
   }
 
-  const rows = (await prisma.toolRunLog.findMany({
+  const rows = await prisma.toolRunLog.findMany({
     where,
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     take: limit + 1,
-  })) as Array<any>
+  })
 
   const hasMore = rows.length > limit
   const page = hasMore ? rows.slice(0, limit) : rows

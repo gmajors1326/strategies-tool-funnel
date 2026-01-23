@@ -102,7 +102,7 @@ export const logToolRun = async (params: {
   errorCode?: string | null
 }) => {
   try {
-    const data: any = {
+    const data: Prisma.ToolRunLogCreateInput = {
       orgId: params.orgId || null,
       userId: params.userId,
       toolId: params.toolId,

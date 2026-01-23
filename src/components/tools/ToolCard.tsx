@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { ToolUiItem } from '@/src/lib/ui/types'
 import { ToolBadges } from '@/src/components/tools/ToolBadges'
 import { Button } from '@/src/components/ui/Button'
+import { getLaunchMeta } from '@/src/lib/tools/launchTools'
 
 type ToolCardProps = {
   tool: ToolUiItem
@@ -29,14 +30,36 @@ function resolveCta(tool: ToolUiItem) {
 
 export function ToolCard({ tool }: ToolCardProps) {
   const cta = resolveCta(tool)
+  const meta = getLaunchMeta(tool.id)
 
   return (
     <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-3">
       {/* Header */}
       <div className="space-y-2">
+        <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted))]">
+          {meta?.label ? (
+            <span className="rounded-full border border-[hsl(var(--border))] px-2 py-0.5">{meta.label}</span>
+          ) : null}
+          {meta?.startHere ? (
+            <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-2 py-0.5 text-[hsl(var(--text))]">
+              Start here
+            </span>
+          ) : null}
+        </div>
         <p className="text-sm font-semibold leading-tight">{tool.name}</p>
+        {meta?.promise ? <p className="text-xs text-[hsl(var(--muted))]">{meta.promise}</p> : null}
         <ToolBadges category={tool.category} aiLevel={tool.aiLevel} lockState={tool.lockState} />
       </div>
+      {meta?.outputs?.length ? (
+        <div className="text-xs text-[hsl(var(--muted))]">
+          Outputs:{' '}
+          {meta.outputs.map((out) => (
+            <span key={out} className="mr-1 inline-flex items-center rounded-md border border-[hsl(var(--border))] px-2 py-0.5">
+              {out}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {/* Reason / explanation */}
       {tool.reason && <p className="text-xs text-[hsl(var(--muted))]">{tool.reason}</p>}

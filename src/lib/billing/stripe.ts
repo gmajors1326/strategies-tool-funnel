@@ -17,8 +17,7 @@ export function getStripe() {
 }
 
 export async function ensureStripeCustomer(userId: string, email?: string | null) {
-  const prismaAny = prisma as any
-  const existing = await prismaAny.billingCustomer.findUnique({
+  const existing = await prisma.billingCustomer.findUnique({
     where: { userId },
   })
   if (existing) return existing
@@ -29,7 +28,7 @@ export async function ensureStripeCustomer(userId: string, email?: string | null
     metadata: { userId },
   })
 
-  return prismaAny.billingCustomer.create({
+  return prisma.billingCustomer.create({
     data: {
       userId,
       stripeCustomerId: customer.id,

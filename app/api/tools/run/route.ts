@@ -86,6 +86,25 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const sanitizeInputPayload = (value: unknown): unknown => {
+    const sensitiveKeys = ['token', 'secret', 'password', 'apiKey', 'apikey', 'authorization', 'cookie']
+    if (Array.isArray(value)) {
+      return value.map((item) => sanitizeInputPayload(item))
+    }
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value as Record<string, unknown>).map(([key, val]) => {
+          const lower = key.toLowerCase()
+          if (sensitiveKeys.some((k) => lower.includes(k))) {
+            return [key, '[redacted]']
+          }
+          return [key, sanitizeInputPayload(val)]
+        })
+      )
+    }
+    return value
+  }
+
   const inputSummary = summarizeValue(data.input)
 
   const recordRun = async (params: {
@@ -112,10 +131,9 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const prismaAny = prisma as any
   const logProductEvent = async (eventName: string, meta: Record<string, any>) => {
     try {
-      await prismaAny.productEvent.create({
+      await prisma.productEvent.create({
         data: {
           userId,
           eventName,
@@ -492,7 +510,7 @@ export async function POST(request: NextRequest) {
 
     const updatedBalance = await getTokenBalance(userId)
 
-    const response: RunResponse & { inputEcho?: any; requestId?: string } = {
+    const response: RunResponse & { inputEcho?: any; requestId?: string; usage?: any } = {
       status: 'ok',
       output: output.output,
       runId,
@@ -511,10 +529,32 @@ export async function POST(request: NextRequest) {
       // ✅ NEW: inputEcho
       inputEcho: data.input ?? {},
       requestId,
+      usage: (output as any).usage ?? undefined,
     }
 
     // Persist recent runs (DB-backed now)
     await addRun(userId, tool.id, runId, response)
+
+    try {
+      const sanitizedInput = sanitizeInputPayload(data.input ?? {})
+      await prisma.toolRun.create({
+        data: {
+          id: runId,
+          userId,
+          toolId: tool.id,
+          toolSlug: tool.id,
+          toolKey: tool.id,
+          input: sanitizedInput,
+          output: output.output ?? {},
+          inputsJson: sanitizedInput,
+          outputsJson: output.output ?? {},
+        },
+      })
+    } catch (err: any) {
+      if (err?.code !== 'P2002' && err?.code !== 'P2021') {
+        throw err
+      }
+    }
 
     await recordRun({
       status: 'ok',

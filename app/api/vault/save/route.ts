@@ -10,15 +10,10 @@ export async function POST(req: Request) {
     const ent = getEntitlements(user)
 
     if (!ent.canSaveToVault) {
-      return NextResponse.json({ error: 'Vault is a paid feature.' }, { status: 403 })
+      return NextResponse.json({ error: 'Vault is a paid feature.', errorCode: 'PLAN_REQUIRED' }, { status: 403 })
     }
 
-    const body = (await req.json()) as {
-      toolId?: string
-      runId?: string
-      title?: string
-    }
-
+    const body = (await req.json()) as { toolId?: string; runId?: string; title?: string }
     if (!body?.runId) {
       return NextResponse.json({ error: 'Missing runId.' }, { status: 400 })
     }
@@ -50,7 +45,7 @@ export async function POST(req: Request) {
       select: { id: true, createdAt: true },
     })
 
-    return NextResponse.json({ ok: true, id: item.id, at: item.createdAt.toISOString() })
+    return NextResponse.json({ vaultItemId: item.id, createdAt: item.createdAt.toISOString() })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Save failed.' }, { status: 500 })
   }

@@ -11,11 +11,9 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
 const ACTIVE_STATUSES = new Set(['active', 'trialing'])
 const INACTIVE_STATUSES = new Set(['canceled', 'unpaid', 'incomplete_expired'])
 
-const prismaAny = prisma as any
-
 async function resolveUserIdFromCustomer(customerId?: string | null) {
   if (!customerId) return null
-  const record = await prismaAny.billingCustomer.findUnique({
+  const record = await prisma.billingCustomer.findUnique({
     where: { stripeCustomerId: customerId },
   })
   return record?.userId ?? null
@@ -41,7 +39,7 @@ async function handleTokenPurchase(userId: string, skuId: string, paymentIntentI
   if (!sku || !('tokensGranted' in sku)) return
   const tokensGranted = typeof sku.tokensGranted === 'number' ? sku.tokensGranted : 0
   try {
-    await prismaAny.tokenLedger.create({
+    await prisma.tokenLedger.create({
       data: {
         user_id: userId,
         event_type: 'purchase',
@@ -56,7 +54,7 @@ async function handleTokenPurchase(userId: string, skuId: string, paymentIntentI
 }
 
 async function recordPurchase(userId: string, sku: string, sessionId: string, paymentIntentId?: string | null) {
-  await prismaAny.purchase.upsert({
+  await prisma.purchase.upsert({
     where: { stripeCheckoutSessionId: sessionId },
     update: {
       sku,
@@ -79,7 +77,7 @@ async function updateSubscriptionFromStripe(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId || (await resolveUserIdFromCustomer(subscription.customer as string))
   if (!userId || !sku || !('planId' in sku)) return
 
-  await prismaAny.billingSubscription.upsert({
+  await prisma.billingSubscription.upsert({
     where: { stripeSubscriptionId: subscription.id },
     update: {
       stripePriceId: priceId || '',
@@ -124,7 +122,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await prismaAny.billingEvent.create({
+    await prisma.billingEvent.create({
       data: {
         stripeEventId: event.id,
         type: event.type,
@@ -177,7 +175,7 @@ export async function POST(request: NextRequest) {
       const subscriptionId = invoice.subscription as string | null
       if (subscriptionId) {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-        await prismaAny.billingSubscription.update({
+        await prisma.billingSubscription.update({
           where: { stripeSubscriptionId: subscription.id },
           data: { status: subscription.status },
         })
@@ -188,14 +186,14 @@ export async function POST(request: NextRequest) {
       const charge = event.data.object as Stripe.Charge
       const paymentIntentId = charge.payment_intent as string | null
       if (paymentIntentId) {
-        const purchase = await prismaAny.purchase.findUnique({
+        const purchase = await prisma.purchase.findUnique({
           where: { stripePaymentIntentId: paymentIntentId },
         })
         if (purchase) {
           const sku = getSku(purchase.sku)
           if (sku && 'tokensGranted' in sku) {
             const tokensGranted = typeof sku.tokensGranted === 'number' ? sku.tokensGranted : 0
-            await prismaAny.tokenLedger.create({
+            await prisma.tokenLedger.create({
               data: {
                 user_id: purchase.userId,
                 event_type: 'refund',
@@ -205,7 +203,7 @@ export async function POST(request: NextRequest) {
               },
             })
           }
-          await prismaAny.purchase.update({
+          await prisma.purchase.update({
             where: { stripePaymentIntentId: paymentIntentId },
             data: { status: 'refunded' },
           })

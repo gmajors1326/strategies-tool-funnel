@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { prisma } from '@/src/lib/db/prisma'
 import { getUserOrThrow } from '@/src/lib/auth/getUser'
 import { getEntitlements } from '@/src/lib/entitlements/getEntitlements'
 
@@ -34,7 +35,7 @@ function toTemplate(output: any) {
   }
 }
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
     const user = await getUserOrThrow()
     const ent = getEntitlements(user)
@@ -43,18 +44,46 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Template exports are a paid feature.' }, { status: 403 })
     }
 
-    const body = (await req.json()) as {
-      toolSlug: string
-      kind: ExportKind
-      output: any
+    const { searchParams } = new URL(req.url)
+    const runId = searchParams.get('runId')
+    const kind = searchParams.get('kind') as ExportKind
+
+    if (!runId) return NextResponse.json({ error: 'Missing runId.' }, { status: 400 })
+    if (!kind) return NextResponse.json({ error: 'Missing kind.' }, { status: 400 })
+
+    const run = await prisma.toolRun.findFirst({
+      where: { id: runId, userId: user.id },
+      select: { toolSlug: true, input: true, inputsJson: true, output: true, outputsJson: true, createdAt: true },
+    })
+
+    if (!run) {
+      return NextResponse.json({ error: 'Run not found.' }, { status: 404 })
     }
 
-    if (!body?.toolSlug) return NextResponse.json({ error: 'Missing toolSlug.' }, { status: 400 })
-    if (!body?.kind) return NextResponse.json({ error: 'Missing kind.' }, { status: 400 })
+    const output = run.output ?? run.outputsJson ?? {}
+    const payload = kind === 'checklist' ? toChecklist(output) : toTemplate(output)
+    const filename = `${run.toolSlug || 'tool'}-${kind}.json`
 
-    const payload = body.kind === 'checklist' ? toChecklist(body.output) : toTemplate(body.output)
-
-    return NextResponse.json({ ok: true, kind: body.kind, payload })
+    return new NextResponse(
+      JSON.stringify(
+        {
+          toolId: run.toolSlug,
+          name: `Preset - ${run.toolSlug || 'tool'}`,
+          input: run.input ?? run.inputsJson ?? {},
+          createdAt: run.createdAt.toISOString(),
+          payload,
+        },
+        null,
+        2
+      ),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${filename}"`,
+        },
+      }
+    )
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Export failed.' }, { status: 500 })
   }
