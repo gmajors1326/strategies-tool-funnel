@@ -21,9 +21,11 @@ export default function AdminAccessManager({ initialAdmins }: AdminAccessManager
   const [busy, setBusy] = useState(false)
 
   const refreshAdmins = useCallback(async () => {
-    const res = await fetch('/api/admin/access', { cache: 'no-store' })
-    if (!res.ok) throw new Error('Failed to load admin list')
-    const data = await res.json()
+    const res = await fetch('/api/admin/access', { cache: 'no-store', credentials: 'include' })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      throw new Error(data?.error || 'Failed to load admin list')
+    }
     setAdmins(data.admins ?? [])
   }, [])
 
@@ -34,9 +36,10 @@ export default function AdminAccessManager({ initialAdmins }: AdminAccessManager
       const res = await fetch('/api/admin/access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email: targetEmail, isAdmin }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         setStatus(data?.error || 'Update failed')
         return

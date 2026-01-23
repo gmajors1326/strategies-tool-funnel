@@ -551,6 +551,29 @@ export async function POST(request: NextRequest) {
       logger: { info: () => undefined, error: () => undefined },
     })
 
+    const outputError = (output as any)?.output?.error
+    if (outputError) {
+      await recordRun({
+        status: 'error',
+        lockCode: 'tool_error',
+        errorCode: outputError.errorCode || outputError.code || 'AI_ERROR',
+        outputSummary: summarizeValue(outputError),
+      })
+
+      return jsonWithRequestId(
+        {
+          status: 'error',
+          error: {
+            message: outputError.message || 'AI output error.',
+            code: outputError.errorCode || outputError.code || 'AI_ERROR',
+          },
+          inputEcho: data.input ?? {},
+          requestId,
+        },
+        { status: 502 }
+      )
+    }
+
     if (data.mode === 'trial' && trial.allowed) {
       markTrialUsed(userId, tool.id)
     }
