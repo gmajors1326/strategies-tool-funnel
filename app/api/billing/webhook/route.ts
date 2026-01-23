@@ -37,12 +37,13 @@ async function upsertEntitlementPlan(userId: string, planId: string) {
 async function handleTokenPurchase(userId: string, skuId: string, paymentIntentId?: string | null) {
   const sku = getSku(skuId)
   if (!sku || !('tokensGranted' in sku)) return
+  const tokensGranted = typeof sku.tokensGranted === 'number' ? sku.tokensGranted : 0
   try {
     await prisma.tokenLedger.create({
       data: {
         user_id: userId,
         event_type: 'purchase',
-        tokens_delta: sku.tokensGranted,
+        tokens_delta: tokensGranted,
         reason: 'purchase',
         stripe_payment_intent_id: paymentIntentId || undefined,
       },
@@ -191,11 +192,12 @@ export async function POST(request: NextRequest) {
         if (purchase) {
           const sku = getSku(purchase.sku)
           if (sku && 'tokensGranted' in sku) {
+            const tokensGranted = typeof sku.tokensGranted === 'number' ? sku.tokensGranted : 0
             await prisma.tokenLedger.create({
               data: {
                 user_id: purchase.userId,
                 event_type: 'refund',
-                tokens_delta: -sku.tokensGranted,
+                tokens_delta: -tokensGranted,
                 reason: 'refund',
                 stripe_payment_intent_id: paymentIntentId,
               },
