@@ -27,14 +27,10 @@ type UiConfig = {
 }
 
 type RunResponse = {
+  status?: 'ok' | 'locked' | 'error'
   output?: any
-  meta?: {
-    tokensUsed?: number
-    model?: string
-    latencyMs?: number
-  }
-  entitlements?: any
-  error?: string
+  lock?: { message?: string }
+  error?: string | { message?: string }
 }
 
 function safeJsonParse(s: string) {
@@ -115,16 +111,21 @@ export function ToolRunner(props: {
     setMsg(null)
 
     try {
-      const res = await fetch('/api/run', {
+      const res = await fetch('/api/tools/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolId, toolSlug, input }),
+        body: JSON.stringify({ toolId, mode: 'paid', input }),
       })
 
       const data = (await res.json()) as RunResponse
 
-      if (!res.ok) {
-        setResult({ error: data?.error || 'Run failed.' })
+      if (!res.ok || data?.status === 'locked' || data?.status === 'error') {
+        const errorValue = data?.error
+        const message =
+          data?.lock?.message ||
+          (typeof errorValue === 'string' ? errorValue : errorValue?.message) ||
+          'Run failed.'
+        setResult({ error: message })
         return
       }
 
@@ -361,7 +362,9 @@ export function ToolRunner(props: {
           ) : null}
 
           {result?.error ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">{result.error}</div>
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+              {typeof result.error === 'string' ? result.error : result.error?.message}
+            </div>
           ) : result?.output ? (
             <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
               {typeof result.output === 'string' ? result.output : JSON.stringify(result.output, null, 2)}

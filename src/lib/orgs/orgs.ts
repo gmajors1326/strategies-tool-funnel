@@ -98,17 +98,24 @@ export const logToolRun = async (params: {
   lockCode?: string | null
   durationMs?: number | null
 }) => {
-  return prisma.toolRunLog.create({
-    data: {
-      orgId: params.orgId || null,
-      userId: params.userId,
-      toolId: params.toolId,
-      runId: params.runId,
-      meteringMode: params.meteringMode,
-      tokensCharged: params.tokensCharged,
-      status: params.status,
-      lockCode: params.lockCode || null,
-      durationMs: params.durationMs || null,
-    },
-  })
+  try {
+    return prisma.toolRunLog.create({
+      data: {
+        orgId: params.orgId || null,
+        userId: params.userId,
+        toolId: params.toolId,
+        runId: params.runId,
+        meteringMode: params.meteringMode,
+        tokensCharged: params.tokensCharged,
+        status: params.status,
+        lockCode: params.lockCode || null,
+        durationMs: params.durationMs || null,
+      },
+    })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2021') {
+      return null
+    }
+    throw err
+  }
 }

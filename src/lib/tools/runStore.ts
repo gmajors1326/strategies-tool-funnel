@@ -14,19 +14,26 @@ function canUseDevFallback() {
 export const addRun = async (userId: string, toolId: string, runId: string, run: RunResponse) => {
   if ((prisma as any)?.toolRunLog?.create) {
     // Persist to DB
-    await prisma.toolRunLog.create({
-      data: {
-        userId,
-        toolId,
-        runId,
-        status: run.status,
-        meteringMode: run.metering?.meteringMode ?? 'tokens',
-        tokensCharged: run.metering?.chargedTokens ?? 0,
-        lockCode: run.lock?.code ?? null,
-        durationMs: null,
-        orgId: run.metering?.orgId ?? null,
-      },
-    })
+    try {
+      await prisma.toolRunLog.create({
+        data: {
+          userId,
+          toolId,
+          runId,
+          status: run.status,
+          meteringMode: run.metering?.meteringMode ?? 'tokens',
+          tokensCharged: run.metering?.chargedTokens ?? 0,
+          lockCode: run.lock?.code ?? null,
+          durationMs: null,
+          orgId: run.metering?.orgId ?? null,
+        },
+      })
+    } catch (err) {
+      if (err instanceof Error && (err as any).code === 'P2021') {
+        return
+      }
+      throw err
+    }
 
     return
   }
@@ -54,21 +61,28 @@ export const addRun = async (userId: string, toolId: string, runId: string, run:
 
 export const getRecentRuns = async (userId: string): Promise<RunResponse[]> => {
   if ((prisma as any)?.toolRunLog?.findMany) {
-    const rows = await prisma.toolRunLog.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: MAX_RUNS,
-    })
+    try {
+      const rows = await prisma.toolRunLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: MAX_RUNS,
+      })
 
-    // Map DB rows back into the RunResponse shape your UI expects.
-    // Keep this minimal; full fidelity should come from your tool run logs + outputs store (later).
-    return rows.map((r: any) => ({
-      runId: r.runId,
-      status: r.status,
-      lock: r.lockCode
-        ? { code: r.lockCode, message: '', cta: { type: 'upgrade' as const } }
-        : undefined,
-    })) as RunResponse[]
+      // Map DB rows back into the RunResponse shape your UI expects.
+      // Keep this minimal; full fidelity should come from your tool run logs + outputs store (later).
+      return rows.map((r: any) => ({
+        runId: r.runId,
+        status: r.status,
+        lock: r.lockCode
+          ? { code: r.lockCode, message: '', cta: { type: 'upgrade' as const } }
+          : undefined,
+      })) as RunResponse[]
+    } catch (err) {
+      if (err instanceof Error && (err as any).code === 'P2021') {
+        return []
+      }
+      throw err
+    }
   }
 
   // No Prisma / model not ready
