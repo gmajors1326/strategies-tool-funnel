@@ -13,10 +13,6 @@ function encodeSession(payload: { userId: string; email: string; role: 'admin' }
 
 export async function POST(request: NextRequest) {
   try {
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json({ error: 'Admin password login disabled' }, { status: 404 })
-    }
-
     const body = await request.json()
     const email = String(body?.email || '').trim().toLowerCase()
     const password = String(body?.password || '')

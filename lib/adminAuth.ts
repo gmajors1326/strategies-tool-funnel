@@ -1,4 +1,3 @@
-import { ensureDevDbReady } from './devDbGuard'
 import { requireAdmin as requireAppAdmin } from '@/src/lib/auth/requireAdmin'
 
 export type AdminRole = 'admin' | 'support' | 'analyst'
@@ -49,7 +48,6 @@ export function resolveAdminRole(identity: AdminIdentity): AdminRole | null {
 }
 
 export async function requireAdmin(): Promise<AdminSession> {
-  await ensureDevDbReady()
   const admin = await requireAppAdmin()
   return {
     userId: admin.id,

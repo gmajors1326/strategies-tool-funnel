@@ -4,6 +4,7 @@ import { prisma } from '@/src/lib/prisma'
 // IMPORTANT: this must exist in your codebase already.
 // It's the function currently throwing:
 // "Unauthorized: user session missing or invalid. Sign in via /verify..."
+import { cookies } from 'next/headers'
 import { requireUser } from '@/src/lib/auth/requireUser'
 
 export type AdminUser = {
@@ -14,6 +15,18 @@ export type AdminUser = {
 }
 
 export async function requireAdmin(): Promise<AdminUser> {
+  const adminSession = cookies().get('admin_session')?.value
+  if (adminSession) {
+    try {
+      const json = Buffer.from(adminSession, 'base64url').toString('utf8')
+      const parsed = JSON.parse(json) as { userId?: string; email?: string; role?: string }
+      if (parsed?.role === 'admin' && parsed.email) {
+        return { id: parsed.userId || 'admin-user', email: parsed.email, provider: 'app-auth' }
+      }
+    } catch {
+      // ignore malformed cookie
+    }
+  }
   // Dev bypass (local only)
   if (process.env.DEV_AUTH_BYPASS === 'true') {
     return {

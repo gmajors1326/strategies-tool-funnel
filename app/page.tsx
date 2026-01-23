@@ -41,7 +41,7 @@ export default function HomePage() {
             Strategic engagement tools that turn conversations into revenue.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
-            <OpenToolsCapture redirectTo="/app/explore" />
+            <OpenToolsCapture redirectTo="/tools" />
             <Button asChild size="lg" variant="outline">
               <Link href="#faq">Learn More</Link>
             </Button>

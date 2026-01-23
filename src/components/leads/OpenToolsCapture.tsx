@@ -41,7 +41,7 @@ function markLeadCaptured(email: string) {
   document.cookie = `${COOKIE_NAME}=true; Max-Age=${MAX_AGE_SECONDS}; Path=/; SameSite=Lax`
 }
 
-export function OpenToolsCapture({ redirectTo = "/app/explore" }: { redirectTo?: string }) {
+export function OpenToolsCapture({ redirectTo = "/tools" }: { redirectTo?: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState("")
