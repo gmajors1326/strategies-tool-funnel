@@ -201,51 +201,163 @@ function summarizeText(value: unknown, limit = 120) {
   }
 }
 
+function isPrimitive(value: any) {
+  return value === null || value === undefined || ['string', 'number', 'boolean'].includes(typeof value)
+}
+
+function ExpandableText({ text, limit = 220 }: { text: string; limit?: number }) {
+  const [expanded, setExpanded] = React.useState(false)
+  if (text.length <= limit) return <span>{text}</span>
+  return (
+    <span>
+      {expanded ? text : `${text.slice(0, limit)}…`}{' '}
+      <button type="button" className="text-xs underline" onClick={() => setExpanded((prev) => !prev)}>
+        {expanded ? 'Show less' : 'Show more'}
+      </button>
+    </span>
+  )
+}
+
+function ValueRenderer({
+  value,
+  depth = 0,
+  cardFields,
+}: {
+  value: any
+  depth?: number
+  cardFields?: string[]
+}) {
+  if (value === null || value === undefined) {
+    return <span className="text-muted-foreground">—</span>
+  }
+  if (typeof value === 'string') {
+    return <ExpandableText text={value} />
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return <span>{String(value)}</span>
+  }
+  if (Array.isArray(value)) {
+    if (value.length === 0) return <span className="text-muted-foreground">—</span>
+    const allPrimitive = value.every((item) => isPrimitive(item))
+    if (allPrimitive) {
+      return (
+        <ul className="list-disc space-y-1 pl-4 text-sm">
+          {value.slice(0, 6).map((item, idx) => (
+            <li key={`${idx}-${String(item)}`}>{String(item)}</li>
+          ))}
+          {value.length > 6 ? (
+            <li className="text-xs text-muted-foreground">Show more ({value.length - 6})</li>
+          ) : null}
+        </ul>
+      )
+    }
+
+    return (
+      <div className="grid gap-2 sm:grid-cols-2">
+        {value.slice(0, 6).map((item, idx) => {
+          const obj = typeof item === 'object' && item ? item : { value: item }
+          const fields =
+            cardFields && cardFields.length
+              ? cardFields
+              : Object.keys(obj).filter((key) => isPrimitive(obj[key])).slice(0, 4)
+          return (
+            <div key={`${idx}-${fields.join('-')}`} className="rounded-md border bg-muted/20 p-2 text-xs">
+              {fields.map((key) => (
+                <div key={key} className="flex gap-2">
+                  <span className="text-muted-foreground">{key}</span>
+                  <span className="font-medium">{summarizeText(obj[key], 140)}</span>
+                </div>
+              ))}
+            </div>
+          )
+        })}
+        {value.length > 6 ? (
+          <div className="text-xs text-muted-foreground">Show more ({value.length - 6})</div>
+        ) : null}
+      </div>
+    )
+  }
+
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, any>)
+    if (entries.length === 0) return <span className="text-muted-foreground">—</span>
+    if (depth >= 2) {
+      return (
+        <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-xs">
+          {JSON.stringify(value, null, 2)}
+        </pre>
+      )
+    }
+    return (
+      <div className="grid gap-2 text-sm sm:grid-cols-2">
+        {entries.map(([key, val]) => (
+          <div key={key} className="rounded-md border bg-muted/10 p-2">
+            <div className="text-xs text-muted-foreground">{key}</div>
+            <div className="mt-1 text-sm">
+              <ValueRenderer value={val} depth={depth + 1} />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return <span>{summarizeText(value)}</span>
+}
+
 function SectionBlock({
   title,
   value,
   onCopy,
+  cardFields,
+  defaultOpen = false,
 }: {
   title: string
   value: any
   onCopy: (text: string, label: string) => void
+  cardFields?: string[]
+  defaultOpen?: boolean
 }) {
-  const [expanded, setExpanded] = React.useState(false)
-  const isArray = Array.isArray(value)
-  const items = isArray ? value : []
-  const visible = isArray ? (expanded ? items : items.slice(0, 3)) : []
-
+  const [showJson, setShowJson] = React.useState(false)
   return (
-    <div className="rounded-md border bg-muted/20 p-3 text-sm">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <Button variant="ghost" size="sm" onClick={() => onCopy(JSON.stringify(value, null, 2), `Copied ${title}`)}>
-          Copy
-        </Button>
-      </div>
-      {isArray ? (
-        <div className="mt-2 space-y-2">
-          {visible.map((item: any, idx: number) => (
-            <div key={`${title}-${idx}`} className="rounded-md border bg-muted/30 p-2 text-xs">
-              {typeof item === 'string' ? item : JSON.stringify(item, null, 2)}
-            </div>
-          ))}
-          {items.length > 3 ? (
-            <button
-              type="button"
-              className="text-xs text-muted-foreground underline"
-              onClick={() => setExpanded((prev) => !prev)}
+    <details className="rounded-md border bg-muted/10 p-2" open={defaultOpen}>
+      <summary className="cursor-pointer list-none">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">{title}</h3>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.preventDefault()
+                onCopy(JSON.stringify(value, null, 2), `Copied ${title}`)
+              }}
             >
-              {expanded ? 'Show less' : `Show more (${items.length - 3})`}
-            </button>
-          ) : null}
+              Copy
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.preventDefault()
+                setShowJson((prev) => !prev)
+              }}
+            >
+              {showJson ? 'Hide JSON' : 'View JSON'}
+            </Button>
+          </div>
         </div>
-      ) : (
-        <pre className="mt-2 max-h-[240px] overflow-auto rounded-md border bg-muted/30 p-2 text-xs">
-          {JSON.stringify(value ?? {}, null, 2)}
-        </pre>
-      )}
-    </div>
+      </summary>
+      <div className="mt-2">
+        {showJson ? (
+          <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-xs">
+            {JSON.stringify(value ?? {}, null, 2)}
+          </pre>
+        ) : (
+          <ValueRenderer value={value} cardFields={cardFields} />
+        )}
+      </div>
+    </details>
   )
 }
 
@@ -278,6 +390,18 @@ export function ToolRunner(props: {
   const [tokensRemaining, setTokensRemaining] = React.useState<number | null>(null)
   const [tokensAllowance, setTokensAllowance] = React.useState<number | null>(null)
   const [tokensResetAt, setTokensResetAt] = React.useState<string | null>(null)
+  const [authLoaded, setAuthLoaded] = React.useState(false)
+  const [authStatus, setAuthStatus] = React.useState<{ signedIn: boolean; guest: boolean; email?: string | null }>({
+    signedIn: false,
+    guest: false,
+    email: null,
+  })
+  const [showGate, setShowGate] = React.useState(false)
+  const [guestEmail, setGuestEmail] = React.useState('')
+  const [guestName, setGuestName] = React.useState('')
+  const [guestSendLink, setGuestSendLink] = React.useState(true)
+  const [guestBusy, setGuestBusy] = React.useState(false)
+  const [guestError, setGuestError] = React.useState<string | null>(null)
   const isDev = process.env.NODE_ENV !== 'production'
 
   function debugLog(message: string, meta?: Record<string, any>) {
@@ -559,6 +683,26 @@ export function ToolRunner(props: {
     }
   }, [toolId, input])
 
+  const refreshAuth = React.useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/status', { cache: 'no-store' })
+      if (!res.ok) return
+      const data = await res.json()
+      setAuthStatus({
+        signedIn: Boolean(data?.signedIn),
+        guest: Boolean(data?.guest),
+        email: data?.email ?? null,
+      })
+      setAuthLoaded(true)
+    } catch {
+      setAuthLoaded(true)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    refreshAuth()
+  }, [refreshAuth])
+
   React.useEffect(() => {
     if (Object.keys(input).length > 0) return
     const last = readLastInput(toolId)
@@ -568,7 +712,7 @@ export function ToolRunner(props: {
     }
   }, [toolId, input])
 
-  async function runTool() {
+  async function runToolInternal() {
     setBusy(true)
     setResult(null)
     setMsg(null)
@@ -669,6 +813,63 @@ export function ToolRunner(props: {
     }
   }
 
+  async function runTool() {
+    if (!authLoaded) {
+      await refreshAuth()
+    }
+    if (!authStatus.signedIn && !authStatus.guest) {
+      setShowGate(true)
+      return
+    }
+    return runToolInternal()
+  }
+
+  async function handleGuestContinue() {
+    setGuestError(null)
+    if (!guestName.trim()) {
+      setGuestError('Please enter your name.')
+      return
+    }
+    if (!guestEmail.trim()) {
+      setGuestError('Please enter your email.')
+      return
+    }
+    setGuestBusy(true)
+    try {
+      const res = await fetch('/api/leads/guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: guestEmail, source: 'tool_run_gate', toolId }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        setGuestError(data?.error || 'Failed to continue as guest.')
+        setGuestBusy(false)
+        return
+      }
+      const leadData = await res.json().catch(() => null)
+      if (guestSendLink) {
+        await fetch('/api/auth/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: guestName,
+            email: guestEmail,
+            next: `/tools/${toolSlug}`,
+            stripeCustomerId: leadData?.stripeCustomerId,
+          }),
+        })
+      }
+      setAuthStatus({ signedIn: false, guest: true, email: guestEmail })
+      setShowGate(false)
+      await runToolInternal()
+    } catch {
+      setGuestError('Failed to continue as guest.')
+    } finally {
+      setGuestBusy(false)
+    }
+  }
+
   async function copy(text: string, label: string) {
     try {
       await navigator.clipboard.writeText(text)
@@ -680,58 +881,98 @@ export function ToolRunner(props: {
     }
   }
 
-  function renderSummaryChips(value: any) {
-    if (value === null || value === undefined) return <span className="text-muted-foreground">—</span>
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      return <span>{String(value)}</span>
-    }
-    if (Array.isArray(value)) {
-      return (
-        <div className="flex flex-wrap gap-1">
-          {value.slice(0, 6).map((item, idx) => (
-            <span
-              key={`${idx}-${String(item).slice(0, 16)}`}
-              className="rounded-full border bg-muted/30 px-2 py-0.5 text-[11px]"
-            >
-              {typeof item === 'string' ? item : summarizeText(item, 48)}
-            </span>
-          ))}
-          {value.length > 6 ? (
-            <span className="rounded-full border bg-muted/20 px-2 py-0.5 text-[11px] text-muted-foreground">
-              +{value.length - 6}
-            </span>
-          ) : null}
-        </div>
-      )
-    }
-    if (typeof value === 'object') {
-      const entries = Object.entries(value as Record<string, any>).slice(0, 6)
-      return (
-        <div className="flex flex-wrap gap-1">
-          {entries.map(([k, v]) => (
-            <span key={k} className="rounded-full border bg-muted/30 px-2 py-0.5 text-[11px]">
-              {k}: {summarizeText(v, 36)}
-            </span>
-          ))}
-        </div>
-      )
-    }
-    return <span>{summarizeText(value)}</span>
+  type ResultConfig = {
+    order: string[]
+    titles?: Record<string, string>
+    cardFields?: Record<string, string[]>
   }
 
-  function renderJsonFallback(output: any) {
-    const confidence = getConfidenceScore(output)
-    const lowConfidence = confidence !== null && confidence < 0.5
+  const RESULT_CONFIG: Record<string, ResultConfig> = {
+    'hook-analyzer': {
+      order: ['summary', 'score', 'diagnosis', 'rewrites', 'nextSteps'],
+      titles: { score: 'Scores', rewrites: 'Rewrites', nextSteps: 'Next steps' },
+      cardFields: { rewrites: ['hook', 'rationale'] },
+    },
+    'cta-match-analyzer': {
+      order: ['summary', 'score', 'diagnosis', 'rewrites', 'nextSteps'],
+      titles: { score: 'Scores', rewrites: 'Rewrites', nextSteps: 'Next steps' },
+      cardFields: { rewrites: ['cta', 'rationale'] },
+    },
+    'content-angle-generator': {
+      order: ['summary', 'angles', 'notes', 'nextSteps'],
+      titles: { angles: 'Angles', nextSteps: 'Next steps' },
+      cardFields: { angles: ['angle', 'hook', 'format', 'rationale'] },
+    },
+    'caption-optimizer': {
+      order: ['summary', 'revisions', 'notes', 'nextSteps'],
+      titles: { revisions: 'Revisions', nextSteps: 'Next steps' },
+      cardFields: { revisions: ['caption', 'rationale'] },
+    },
+    'engagement-diagnostic': {
+      order: ['summary', 'signals', 'prioritizedFixes', 'nextSteps'],
+      titles: { prioritizedFixes: 'Prioritized fixes', nextSteps: 'Next steps' },
+      cardFields: {
+        signals: ['signal', 'evidence', 'severity'],
+        prioritizedFixes: ['title', 'why', 'how', 'impact', 'effort'],
+      },
+    },
+  }
+
+  function buildSummaryLines(output: any) {
+    const lines: Array<{ label: string; value: any }> = []
+    const summary = output?.summary
+    if (typeof summary === 'string') {
+      lines.push({ label: 'Summary', value: summary })
+      return lines
+    }
+    if (summary && typeof summary === 'object') {
+      const primary = summary?.primaryIssue || summary?.oneSentenceDiagnosis
+      if (primary) lines.push({ label: 'Primary issue', value: primary })
+      if (summary?.confidence !== undefined) lines.push({ label: 'Confidence', value: summary.confidence })
+      if (!lines.length) {
+        Object.entries(summary)
+          .filter(([, v]) => isPrimitive(v))
+          .slice(0, 3)
+          .forEach(([k, v]) => lines.push({ label: k, value: v }))
+      }
+      return lines
+    }
+    if (output?.score && typeof output.score === 'object') {
+      Object.entries(output.score)
+        .filter(([, v]) => typeof v === 'number')
+        .slice(0, 3)
+        .forEach(([k, v]) => lines.push({ label: k, value: v }))
+    }
+    if (!lines.length && Array.isArray(output?.angles) && output.angles[0]) {
+      lines.push({ label: 'Top angle', value: output.angles[0].angle || output.angles[0].hook })
+    }
+    if (!lines.length && Array.isArray(output?.rewrites) && output.rewrites[0]) {
+      lines.push({ label: 'Top rewrite', value: output.rewrites[0].cta || output.rewrites[0].hook })
+    }
+    if (!lines.length && Array.isArray(output?.signals) && output.signals[0]) {
+      lines.push({ label: 'Top signal', value: output.signals[0].signal })
+    }
+    if (!lines.length) {
+      Object.entries(output || {})
+        .filter(([, v]) => isPrimitive(v))
+        .slice(0, 3)
+        .forEach(([k, v]) => lines.push({ label: k, value: v }))
+    }
+    return lines
+  }
+
+  function renderGenericResult(output: any) {
     if (!output || typeof output !== 'object') {
-      return (
-        <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
-          {JSON.stringify(output ?? {}, null, 2)}
-        </pre>
-      )
+      return <ValueRenderer value={output} />
     }
 
-    const entries = Object.entries(output)
-    const summaryPairs = entries.slice(0, 3)
+    const config = RESULT_CONFIG[toolId]
+    const allEntries = Object.entries(output)
+    const order = config?.order ?? []
+    const ordered = order.filter((key) => key in output).map((key) => [key, output[key]] as [string, any])
+    const remaining = allEntries.filter(([key]) => !order.includes(key))
+    const sections = [...ordered, ...remaining]
+    const summaryLines = buildSummaryLines(output)
 
     return (
       <div className="space-y-4">
@@ -741,27 +982,34 @@ export function ToolRunner(props: {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => copy(JSON.stringify(summaryPairs, null, 2), 'Copied summary')}
+              onClick={() => copy(JSON.stringify(output?.summary ?? summaryLines, null, 2), 'Copied summary')}
             >
               Copy
             </Button>
           </div>
           <div className="mt-2 space-y-2 text-xs text-muted-foreground">
-            {summaryPairs.map(([key, value]) => (
-              <div key={key} className="flex flex-col gap-1">
-                <span className="text-foreground">{key}</span>
-                {renderSummaryChips(value)}
-              </div>
-            ))}
+            {summaryLines.length ? (
+              summaryLines.map((line) => (
+                <div key={line.label} className="flex flex-col gap-1">
+                  <span className="text-foreground">{line.label}</span>
+                  <ValueRenderer value={line.value} />
+                </div>
+              ))
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
           </div>
         </div>
-        {entries.map(([key, value]) => (
-          <details key={key} open={!lowConfidence} className="rounded-md border bg-muted/10 p-2">
-            <summary className="cursor-pointer list-none">
-              <div className="text-sm font-semibold">{key}</div>
-            </summary>
-            <SectionBlock title={key} value={value} onCopy={copy} />
-          </details>
+
+        {sections.map(([key, value], idx) => (
+          <SectionBlock
+            key={key}
+            title={config?.titles?.[key] ?? key}
+            value={value}
+            onCopy={copy}
+            cardFields={config?.cardFields?.[key]}
+            defaultOpen={idx < 2}
+          />
         ))}
       </div>
     )
@@ -1147,13 +1395,10 @@ export function ToolRunner(props: {
         </pre>
       )
     }
-    if (toolId === 'hook-analyzer') {
-      return renderHookAnalyzer(result.output)
-    }
     if (toolId === 'analytics-signal-reader') {
       return renderAnalyticsSignalReader(result.output)
     }
-    return renderJsonFallback(result.output)
+    return renderGenericResult(result.output)
   }
 
   return (
@@ -1385,6 +1630,48 @@ export function ToolRunner(props: {
             <p className="text-sm text-muted-foreground">This tool does not expose input fields yet.</p>
           )}
 
+          {showGate ? (
+            <div className="space-y-3 rounded-md border bg-muted/20 p-3 text-sm">
+              <div className="font-semibold">Choose how you want to continue</div>
+              <p className="text-xs text-muted-foreground">
+                Guest access saves your email and lets you run tools right now.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button variant="outline" onClick={() => router.push(`/verify?next=/tools/${toolSlug}`)}>
+                  I already have an account → Log in
+                </Button>
+                <Button variant="secondary" onClick={() => router.push('/signup')}>
+                  Create account
+                </Button>
+              </div>
+              <div className="space-y-2 pt-2">
+                <Input
+                  placeholder="Your name"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                />
+                <Input
+                  type="email"
+                  placeholder="you@email.com"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={guestSendLink}
+                    onChange={(e) => setGuestSendLink(e.target.checked)}
+                  />
+                  Email me a sign-in link
+                </label>
+                {guestError ? <p className="text-xs text-destructive">{guestError}</p> : null}
+                <Button className="w-full" onClick={handleGuestContinue} disabled={guestBusy}>
+                  {guestBusy ? 'Continuing...' : 'Continue as Guest'}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
           <div className="space-y-2 pt-2">
             <Button className="w-full" onClick={runTool} disabled={busy || isLocked}>
               {isLocked
@@ -1438,6 +1725,19 @@ export function ToolRunner(props: {
               </div>
             )
           })()}
+          {authStatus.guest ? (
+            <div className="rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
+              Create an account to save and export results.
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => router.push('/signup')}>
+                  Upgrade to account
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => router.push('/verify')}>
+                  Sign in
+                </Button>
+              </div>
+            </div>
+          ) : null}
           {result?.error ? (
             <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
               <div className="font-medium">

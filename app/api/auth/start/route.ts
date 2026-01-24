@@ -7,6 +7,7 @@ const startSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
   next: z.string().optional(),
+  stripeCustomerId: z.string().optional(),
 })
 
 const LINK_EXPIRY_MINUTES = 10
@@ -27,12 +28,12 @@ export async function POST(request: NextRequest) {
       console.info('[auth/start] DB host: unavailable')
     }
     const body = await request.json()
-    const { name, email, next } = startSchema.parse(body)
+    const { name, email, next, stripeCustomerId } = startSchema.parse(body)
 
     const origin = request.headers.get('origin') || process.env.APP_URL || 'http://localhost:3000'
     const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/account'
     const exp = Date.now() + LINK_EXPIRY_MINUTES * 60 * 1000
-    const token = signMagicLinkToken({ email, name, next: safeNext, exp })
+    const token = signMagicLinkToken({ email, name, next: safeNext, exp, stripeCustomerId })
     const link = `${origin}/api/auth/magic/verify?token=${encodeURIComponent(token)}`
 
     // Send email

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { createSessionCookie, verifyMagicLinkToken } from '@/lib/auth'
+import Stripe from 'stripe'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -40,6 +41,23 @@ export async function GET(request: NextRequest) {
     sessionPlan = user.plan
   } catch {
     // DB unavailable - fall back to stateless session for degraded mode
+  }
+
+  if (payload.stripeCustomerId && process.env.STRIPE_SECRET_KEY) {
+    try {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2023-10-16',
+        typescript: true,
+      })
+      await stripe.customers.update(payload.stripeCustomerId, {
+        metadata: {
+          verified: 'true',
+          verified_at: new Date().toISOString(),
+        },
+      })
+    } catch {
+      // ignore
+    }
   }
 
   const res = NextResponse.redirect(new URL(safeNext, request.url))

@@ -3,6 +3,7 @@ import { prisma } from './db'
 import { hash, compare } from 'bcryptjs'
 
 const SESSION_COOKIE_NAME = 'strategy-tools-session'
+const GUEST_COOKIE_NAME = 'strategy-tools-guest'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 const IS_PRODUCTION =
   process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
@@ -17,6 +18,14 @@ type MagicLinkPayload = {
   email: string
   name?: string
   next?: string
+  stripeCustomerId?: string
+  exp: number
+}
+
+type GuestTokenPayload = {
+  email: string
+  stripeCustomerId?: string
+  iat: number
   exp: number
 }
 
@@ -68,6 +77,10 @@ function verifySessionToken(token: string): Session | null {
   }
 }
 
+export function decodeSessionToken(token: string): Session | null {
+  return verifySessionToken(token)
+}
+
 function signPayload(payload: object): string {
   const payloadJson = JSON.stringify(payload)
   const payloadB64 = Buffer.from(payloadJson).toString('base64url')
@@ -103,6 +116,17 @@ export function signMagicLinkToken(payload: MagicLinkPayload): string {
 
 export function verifyMagicLinkToken(token: string): MagicLinkPayload | null {
   const payload = verifyPayload<MagicLinkPayload>(token)
+  if (!payload?.email || !payload.exp) return null
+  if (Date.now() > payload.exp) return null
+  return payload
+}
+
+export function signGuestToken(payload: GuestTokenPayload): string {
+  return signPayload(payload)
+}
+
+export function verifyGuestToken(token: string): GuestTokenPayload | null {
+  const payload = verifyPayload<GuestTokenPayload>(token)
   if (!payload?.email || !payload.exp) return null
   if (Date.now() > payload.exp) return null
   return payload
@@ -161,6 +185,10 @@ export async function createSessionCookie(userId: string, email: string, plan: s
 
 export function getSessionCookieName() {
   return SESSION_COOKIE_NAME
+}
+
+export function getGuestCookieName() {
+  return GUEST_COOKIE_NAME
 }
 
 export async function hashOtp(code: string): Promise<string> {

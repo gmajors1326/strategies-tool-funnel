@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 
 const ADMIN_ITEMS = [
   { label: 'Analytics', href: '/admin/analytics' },
+  { label: 'Leads', href: '/admin/leads' },
   { label: 'Support', href: '/admin/support' },
   { label: 'Refunds', href: '/admin/billing/refunds' },
   { label: 'Tool Config', href: '/admin/tools' },

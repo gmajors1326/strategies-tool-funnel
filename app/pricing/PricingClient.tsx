@@ -92,6 +92,7 @@ export function PricingClient() {
   const reason = searchParams.get('reason')
   const tabParam = searchParams.get('tab')
   const feature = searchParams.get('feature')
+  const intent = searchParams.get('intent')
 
   const [activeTab, setActiveTab] = React.useState<'plans' | 'tokens'>('plans')
   const [uiConfig, setUiConfig] = React.useState<UiConfigSummary | null>(null)
@@ -150,7 +151,9 @@ export function PricingClient() {
         ? 'This tool is part of Pro.'
         : reason === 'cooldown'
           ? 'Pro skips most cooldowns.'
-          : null
+          : intent === 'signup'
+            ? 'Choose a plan to start your membership. Free starts instantly.'
+            : null
 
   const comparisonRef = React.useRef<HTMLDivElement | null>(null)
 
