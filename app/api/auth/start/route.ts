@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { hashOtp } from '@/lib/auth'
+import { signMagicLinkToken } from '@/lib/auth'
 import { sendMagicLink } from '@/lib/email'
 import { z } from 'zod'
 
@@ -10,7 +9,7 @@ const startSchema = z.object({
   next: z.string().optional(),
 })
 
-const OTP_EXPIRY_MINUTES = 10
+const LINK_EXPIRY_MINUTES = 10
 // MAX_ATTEMPTS removed - not currently used in this route
 
 export async function POST(request: NextRequest) {
@@ -30,66 +29,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, email, next } = startSchema.parse(body)
 
-    // Rate limiting: Check for recent OTP requests
-    const recentOtp = await prisma.otp.findFirst({
-      where: {
-        email,
-        createdAt: {
-          gte: new Date(Date.now() - 60 * 1000), // Last minute
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-
-    if (recentOtp) {
-      return NextResponse.json(
-        { error: 'Please wait before requesting another link' },
-        { status: 429 }
-      )
-    }
-
-    // Create or update user FIRST (required for foreign key constraint)
-    await prisma.user.upsert({
-      where: { email },
-      create: {
-        email,
-        name,
-      },
-      update: {
-        name,
-      },
-    })
-
-    // Generate magic link token
-    const token = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '')
-    const codeHash = await hashOtp(token)
-
-    // Expiry time
-    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000)
-
-    // Clean up old OTPs
-    await prisma.otp.deleteMany({
-      where: {
-        email,
-        expiresAt: {
-          lt: new Date(),
-        },
-      },
-    })
-
-    // Create or update OTP (after User exists)
-    await prisma.otp.create({
-      data: {
-        email,
-        codeHash,
-        expiresAt,
-        attempts: 0,
-      },
-    })
-
     const origin = request.headers.get('origin') || process.env.APP_URL || 'http://localhost:3000'
     const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/account'
-    const link = `${origin}/api/auth/magic/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent(safeNext)}`
+    const exp = Date.now() + LINK_EXPIRY_MINUTES * 60 * 1000
+    const token = signMagicLinkToken({ email, name, next: safeNext, exp })
+    const link = `${origin}/api/auth/magic/verify?token=${encodeURIComponent(token)}`
 
     // Send email
     await sendMagicLink(email, link, name || undefined)

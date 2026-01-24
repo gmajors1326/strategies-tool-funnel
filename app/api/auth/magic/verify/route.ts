@@ -1,61 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { createSessionCookie, verifyOtp } from '@/lib/auth'
-
-const MAX_ATTEMPTS = 5
+import { createSessionCookie, verifyMagicLinkToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const token = searchParams.get('token')
-  const email = searchParams.get('email')
-  const next = searchParams.get('next') || '/account'
-  const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/account'
-
-  if (!token || !email) {
+  if (!token) {
     return NextResponse.redirect(new URL(`/verify?error=invalid_link`, request.url))
   }
 
-  const otp = await prisma.otp.findFirst({
-    where: {
-      email,
-      expiresAt: { gt: new Date() },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
-
-  if (!otp) {
+  const payload = verifyMagicLinkToken(token)
+  if (!payload) {
     return NextResponse.redirect(new URL(`/verify?error=expired`, request.url))
   }
 
-  if (otp.attempts >= MAX_ATTEMPTS) {
-    return NextResponse.redirect(new URL(`/verify?error=too_many_attempts`, request.url))
-  }
+  const email = payload.email
+  const safeNext =
+    payload.next && payload.next.startsWith('/') && !payload.next.startsWith('//')
+      ? payload.next
+      : '/account'
 
-  const isValid = await verifyOtp(token, otp.codeHash)
-  if (!isValid) {
-    await prisma.otp.update({
-      where: { id: otp.id },
-      data: { attempts: { increment: 1 } },
-    })
-    return NextResponse.redirect(new URL(`/verify?error=invalid_link`, request.url))
-  }
+  let sessionUserId = `email:${email}`
+  let sessionPlan = 'free'
 
-  let user = await prisma.user.findUnique({ where: { email } })
-  if (!user) {
-    user = await prisma.user.create({ data: { email } })
-  }
+  try {
+    let user = await prisma.user.findUnique({ where: { email } })
+    if (!user) {
+      user = await prisma.user.create({ data: { email, name: payload.name } })
+    }
 
-  if (!user.emailVerifiedAt) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { emailVerifiedAt: new Date() },
-    })
-  }
+    if (!user.emailVerifiedAt) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date() },
+      })
+    }
 
-  await prisma.otp.delete({ where: { id: otp.id } })
+    sessionUserId = user.id
+    sessionPlan = user.plan
+  } catch {
+    // DB unavailable - fall back to stateless session for degraded mode
+  }
 
   const res = NextResponse.redirect(new URL(safeNext, request.url))
-  const sessionCookie = await createSessionCookie(user.id, user.email, user.plan)
+  const sessionCookie = await createSessionCookie(sessionUserId, email, sessionPlan)
   res.cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.options)
   return res
 }

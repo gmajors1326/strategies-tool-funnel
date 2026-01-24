@@ -13,6 +13,13 @@ export interface Session {
   plan: string
 }
 
+type MagicLinkPayload = {
+  email: string
+  name?: string
+  next?: string
+  exp: number
+}
+
 export type SessionCookie = {
   name: string
   value: string
@@ -61,6 +68,46 @@ function verifySessionToken(token: string): Session | null {
   }
 }
 
+function signPayload(payload: object): string {
+  const payloadJson = JSON.stringify(payload)
+  const payloadB64 = Buffer.from(payloadJson).toString('base64url')
+  const sig = crypto.createHmac('sha256', getSecret()).update(payloadB64).digest('base64url')
+  return `${payloadB64}.${sig}`
+}
+
+function verifyPayload<T>(token: string): T | null {
+  const [payloadB64, sig] = token.split('.')
+  if (!payloadB64 || !sig) return null
+
+  const expected = crypto.createHmac('sha256', getSecret()).update(payloadB64).digest('base64url')
+  const a = Buffer.from(sig)
+  const b = Buffer.from(expected)
+  if (a.length !== b.length) return null
+  if (!crypto.timingSafeEqual(a, b)) return null
+
+  try {
+    const json = Buffer.from(payloadB64, 'base64url').toString('utf8')
+    return JSON.parse(json) as T
+  } catch {
+    return null
+  }
+}
+
+function isDbConnectionError(message: string) {
+  return /Database|Prisma|P1001|P2021|connection|connect|ENOTFOUND|ECONNREFUSED|ETIMEDOUT/i.test(message)
+}
+
+export function signMagicLinkToken(payload: MagicLinkPayload): string {
+  return signPayload(payload)
+}
+
+export function verifyMagicLinkToken(token: string): MagicLinkPayload | null {
+  const payload = verifyPayload<MagicLinkPayload>(token)
+  if (!payload?.email || !payload.exp) return null
+  if (Date.now() > payload.exp) return null
+  return payload
+}
+
 export async function getSessionFromCookieValue(cookieValue?: string | null): Promise<Session | null> {
   if (!cookieValue) return null
   let parsed: Session | null = null
@@ -71,13 +118,24 @@ export async function getSessionFromCookieValue(cookieValue?: string | null): Pr
   }
   if (!parsed?.userId) return null
 
-  const user = await prisma.user.findUnique({
-    where: { id: parsed.userId },
-    select: { id: true, email: true, plan: true },
-  })
-  if (!user) return null
+  if (parsed.userId.startsWith('email:')) {
+    return parsed
+  }
 
-  return { userId: user.id, email: user.email, plan: user.plan }
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: parsed.userId },
+      select: { id: true, email: true, plan: true },
+    })
+    if (!user) return null
+    return { userId: user.id, email: user.email, plan: user.plan }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    if (isDbConnectionError(message)) {
+      return parsed
+    }
+    return null
+  }
 }
 
 /**
