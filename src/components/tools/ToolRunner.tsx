@@ -44,7 +44,7 @@ type RunResponse = {
   runId?: string | null
   output?: any
   lock?: { code?: string; message?: string; resetsAtISO?: string; remainingTokens?: number }
-  error?: string | { message?: string; code?: string; cta?: { label: string; href: string } }
+  error?: string | { message?: string; code?: string; cta?: { label: string; href: string }; details?: any }
   requestId?: string
   degraded?: boolean
   degradedReason?: string
