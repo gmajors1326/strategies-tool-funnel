@@ -232,9 +232,25 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (err: any) {
-      authDbError = err?.message || 'Unknown error'
-      log('auth_db_failed', { message: authDbError })
-      degraded = true
+      const msg = String(err?.message || err || '')
+      const looksLikeDb =
+        /Database|Prisma|P1001|P2021|connection|connect|ENOTFOUND|ECONNREFUSED|ETIMEDOUT/i.test(msg)
+      if (looksLikeDb) {
+        authDbError = msg || 'Unknown error'
+        log('auth_db_failed', { message: authDbError })
+        degraded = true
+      } else if (leadCaptured) {
+        session = null
+      } else {
+        return NextResponse.json<RunResponse>(
+          {
+            status: 'error',
+            error: { message: 'Unauthorized.', code: 'AUTH_ERROR' },
+            requestId,
+          },
+          { status: 401, headers: { 'x-request-id': requestId } }
+        )
+      }
     }
   }
 
