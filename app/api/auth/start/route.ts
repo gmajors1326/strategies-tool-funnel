@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { createSessionCookie, hashOtp } from '@/lib/auth'
-import { sendVerificationCode } from '@/lib/email'
+import { hashOtp } from '@/lib/auth'
+import { sendMagicLink } from '@/lib/email'
 import { z } from 'zod'
 
 const startSchema = z.object({
-  name: z.string().min(1).max(100),
+  name: z.string().min(1).max(100).optional(),
   email: z.string().email(),
+  next: z.string().optional(),
 })
 
 const OTP_EXPIRY_MINUTES = 10
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
       console.info('[auth/start] DB host: unavailable')
     }
     const body = await request.json()
-    const { name, email } = startSchema.parse(body)
+    const { name, email, next } = startSchema.parse(body)
 
     // Rate limiting: Check for recent OTP requests
     const recentOtp = await prisma.otp.findFirst({
@@ -53,25 +54,15 @@ export async function POST(request: NextRequest) {
       create: {
         email,
         name,
-        emailVerifiedAt: new Date(),
       },
       update: {
         name,
-        emailVerifiedAt: new Date(),
       },
     })
 
-    // Optional: skip OTP verification flow (env toggle)
-    if (process.env.AUTH_SKIP_OTP === 'true') {
-      const res = NextResponse.json({ success: true, skipVerify: true })
-      const sessionCookie = await createSessionCookie(user.id, user.email, user.plan)
-      res.cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.options)
-      return res
-    }
-
-    // Generate 6-digit OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    const codeHash = await hashOtp(code)
+    // Generate magic link token
+    const token = crypto.randomUUID() + crypto.randomUUID().replace(/-/g, '')
+    const codeHash = await hashOtp(token)
 
     // Expiry time
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000)
@@ -96,8 +87,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    const origin = request.headers.get('origin') || process.env.APP_URL || 'http://localhost:3000'
+    const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/account'
+    const link = `${origin}/api/auth/magic/verify?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent(safeNext)}`
+
     // Send email
-    await sendVerificationCode(email, code, name || undefined)
+    await sendMagicLink(email, link, name || undefined)
 
     return NextResponse.json({ success: true })
   } catch (error) {

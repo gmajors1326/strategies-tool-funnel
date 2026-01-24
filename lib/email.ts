@@ -92,6 +92,71 @@ export async function sendVerificationCode(email: string, code: string, name?: s
   }
 }
 
+export async function sendMagicLink(email: string, link: string, name?: string): Promise<void> {
+  const provider = resend ? 'resend' : gmailTransporter ? 'gmail' : 'none'
+  console.info('[email] sending via', provider, 'to', email)
+
+  if (!resend && !gmailTransporter) {
+    const error =
+      'No email provider configured. USE_GMAIL_SMTP=' +
+      USE_GMAIL_SMTP +
+      ', RESEND_API_KEY=' +
+      (RESEND_API_KEY ? 'set' : 'missing') +
+      ', GMAIL_USER=' +
+      (GMAIL_USER ? 'set' : 'missing')
+    console.error('[email]', error)
+    throw new Error(error)
+  }
+
+  const subject = 'Your sign-in link'
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1b1b1b; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #2f4f3a 0%, #5ea972 100%); padding: 36px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">The Strategy Tools</h1>
+        </div>
+        <div style="background: #ffffff; padding: 32px 20px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          ${name ? `<p style="font-size: 16px; margin-bottom: 16px;">Hi ${name},</p>` : '<p style="font-size: 16px; margin-bottom: 16px;">Hi there,</p>'}
+          <p style="font-size: 16px; margin-bottom: 20px;">Click the button below to sign in.</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${link}" style="background: #3d7e52; color: #ffffff; text-decoration: none; padding: 12px 22px; border-radius: 999px; display: inline-block; font-weight: 600;">Sign in</a>
+          </div>
+          <p style="font-size: 13px; color: #666; margin-top: 20px;">This link expires in 10 minutes.</p>
+          <p style="font-size: 13px; color: #666; margin-top: 10px;">If you didn’t request this, you can safely ignore this email.</p>
+        </div>
+      </body>
+    </html>
+  `
+
+  try {
+    if (resend) {
+      const result = await resend.emails.send({
+        from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
+        to: email,
+        subject,
+        html,
+      })
+      console.info('[email] Resend result:', result)
+    } else if (gmailTransporter) {
+      const result = await gmailTransporter.sendMail({
+        from: GMAIL_USER!,
+        to: email,
+        subject,
+        html,
+      })
+      console.info('[email] Gmail result:', result.messageId)
+    }
+  } catch (error: any) {
+    console.error('[email] Send failed:', error.message, error.response || error)
+    throw error
+  }
+}
+
 export async function sendAdminNotification(email: string, name?: string, profileData?: any): Promise<void> {
   console.info('[email] admin provider', resend ? 'resend' : gmailTransporter ? 'gmail' : 'none')
   if (!ADMIN_EMAIL) return

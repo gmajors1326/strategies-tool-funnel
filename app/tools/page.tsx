@@ -26,7 +26,7 @@ export default function ToolsIndexPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {tools.map((tool) => {
-          const isLaunch = LAUNCH_TOOL_IDS.includes(tool.id)
+          const isLaunch = (LAUNCH_TOOL_IDS as readonly string[]).includes(tool.id)
           const highlightClass = isLaunch
             ? 'ring-1 ring-emerald-400/60 shadow-[0_0_28px_rgba(80,200,120,0.35)]'
             : ''
