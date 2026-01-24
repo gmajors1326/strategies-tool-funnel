@@ -5,7 +5,7 @@ import { sendMagicLink } from '@/lib/email'
 import { z } from 'zod'
 
 const startSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
+  name: z.string().min(1).max(100),
   email: z.string().email(),
   next: z.string().optional(),
 })
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     if (recentOtp) {
       return NextResponse.json(
-        { error: 'Please wait before requesting another code' },
+        { error: 'Please wait before requesting another link' },
         { status: 429 }
       )
     }
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error: 'Failed to send verification code',
+        error: 'Failed to send sign-in link',
         code: 'send_failed',
         dbHost,
         dbName,

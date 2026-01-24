@@ -27,6 +27,11 @@ export default function VerifyClient() {
     setError('')
 
     try {
+      if (!name.trim()) {
+        setError('Please enter your name.')
+        setLoading(false)
+        return
+      }
       if (!email.trim()) {
         setError('Please enter your email.')
         setLoading(false)
@@ -71,7 +76,7 @@ export default function VerifyClient() {
         <AppCardContent>
           <form onSubmit={handleStart} className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-[hsl(var(--muted))]">Name (optional)</Label>
+              <Label htmlFor="name" className="text-[hsl(var(--muted))]">Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -79,6 +84,7 @@ export default function VerifyClient() {
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1"
                 placeholder="Your name"
+                required
               />
             </div>
             <div>
