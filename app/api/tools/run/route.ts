@@ -74,8 +74,11 @@ export async function POST(request: NextRequest) {
   let session: Awaited<ReturnType<typeof requireUser>> | null = null
   const disabledFeatures = ['tokens', 'history', 'vault', 'exports'] as const
   const degradedMessage = 'Temporary database outage — results are available, but saving/export/history is disabled.'
+  let authDbError: string | null = null
+  const showDebug = process.env.NODE_ENV !== 'production' || process.env.SHOW_DB_ERRORS === 'true'
 
   const runDegraded = async () => {
+    const debugSuffix = showDebug && authDbError ? ` (auth_db_failed: ${authDbError})` : ''
     let tool: ReturnType<typeof getToolMeta> | null = null
     try {
       tool = getToolMeta(data.toolId)
@@ -92,7 +95,7 @@ export async function POST(request: NextRequest) {
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
           disabledFeatures: [...disabledFeatures],
-          message: degradedMessage,
+          message: `${degradedMessage}${debugSuffix}`,
         },
         { status: 404, headers: { 'x-request-id': requestId } }
       )
@@ -112,7 +115,7 @@ export async function POST(request: NextRequest) {
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
           disabledFeatures: [...disabledFeatures],
-          message: degradedMessage,
+          message: `${degradedMessage}${debugSuffix}`,
         },
         { status: 400, headers: { 'x-request-id': requestId } }
       )
@@ -128,7 +131,7 @@ export async function POST(request: NextRequest) {
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
           disabledFeatures: [...disabledFeatures],
-          message: degradedMessage,
+          message: `${degradedMessage}${debugSuffix}`,
         },
         { status: 401, headers: { 'x-request-id': requestId } }
       )
@@ -144,7 +147,7 @@ export async function POST(request: NextRequest) {
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
           disabledFeatures: [...disabledFeatures],
-          message: degradedMessage,
+          message: `${degradedMessage}${debugSuffix}`,
         },
         { status: 500, headers: { 'x-request-id': requestId } }
       )
@@ -170,7 +173,7 @@ export async function POST(request: NextRequest) {
             degraded: true,
             degradedReason: 'DB_UNAVAILABLE',
             disabledFeatures: [...disabledFeatures],
-            message: degradedMessage,
+            message: `${degradedMessage}${debugSuffix}`,
           },
           { status: 502, headers: { 'x-request-id': requestId } }
         )
@@ -185,7 +188,7 @@ export async function POST(request: NextRequest) {
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
           disabledFeatures: [...disabledFeatures],
-          message: degradedMessage,
+          message: `${degradedMessage}${debugSuffix}`,
           metering: {
             chargedTokens: 0,
             remainingTokens: 0,
@@ -208,7 +211,7 @@ export async function POST(request: NextRequest) {
           degraded: true,
           degradedReason: 'DB_UNAVAILABLE',
           disabledFeatures: [...disabledFeatures],
-          message: degradedMessage,
+          message: `${degradedMessage}${debugSuffix}`,
         },
         { status: 502, headers: { 'x-request-id': requestId } }
       )
@@ -229,7 +232,8 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (err: any) {
-      log('auth_db_failed', { message: err?.message || 'Unknown error' })
+      authDbError = err?.message || 'Unknown error'
+      log('auth_db_failed', { message: authDbError })
       degraded = true
     }
   }
