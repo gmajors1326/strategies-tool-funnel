@@ -23,19 +23,14 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#7d9b76] text-foreground">
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-6 pb-12 md:pt-12 md:pb-20">
-        <div className="flex justify-end no-print">
-          <Button asChild size="sm" variant="outline">
-            <Link href="/admin/login">Admin</Link>
-          </Button>
-        </div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#f7e0b2] via-[#e7c98a] to-[#caa367] bg-clip-text text-transparent">
-            Free Spirit Marketing
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#b7f3c9] via-[#63c977] to-[#1f6a3a] bg-clip-text text-transparent">
+            Free Spirit Marketer
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-white mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
             Strategic engagement tools that turn conversations into revenue.

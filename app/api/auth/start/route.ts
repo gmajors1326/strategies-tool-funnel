@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { hashOtp } from '@/lib/auth'
+import { createSessionCookie, hashOtp } from '@/lib/auth'
 import { sendVerificationCode } from '@/lib/email'
 import { z } from 'zod'
 
@@ -47,24 +47,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Create or update user FIRST (required for foreign key constraint)
+    const user = await prisma.user.upsert({
+      where: { email },
+      create: {
+        email,
+        name,
+        emailVerifiedAt: new Date(),
+      },
+      update: {
+        name,
+        emailVerifiedAt: new Date(),
+      },
+    })
+
+    // Optional: skip OTP verification flow (env toggle)
+    if (process.env.AUTH_SKIP_OTP === 'true') {
+      const res = NextResponse.json({ success: true, skipVerify: true })
+      const sessionCookie = await createSessionCookie(user.id, user.email, user.plan)
+      res.cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.options)
+      return res
+    }
+
     // Generate 6-digit OTP
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     const codeHash = await hashOtp(code)
 
     // Expiry time
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000)
-
-    // Create or update user FIRST (required for foreign key constraint)
-    await prisma.user.upsert({
-      where: { email },
-      create: {
-        email,
-        name,
-      },
-      update: {
-        name,
-      },
-    })
 
     // Clean up old OTPs
     await prisma.otp.deleteMany({

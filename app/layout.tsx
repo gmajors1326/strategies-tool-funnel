@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { League_Spartan, Poppins } from "next/font/google"
+import { headers } from "next/headers"
 import "./globals.css"
+import { SiteHeader } from "@/src/components/marketing/SiteHeader"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -23,9 +25,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const h = headers()
+  const pathname = h.get("x-pathname") || h.get("next-url") || ""
+
   return (
     <html lang="en">
       <body className={`${poppins.className} ${leagueSpartan.variable}`}>
+        <SiteHeader pathname={pathname} />
         {children}
       </body>
     </html>

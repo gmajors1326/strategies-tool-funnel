@@ -43,6 +43,10 @@ export default function VerifyClient() {
       const data = await res.json()
 
       if (res.ok && data.success) {
+        if (data?.skipVerify) {
+          router.push(nextPath)
+          return
+        }
         setStep('verify')
       } else {
         if (data.code === 'email_not_configured') {

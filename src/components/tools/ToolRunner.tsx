@@ -1398,14 +1398,6 @@ export function ToolRunner(props: {
               </div>
             )
           })()}
-          {degraded ? (
-            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
-              <div className="font-medium">
-                {result?.message ||
-                  'Temporary database outage — results are available, but saving/export/history is disabled.'}
-              </div>
-            </div>
-          ) : null}
           {result?.error ? (
             <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
               <div className="font-medium">
