@@ -680,6 +680,45 @@ export function ToolRunner(props: {
     }
   }
 
+  function renderSummaryChips(value: any) {
+    if (value === null || value === undefined) return <span className="text-muted-foreground">—</span>
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      return <span>{String(value)}</span>
+    }
+    if (Array.isArray(value)) {
+      return (
+        <div className="flex flex-wrap gap-1">
+          {value.slice(0, 6).map((item, idx) => (
+            <span
+              key={`${idx}-${String(item).slice(0, 16)}`}
+              className="rounded-full border bg-muted/30 px-2 py-0.5 text-[11px]"
+            >
+              {typeof item === 'string' ? item : summarizeText(item, 48)}
+            </span>
+          ))}
+          {value.length > 6 ? (
+            <span className="rounded-full border bg-muted/20 px-2 py-0.5 text-[11px] text-muted-foreground">
+              +{value.length - 6}
+            </span>
+          ) : null}
+        </div>
+      )
+    }
+    if (typeof value === 'object') {
+      const entries = Object.entries(value as Record<string, any>).slice(0, 6)
+      return (
+        <div className="flex flex-wrap gap-1">
+          {entries.map(([k, v]) => (
+            <span key={k} className="rounded-full border bg-muted/30 px-2 py-0.5 text-[11px]">
+              {k}: {summarizeText(v, 36)}
+            </span>
+          ))}
+        </div>
+      )
+    }
+    return <span>{summarizeText(value)}</span>
+  }
+
   function renderJsonFallback(output: any) {
     const confidence = getConfidenceScore(output)
     const lowConfidence = confidence !== null && confidence < 0.5
@@ -707,10 +746,11 @@ export function ToolRunner(props: {
               Copy
             </Button>
           </div>
-          <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+          <div className="mt-2 space-y-2 text-xs text-muted-foreground">
             {summaryPairs.map(([key, value]) => (
-              <div key={key}>
-                <span className="text-foreground">{key}</span>: {String(value ?? '')}
+              <div key={key} className="flex flex-col gap-1">
+                <span className="text-foreground">{key}</span>
+                {renderSummaryChips(value)}
               </div>
             ))}
           </div>
