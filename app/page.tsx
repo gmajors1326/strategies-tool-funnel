@@ -29,7 +29,7 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-[#d7f7de] via-[#9ee8b4] to-[#5ecf85] bg-clip-text text-transparent drop-shadow-[0_6px_18px_rgba(120,255,170,0.35)]">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-b from-[#d7f7de] via-[#9ee8b4] to-[#5ecf85] bg-clip-text text-transparent drop-shadow-[0_6px_18px_rgba(120,255,170,0.35)]">
             Free Spirit Marketing
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-white mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
