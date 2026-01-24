@@ -73,14 +73,7 @@ export default async function ToolPage({
   const fields = mapFields(tool.fields)
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold">{tool.name}</h1>
-        {tool.description ? (
-          <p className="text-sm text-[hsl(var(--muted))]">{tool.description}</p>
-        ) : null}
-      </div>
-
+    <div className="mx-auto w-full max-w-5xl space-y-4 px-4 sm:px-6">
       <ToolRunner
         toolId={tool.id}
         toolSlug={tool.id}

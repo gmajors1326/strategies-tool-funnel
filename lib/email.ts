@@ -12,7 +12,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim() || 'admin@example.com'
 let resend: Resend | null = null
 let gmailTransporter: nodemailer.Transporter | null = null
 
-// Initialize email providers
+// Initialize email providers (allow fallback)
 if (USE_GMAIL_SMTP) {
   if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
     console.error('[email] Gmail SMTP enabled but GMAIL_USER or GMAIL_APP_PASSWORD missing')
@@ -26,15 +26,24 @@ if (USE_GMAIL_SMTP) {
     })
     console.info('[email] Gmail SMTP initialized')
   }
-} else if (RESEND_API_KEY) {
+}
+
+if (RESEND_API_KEY) {
   resend = new Resend(RESEND_API_KEY)
   console.info('[email] Resend initialized')
-} else {
-  console.error('[email] No email provider configured - USE_GMAIL_SMTP:', USE_GMAIL_SMTP, 'RESEND_API_KEY:', RESEND_API_KEY ? 'set' : 'missing')
+}
+
+if (!gmailTransporter && !resend) {
+  console.error(
+    '[email] No email provider configured - USE_GMAIL_SMTP:',
+    USE_GMAIL_SMTP,
+    'RESEND_API_KEY:',
+    RESEND_API_KEY ? 'set' : 'missing'
+  )
 }
 
 export async function sendMagicLink(email: string, link: string, name?: string): Promise<void> {
-  const provider = resend ? 'resend' : gmailTransporter ? 'gmail' : 'none'
+  const provider = gmailTransporter ? 'gmail' : resend ? 'resend' : 'none'
   console.info('[email] sending via', provider, 'to', email)
 
   if (!resend && !gmailTransporter) {
@@ -75,6 +84,21 @@ export async function sendMagicLink(email: string, link: string, name?: string):
   `
 
   try {
+    if (gmailTransporter) {
+      const result = await gmailTransporter.sendMail({
+        from: GMAIL_USER!,
+        to: email,
+        subject,
+        html,
+      })
+      console.info('[email] Gmail result:', result.messageId)
+      return
+    }
+  } catch (error: any) {
+    console.error('[email] Gmail send failed:', error.message, error.response || error)
+  }
+
+  try {
     if (resend) {
       const result = await resend.emails.send({
         from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
@@ -83,19 +107,13 @@ export async function sendMagicLink(email: string, link: string, name?: string):
         html,
       })
       console.info('[email] Resend result:', result)
-    } else if (gmailTransporter) {
-      const result = await gmailTransporter.sendMail({
-        from: GMAIL_USER!,
-        to: email,
-        subject,
-        html,
-      })
-      console.info('[email] Gmail result:', result.messageId)
+      return
     }
   } catch (error: any) {
-    console.error('[email] Send failed:', error.message, error.response || error)
-    throw error
+    console.error('[email] Resend send failed:', error.message, error.response || error)
   }
+
+  throw new Error('Email send failed: no provider succeeded')
 }
 
 export async function sendAdminNotification(email: string, name?: string, profileData?: any): Promise<void> {
