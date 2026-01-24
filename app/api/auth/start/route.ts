@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create or update user FIRST (required for foreign key constraint)
-    const user = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { email },
       create: {
         email,
