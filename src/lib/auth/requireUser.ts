@@ -49,7 +49,12 @@ export const requireUser = async (): Promise<UserSession> => {
   const isProd = process.env.NODE_ENV === 'production'
   const devBypassEnabled = process.env.DEV_AUTH_BYPASS === 'true'
 
-  await ensureDevDbReady()
+  try {
+    await ensureDevDbReady()
+  } catch (err: any) {
+    console.error('[requireUser] ensureDevDbReady failed', err?.message || err)
+    throw err
+  }
 
   const requestHeaders = headers()
 
@@ -102,7 +107,13 @@ export const requireUser = async (): Promise<UserSession> => {
     )
   }
 
-  const entitlement = await getOrCreateEntitlement(session.userId)
+  let entitlement
+  try {
+    entitlement = await getOrCreateEntitlement(session.userId)
+  } catch (err: any) {
+    console.error('[requireUser] getOrCreateEntitlement failed', err?.message || err)
+    throw err
+  }
   const planId = parsePlanId(entitlement.plan) || 'free'
   const adminRole = resolveAdminRole({ userId: session.userId, email: session.email })
 

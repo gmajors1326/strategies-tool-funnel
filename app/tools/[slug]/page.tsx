@@ -11,7 +11,7 @@ type RunnerField = {
   placeholder?: string
   help?: string
   required?: boolean
-  options?: string[]
+  options?: Array<{ label: string; value: string }>
 }
 
 const mapFieldType = (type: string): RunnerField['type'] => {
@@ -39,7 +39,12 @@ const mapFields = (fields: ToolMeta['fields']): RunnerField[] => {
     placeholder: field.placeholder,
     help: field.help,
     required: field.required,
-    options: (field.options ?? []).map((opt) => opt.label ?? opt.value ?? String(opt)),
+    options: (field.options ?? []).map((opt) => {
+      if (typeof opt === 'string') return { label: opt, value: opt }
+      const label = opt.label ?? opt.value ?? String(opt)
+      const value = opt.value ?? opt.label ?? String(opt)
+      return { label, value }
+    }),
   }))
 }
 

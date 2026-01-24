@@ -25,7 +25,7 @@ type ToolField = {
   placeholder?: string
   help?: string
   required?: boolean
-  options?: string[]
+  options?: Array<string | { label: string; value: string }>
   min?: number
   max?: number
 }
@@ -628,9 +628,20 @@ export function ToolRunner(props: {
           mapErrorState(data, res.status).message
         const errorState = mapErrorState(data, res.status)
         const errorCode = data?.lock?.code || (typeof errorValue === 'string' ? undefined : errorValue?.code)
+        if (errorCode === 'VALIDATION_ERROR' && typeof errorValue !== 'string') {
+          const details = (errorValue as any)?.details
+          if (details && typeof details === 'object') {
+            setFieldErrors(details as Record<string, string>)
+          }
+        }
         setResult({
           status: 'error',
-          error: { message, code: errorCode, cta: errorState.cta },
+          error: {
+            message,
+            code: errorCode,
+            cta: errorState.cta,
+            details: typeof errorValue === 'string' ? undefined : errorValue?.details,
+          },
           requestId,
         })
         if (res.status === 401) {
@@ -1295,11 +1306,15 @@ export function ToolRunner(props: {
                       }}
                     >
                       <option value="">{f.placeholder ?? 'Select'}</option>
-                      {(f.options ?? []).map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
+                      {(f.options ?? []).map((opt) => {
+                        const value = typeof opt === 'string' ? opt : opt.value
+                        const label = typeof opt === 'string' ? opt : opt.label
+                        return (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        )
+                      })}
                     </Select>
                   ) : (
                     <Input
@@ -1396,6 +1411,24 @@ export function ToolRunner(props: {
               <div className="font-medium">
                 {typeof result.error === 'string' ? result.error : result.error?.message}
               </div>
+              {(() => {
+                if (typeof result.error === 'string') return null
+                if (result.error?.code !== 'VALIDATION_ERROR') return null
+                const details =
+                  result.error?.details && typeof result.error.details === 'object'
+                    ? (result.error.details as Record<string, string>)
+                    : fieldErrors
+                if (!details || Object.keys(details).length === 0) return null
+                return (
+                  <div className="mt-2 space-y-1 text-xs text-[hsl(var(--muted))]">
+                    {Object.entries(details).map(([key, value]) => (
+                      <div key={key}>
+                        <span className="text-[hsl(var(--text))]">{key}</span>: {value}
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
               {result?.requestId ? (
                 <div className="mt-1 text-xs text-[hsl(var(--muted))]">Request ID: {result.requestId}</div>
               ) : null}

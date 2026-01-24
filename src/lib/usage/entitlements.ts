@@ -15,6 +15,7 @@ export const getOrCreateEntitlement = async (userId: string) => {
       },
     })
   } catch (err) {
+    console.error('[entitlements] getOrCreateEntitlement failed', (err as any)?.message || err)
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2021') {
       const now = new Date()
       return {
