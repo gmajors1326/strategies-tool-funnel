@@ -28,8 +28,8 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-b from-[#d7f7de] via-[#9ee8b4] to-[#5ecf85] bg-clip-text text-transparent drop-shadow-[0_6px_18px_rgba(120,255,170,0.35)]">
-            Free Spirit Marketing
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 text-[#1f3b2b] drop-shadow-[0_6px_18px_rgba(0,0,0,0.2)]">
+            The Calm Content Companion
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-white mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
             Strategic engagement tools that turn conversations into revenue.
