@@ -22,7 +22,7 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
           <Link href="/pricing">Pricing</Link>
         </Button>
         <Button asChild size="sm" variant="outline">
-          <Link href="/admin/login">Admin</Link>
+          <Link href="/help">Help</Link>
         </Button>
         {isSignedIn ? (
           <form action="/api/auth/logout" method="post">
@@ -35,6 +35,9 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
             <Link href={`/auth?returnTo=${encodeURIComponent(returnTo)}`}>Sign In</Link>
           </Button>
         )}
+        <Button asChild size="sm" variant="outline">
+          <Link href="/admin/login">Admin</Link>
+        </Button>
       </div>
     </div>
   )
