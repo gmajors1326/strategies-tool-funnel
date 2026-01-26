@@ -28,10 +28,10 @@ export async function POST(request: NextRequest) {
       console.info('[auth/start] DB host: unavailable')
     }
     const body = await request.json()
-    const { name, email, next, stripeCustomerId } = startSchema.parse(body)
+    const { name, email, stripeCustomerId } = startSchema.parse(body)
 
     const origin = request.headers.get('origin') || process.env.APP_URL || 'http://localhost:3000'
-    const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/account'
+    const safeNext = '/'
     const exp = Date.now() + LINK_EXPIRY_MINUTES * 60 * 1000
     const token = signMagicLinkToken({ email, name, next: safeNext, exp, stripeCustomerId })
     const link = `${origin}/api/auth/magic/verify?token=${encodeURIComponent(token)}`
