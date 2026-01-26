@@ -194,11 +194,26 @@ function mapDesiredToCtaGoal(action?: string) {
 
 const EMPTY_PLACEHOLDER = 'Needs more input.'
 
+function sanitizeText(text: string) {
+  return text.replace(/_/g, ' ').trim()
+}
+
+function formatLabel(label: string) {
+  const withSpaces = label
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!withSpaces) return label
+  return withSpaces[0].toUpperCase() + withSpaces.slice(1)
+}
+
 function summarizeText(value: unknown, limit = 120) {
   try {
-    if (typeof value === 'string') return value.slice(0, limit)
+    if (typeof value === 'string') return sanitizeText(value.slice(0, limit))
     const json = JSON.stringify(value)
-    return json.length > limit ? `${json.slice(0, limit)}…` : json
+    const sanitized = sanitizeText(json)
+    return sanitized.length > limit ? `${sanitized.slice(0, limit)}…` : sanitized
   } catch {
     return ''
   }
@@ -211,14 +226,15 @@ function isPrimitive(value: any) {
 function renderPrimitiveValue(value: any, limit = 120) {
   if (value === null || value === undefined) return EMPTY_PLACEHOLDER
   if (typeof value === 'string') {
-    const trimmed = value.trim()
+    const trimmed = sanitizeText(value).trim()
     if (!trimmed) return EMPTY_PLACEHOLDER
     return trimmed.length > limit ? `${trimmed.slice(0, limit)}...` : trimmed
   }
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
   try {
     const json = JSON.stringify(value)
-    return json.length > limit ? `${json.slice(0, limit)}...` : json
+    const sanitized = sanitizeText(json)
+    return sanitized.length > limit ? `${sanitized.slice(0, limit)}...` : sanitized
   } catch {
     return EMPTY_PLACEHOLDER
   }
@@ -250,7 +266,7 @@ function ValueRenderer({
     return <span className="text-muted-foreground">—</span>
   }
   if (typeof value === 'string') {
-    return <ExpandableText text={value} />
+    return <ExpandableText text={sanitizeText(value)} />
   }
   if (typeof value === 'number' || typeof value === 'boolean') {
     return <span>{String(value)}</span>
@@ -262,7 +278,7 @@ function ValueRenderer({
       return (
         <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed">
           {value.slice(0, 6).map((item, idx) => (
-            <li key={`${idx}-${String(item)}`}>{String(item)}</li>
+            <li key={`${idx}-${String(item)}`}>{renderPrimitiveValue(item)}</li>
           ))}
           {value.length > 6 ? (
             <li className="text-xs text-muted-foreground">Show more ({value.length - 6})</li>
@@ -283,7 +299,7 @@ function ValueRenderer({
             <div key={`${idx}-${fields.join('-')}`} className="rounded-md border bg-muted/20 p-3 text-sm">
               {fields.map((key) => (
                 <div key={key} className="flex flex-col gap-1">
-                  <span className="text-xs text-muted-foreground">{key}</span>
+                  <span className="text-xs text-muted-foreground">{formatLabel(key)}</span>
                   <span className="font-medium leading-relaxed">{renderPrimitiveValue(obj[key], 140)}</span>
                 </div>
               ))}
@@ -301,9 +317,10 @@ function ValueRenderer({
     const entries = Object.entries(value as Record<string, any>)
     if (entries.length === 0) return <span className="text-muted-foreground">{EMPTY_PLACEHOLDER}</span>
     if (depth >= 2) {
+      const sanitizedJson = sanitizeText(JSON.stringify(value, null, 2))
       return (
         <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-xs">
-          {JSON.stringify(value, null, 2)}
+          {sanitizedJson}
         </pre>
       )
     }
@@ -311,7 +328,7 @@ function ValueRenderer({
       <div className="grid gap-3 text-sm sm:grid-cols-2">
         {entries.map(([key, val]) => (
           <div key={key} className="rounded-md border bg-muted/10 p-3">
-            <div className="text-xs text-muted-foreground">{key}</div>
+            <div className="text-xs text-muted-foreground">{formatLabel(key)}</div>
             <div className="mt-1 text-sm leading-relaxed">
               <ValueRenderer value={val} depth={depth + 1} />
             </div>
@@ -344,7 +361,7 @@ function SectionBlock({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
-            <h3 className="text-sm font-semibold">{title}</h3>
+            <h3 className="text-sm font-semibold">{formatLabel(title)}</h3>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -352,7 +369,7 @@ function SectionBlock({
               size="sm"
               onClick={(e) => {
                 e.preventDefault()
-                onCopy(JSON.stringify(value, null, 2), `Copied ${title}`)
+                onCopy(sanitizeText(JSON.stringify(value, null, 2)), `Copied ${formatLabel(title)}`)
               }}
             >
               Copy
@@ -371,13 +388,13 @@ function SectionBlock({
         </div>
       </summary>
       <div className="mt-2">
-        {showJson ? (
-          <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-xs">
-            {JSON.stringify(value ?? {}, null, 2)}
-          </pre>
-        ) : (
-          <ValueRenderer value={value} cardFields={cardFields} />
-        )}
+          {showJson ? (
+            <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-xs">
+              {sanitizeText(JSON.stringify(value ?? {}, null, 2))}
+            </pre>
+          ) : (
+            <ValueRenderer value={value} cardFields={cardFields} />
+          )}
       </div>
     </details>
   )
@@ -956,6 +973,21 @@ export function ToolRunner(props: {
     return lines.length ? lines : output
   }
 
+  function sanitizeForCopy(value: any): any {
+    if (value === null || value === undefined) return EMPTY_PLACEHOLDER
+    if (typeof value === 'string') return sanitizeText(value)
+    if (typeof value === 'number' || typeof value === 'boolean') return value
+    if (Array.isArray(value)) return value.map((item) => sanitizeForCopy(item))
+    if (typeof value === 'object') {
+      const output: Record<string, any> = {}
+      Object.entries(value).forEach(([key, val]) => {
+        output[formatLabel(key)] = sanitizeForCopy(val)
+      })
+      return output
+    }
+    return value
+  }
+
   function renderGenericResult(output: any) {
     if (!output || typeof output !== 'object') {
       return <ValueRenderer value={output} />
@@ -979,7 +1011,7 @@ export function ToolRunner(props: {
             {summaryLines.length ? (
               summaryLines.map((line) => (
                 <div key={line.label} className="flex flex-col gap-2">
-                  <span className="text-foreground text-sm font-medium">{line.label}</span>
+                  <span className="text-foreground text-sm font-medium">{formatLabel(String(line.label))}</span>
                   <ValueRenderer value={line.value} />
                 </div>
               ))
@@ -1019,11 +1051,11 @@ export function ToolRunner(props: {
             </div>
             <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm leading-relaxed">
               <div className="text-xs text-muted-foreground">Primary issue</div>
-              <div className="font-medium text-sm">{summary?.primaryIssue ?? '—'}</div>
+              <div className="font-medium text-sm">{renderPrimitiveValue(summary?.primaryIssue)}</div>
               <div className="mt-3 text-xs text-muted-foreground">Diagnosis</div>
-              <div className="text-sm leading-relaxed">{summary?.oneSentenceDiagnosis ?? '—'}</div>
+              <div className="text-sm leading-relaxed">{renderPrimitiveValue(summary?.oneSentenceDiagnosis)}</div>
               <div className="mt-3 text-xs text-muted-foreground">
-                Confidence: <span className="text-foreground">{summary?.confidence ?? '—'}</span>
+                Confidence: <span className="text-foreground">{renderPrimitiveValue(summary?.confidence)}</span>
               </div>
             </div>
           {lowConfidence ? (
@@ -1042,7 +1074,7 @@ export function ToolRunner(props: {
                 size="sm"
                 onClick={(event) => {
                   event.preventDefault()
-                  copy(JSON.stringify(signals, null, 2), 'Copied signals')
+                  copy(JSON.stringify(sanitizeForCopy(signals), null, 2), 'Copied signals')
                 }}
               >
                 Copy
@@ -1052,9 +1084,9 @@ export function ToolRunner(props: {
           <ul className="mt-2 space-y-2 text-sm">
             {signals.map((item: any, idx: number) => (
               <li key={`signal-${idx}`} className="rounded-md border bg-muted/20 p-2">
-                <div className="text-xs text-muted-foreground">{item?.severity ?? '—'}</div>
-                <div className="font-medium">{item?.signal ?? '—'}</div>
-                <div className="text-xs text-muted-foreground">{item?.evidence ?? '—'}</div>
+                <div className="text-xs text-muted-foreground">{renderPrimitiveValue(item?.severity)}</div>
+                <div className="font-medium">{renderPrimitiveValue(item?.signal)}</div>
+                <div className="text-xs text-muted-foreground">{renderPrimitiveValue(item?.evidence)}</div>
               </li>
             ))}
           </ul>
@@ -1069,7 +1101,7 @@ export function ToolRunner(props: {
                 size="sm"
                 onClick={(event) => {
                   event.preventDefault()
-                  copy(JSON.stringify(fixes, null, 2), 'Copied fixes')
+                  copy(JSON.stringify(sanitizeForCopy(fixes), null, 2), 'Copied fixes')
                 }}
               >
                 Copy
@@ -1079,15 +1111,15 @@ export function ToolRunner(props: {
           <div className="mt-2 space-y-2 text-sm">
             {fixes.map((item: any, idx: number) => (
               <div key={`fix-${idx}`} className="rounded-md border bg-muted/20 p-3">
-                <div className="font-medium">{item?.title ?? '—'}</div>
-                <div className="text-xs text-muted-foreground">{item?.why ?? '—'}</div>
+                <div className="font-medium">{renderPrimitiveValue(item?.title)}</div>
+                <div className="text-xs text-muted-foreground">{renderPrimitiveValue(item?.why)}</div>
                 <div className="mt-2 text-xs text-muted-foreground">
-                  Impact: <span className="text-foreground">{item?.impact ?? '—'}</span> · Effort:{' '}
-                  <span className="text-foreground">{item?.effort ?? '—'}</span>
+                  Impact: <span className="text-foreground">{renderPrimitiveValue(item?.impact)}</span> · Effort:{' '}
+                  <span className="text-foreground">{renderPrimitiveValue(item?.effort)}</span>
                 </div>
                 <ul className="mt-2 list-disc pl-5 text-xs">
                   {(item?.how || []).map((step: string, stepIdx: number) => (
-                    <li key={`fix-${idx}-step-${stepIdx}`}>{step}</li>
+                    <li key={`fix-${idx}-step-${stepIdx}`}>{renderPrimitiveValue(step)}</li>
                   ))}
                 </ul>
               </div>
@@ -1104,7 +1136,7 @@ export function ToolRunner(props: {
                 size="sm"
                 onClick={(event) => {
                   event.preventDefault()
-                  copy(JSON.stringify(plan, null, 2), 'Copied plan')
+                  copy(JSON.stringify(sanitizeForCopy(plan), null, 2), 'Copied plan')
                 }}
               >
                 Copy
@@ -1115,14 +1147,14 @@ export function ToolRunner(props: {
             {plan.map((item: any, idx: number) => (
               <div key={`day-${idx}`} className="rounded-md border bg-muted/20 p-3 text-xs">
                 <div className="text-muted-foreground">Day {item?.day ?? idx + 1}</div>
-                <div className="font-medium">{item?.reelIdea ?? '—'}</div>
-                <div className="text-muted-foreground">Hook: {item?.hook ?? '—'}</div>
+                <div className="font-medium">{renderPrimitiveValue(item?.reelIdea)}</div>
+                <div className="text-muted-foreground">Hook: {renderPrimitiveValue(item?.hook)}</div>
                 <ul className="mt-1 list-disc pl-4">
                   {(item?.shotPlan || []).map((step: string, stepIdx: number) => (
-                    <li key={`day-${idx}-shot-${stepIdx}`}>{step}</li>
+                    <li key={`day-${idx}-shot-${stepIdx}`}>{renderPrimitiveValue(step)}</li>
                   ))}
                 </ul>
-                <div className="mt-1 text-muted-foreground">CTA: {item?.cta ?? '—'}</div>
+                <div className="mt-1 text-muted-foreground">CTA: {renderPrimitiveValue(item?.cta)}</div>
               </div>
             ))}
           </div>
@@ -1137,7 +1169,7 @@ export function ToolRunner(props: {
                 size="sm"
                 onClick={(event) => {
                   event.preventDefault()
-                  copy(JSON.stringify(output?.stopDoing ?? [], null, 2), 'Copied stop doing')
+                  copy(JSON.stringify(sanitizeForCopy(output?.stopDoing ?? []), null, 2), 'Copied stop doing')
                 }}
               >
                 Copy
@@ -1146,7 +1178,7 @@ export function ToolRunner(props: {
           </summary>
           <ul className="mt-2 list-disc pl-5 text-sm">
             {(output?.stopDoing || []).map((item: string, idx: number) => (
-              <li key={`stop-${idx}`}>{item}</li>
+              <li key={`stop-${idx}`}>{renderPrimitiveValue(item)}</li>
             ))}
           </ul>
         </details>
@@ -1156,15 +1188,16 @@ export function ToolRunner(props: {
             <h3 className="text-sm font-semibold">Experiment</h3>
           </summary>
           <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm">
-            <div className="font-medium">{output?.experiment?.name ?? '—'}</div>
-            <div className="text-xs text-muted-foreground">{output?.experiment?.hypothesis ?? '—'}</div>
+            <div className="font-medium">{renderPrimitiveValue(output?.experiment?.name)}</div>
+            <div className="text-xs text-muted-foreground">{renderPrimitiveValue(output?.experiment?.hypothesis)}</div>
             <ul className="mt-2 list-disc pl-5 text-xs">
               {(output?.experiment?.steps || []).map((step: string, idx: number) => (
-                <li key={`exp-${idx}`}>{step}</li>
+                <li key={`exp-${idx}`}>{renderPrimitiveValue(step)}</li>
               ))}
             </ul>
             <div className="mt-2 text-xs text-muted-foreground">
-              Success metric: <span className="text-foreground">{output?.experiment?.successMetric ?? '—'}</span>
+              Success metric:{' '}
+              <span className="text-foreground">{renderPrimitiveValue(output?.experiment?.successMetric)}</span>
             </div>
           </div>
         </details>
@@ -1174,17 +1207,18 @@ export function ToolRunner(props: {
 
   function renderOutput() {
     if (!result?.output) return null
-    const summaryPayload = getSummaryPayload(result.output)
+    const summaryPayload = sanitizeForCopy(getSummaryPayload(result.output))
     const summaryText =
       typeof summaryPayload === 'string' ? summaryPayload : JSON.stringify(summaryPayload, null, 2)
+    const outputPayload = sanitizeForCopy(result.output)
     const outputText =
-      typeof result.output === 'string' ? result.output : JSON.stringify(result.output, null, 2)
+      typeof outputPayload === 'string' ? outputPayload : JSON.stringify(outputPayload, null, 2)
 
     let content: React.ReactNode = null
     if (typeof result.output === 'string') {
       content = (
         <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
-          {result.output}
+          {sanitizeText(result.output)}
         </pre>
       )
     } else if (toolId === 'analytics-signal-reader') {
