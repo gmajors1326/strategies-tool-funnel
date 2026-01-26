@@ -5,7 +5,7 @@ import { decodeSessionToken, getSessionCookieName } from '@/lib/auth'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const sessionCookie = cookieStore.get(getSessionCookieName())?.value
   const session = sessionCookie ? decodeSessionToken(sessionCookie) : null
 

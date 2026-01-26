@@ -5,7 +5,7 @@ import { Button } from '@/src/components/ui/Button'
 export const dynamic = 'force-dynamic'
 
 const fetchOrg = async (slug: string) => {
-  const headerList = headers()
+  const headerList = await headers()
   const host = headerList.get('host') ?? 'localhost:3000'
   const proto = headerList.get('x-forwarded-proto') ?? 'http'
   const res = await fetch(`${proto}://${host}/api/orgs/${slug}`, { cache: 'no-store' })
@@ -14,7 +14,7 @@ const fetchOrg = async (slug: string) => {
 }
 
 const fetchAudit = async (slug: string) => {
-  const headerList = headers()
+  const headerList = await headers()
   const host = headerList.get('host') ?? 'localhost:3000'
   const proto = headerList.get('x-forwarded-proto') ?? 'http'
   const res = await fetch(`${proto}://${host}/api/orgs/${slug}/audit`, { cache: 'no-store' })

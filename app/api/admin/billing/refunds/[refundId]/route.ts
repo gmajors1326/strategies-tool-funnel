@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: Request,
-  { params }: { params: { refundId: string } }
+  { params }: { params: Promise<{ refundId: string }> }
 ) {
   try {
     await requireAdmin()
@@ -16,8 +16,9 @@ export async function GET(
   }
 
   try {
+    const { refundId } = await params
     // TODO: replace (billing): fetch refund details from billing system.
-    return NextResponse.json(await getMockRefundDetail(params.refundId))
+    return NextResponse.json(await getMockRefundDetail(refundId))
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? 'Refund detail unavailable.' }, { status: 200 })
   }

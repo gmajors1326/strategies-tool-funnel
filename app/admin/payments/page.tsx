@@ -3,7 +3,7 @@ import { headers } from 'next/headers'
 export const dynamic = 'force-dynamic'
 
 const fetchStripeEvents = async () => {
-  const headerList = headers()
+  const headerList = await headers()
   const host = headerList.get('host') ?? 'localhost:3000'
   const proto = headerList.get('x-forwarded-proto') ?? 'http'
   const res = await fetch(`${proto}://${host}/api/admin/stripe/events?limit=50`, { cache: 'no-store' })

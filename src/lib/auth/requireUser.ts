@@ -56,7 +56,7 @@ export const requireUser = async (): Promise<UserSession> => {
     throw err
   }
 
-  const requestHeaders = headers()
+  const requestHeaders = await headers()
 
   // ✅ DEV BYPASS (explicit opt-in)
   // NOTE: This is intentionally not "automatic" in dev.

@@ -20,12 +20,12 @@ export const metadata: Metadata = {
   description: "Premium tools for strategic engagement and conversion",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const h = headers()
+  const h = await headers()
   const pathname = h.get("x-pathname") || h.get("next-url") || ""
 
   return (

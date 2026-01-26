@@ -3,7 +3,7 @@ import { headers } from 'next/headers'
 export const dynamic = 'force-dynamic'
 
 const fetchStatement = async (month: string) => {
-  const headerList = headers()
+  const headerList = await headers()
   const host = headerList.get('host') ?? 'localhost:3000'
   const proto = headerList.get('x-forwarded-proto') ?? 'http'
   const res = await fetch(`${proto}://${host}/api/orgs/usage/statement?month=${month}`, { cache: 'no-store' })

@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import type { UiConfig } from '@/src/lib/mock/data'
 
 export const fetchUiConfig = async (): Promise<UiConfig> => {
-  const headerList = headers()
+  const headerList = await headers()
   const host = headerList.get('host') ?? 'localhost:3000'
   const proto = headerList.get('x-forwarded-proto') ?? 'http'
   const res = await fetch(`${proto}://${host}/api/me/ui-config`, { cache: 'no-store' })

@@ -6,10 +6,11 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: Request,
-  { params }: { params: { ticketId: string } }
+  { params }: { params: Promise<{ ticketId: string }> }
 ) {
   await requireAdmin()
-  const detail = await getTicketDetailForAdmin(params.ticketId)
+  const { ticketId } = await params
+  const detail = await getTicketDetailForAdmin(ticketId)
   if (!detail) {
     return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
   }

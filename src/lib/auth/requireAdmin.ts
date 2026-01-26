@@ -15,7 +15,8 @@ export type AdminUser = {
 }
 
 export async function requireAdmin(): Promise<AdminUser> {
-  const adminSession = cookies().get('admin_session')?.value
+  const cookieStore = await cookies()
+  const adminSession = cookieStore.get('admin_session')?.value
   if (adminSession) {
     try {
       const json = Buffer.from(adminSession, 'base64url').toString('utf8')

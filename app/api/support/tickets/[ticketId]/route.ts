@@ -6,10 +6,11 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   _request: Request,
-  { params }: { params: { ticketId: string } }
+  { params }: { params: Promise<{ ticketId: string }> }
 ) {
   const session = await requireUser()
-  const ticket = await getTicketDetailForUser(session.id, params.ticketId)
+  const { ticketId } = await params
+  const ticket = await getTicketDetailForUser(session.id, ticketId)
   if (!ticket) {
     return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
   }

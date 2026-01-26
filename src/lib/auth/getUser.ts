@@ -6,7 +6,7 @@ export type AppUser = {
 }
 
 export async function getUserOrThrow(): Promise<AppUser> {
-  const c = cookies()
+  const c = await cookies()
   const fake = c.get('dev_user_id')?.value
 
   return {

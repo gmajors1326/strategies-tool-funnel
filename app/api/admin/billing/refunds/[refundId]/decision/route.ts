@@ -13,17 +13,18 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { refundId: string } }
+  { params }: { params: Promise<{ refundId: string }> }
 ) {
   const admin = await requireAdmin()
   const body = await request.json()
   const data = decisionSchema.parse(body)
+  const { refundId } = await params
 
   await logAdminAudit({
     actorId: admin.userId,
     actorEmail: admin.email,
     action: 'admin.refund.decision',
-    target: params.refundId,
+    target: refundId,
     meta: {
       decision: data.decision,
       amount: data.amount ?? null,
@@ -33,7 +34,7 @@ export async function POST(
 
   // TODO: replace (billing): issue refund decision through billing provider.
   return NextResponse.json({
-    refundId: params.refundId,
+    refundId,
     decision: data.decision,
     amount: data.amount ?? null,
     reason: data.reason,

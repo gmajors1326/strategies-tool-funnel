@@ -17,7 +17,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 })
   }
 
-  const all = cookies()
+  const cookieStore = await cookies()
+  const all = cookieStore
     .getAll()
     .map((c) => ({
       name: c.name,

@@ -4,10 +4,11 @@ import { requireOrgRole } from '@/src/lib/orgs/orgs'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(_request: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   // TODO: replace (auth): derive user ID from authenticated session.
   const userId = 'user_dev_1'
-  const org = await prisma.organization.findUnique({ where: { slug: params.slug } })
+  const { slug } = await params
+  const org = await prisma.organization.findUnique({ where: { slug } })
   if (!org) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }

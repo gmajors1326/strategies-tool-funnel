@@ -11,14 +11,15 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { ticketId: string } }
+  { params }: { params: Promise<{ ticketId: string }> }
 ) {
   const session = await requireUser()
   const body = await request.json()
   const { message } = replySchema.parse(body)
+  const { ticketId } = await params
   const detail = await addReplyForUser({
     userId: session.id,
-    ticketId: params.ticketId,
+    ticketId,
     message,
   })
 
