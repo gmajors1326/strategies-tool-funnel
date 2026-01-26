@@ -18,6 +18,9 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
     <div className="container mx-auto px-4 pt-6">
       <div className="flex justify-end gap-2 no-print">
         <Button asChild size="sm" variant="outline">
+          <Link href="/">Home</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
           <Link href="/pricing">Pricing</Link>
         </Button>
         {isAdmin ? (
@@ -28,12 +31,12 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
         {isSignedIn ? (
           <form action="/api/auth/logout" method="post">
             <Button size="sm" variant="outline" type="submit">
-              Log out
+              Logout
             </Button>
           </form>
         ) : (
           <Button asChild size="sm" variant="outline">
-            <Link href={`/auth?returnTo=${encodeURIComponent(returnTo)}`}>Sign in</Link>
+            <Link href={`/auth?returnTo=${encodeURIComponent(returnTo)}`}>Sign In</Link>
           </Button>
         )}
       </div>
