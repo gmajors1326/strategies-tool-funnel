@@ -9,8 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export default function ToolsIndexPage() {
   const tools = getAllTools()
-  const cardClass =
-    "rounded-xl bg-[#141b22] border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+  const cardClass = ""
 
   return (
     <AdminShell
