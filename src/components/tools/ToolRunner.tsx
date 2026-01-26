@@ -1248,13 +1248,15 @@ export function ToolRunner(props: {
       <div className="rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] p-4 text-sm text-[#2f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-[#6a5c4a]">7-day trial</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#1f3b2b]">7-day trial</p>
             <p className="text-base font-semibold">Try every tool free for 7 days.</p>
-            <p className="text-xs text-[#5f6b52]">After the trial, choose Pro ($39) or Elite ($99) to keep access.</p>
+            <p className="text-xs text-[#1f3b2b]">After the trial, choose Pro ($39) or Elite ($99) to keep access.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild size="sm">
-              <Link href="/verify?next=/">Start trial</Link>
+              <Link className="text-[#7ee6a3] hover:text-[#1f3b2b]" href="/verify?next=/">
+                Start Trial
+              </Link>
             </Button>
             <Button asChild size="sm" variant="outline">
               <Link href="/pricing">View plans</Link>
