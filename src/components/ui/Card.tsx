@@ -10,7 +10,7 @@ export function Card({ className, children }: CardProps) {
   return (
     <div
       className={cn(
-        'rounded-2xl border border-white/10 bg-[#3a3a3a] p-5 text-[hsl(var(--text))] shadow-[0_24px_40px_rgba(0,0,0,0.35)]',
+        'rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] p-5 text-[#2f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]',
         className
       )}
     >

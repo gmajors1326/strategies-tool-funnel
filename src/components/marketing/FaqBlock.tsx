@@ -67,20 +67,20 @@ const FAQ_ITEMS = [
 
 export function FaqBlock({ title = "FAQ" }: { title?: string }) {
   return (
-    <section className="space-y-4 rounded-2xl border border-white/10 bg-[#3a3a3a] p-6 shadow-[0_24px_40px_rgba(0,0,0,0.35)]">
+    <section className="space-y-4 rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] p-6 text-[#2f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
       <div>
         <h2 className="text-lg font-semibold text-[hsl(var(--text))]">{title}</h2>
-        <p className="text-sm text-[hsl(var(--muted))]">Clear answers to how the tools work and when to use them.</p>
+        <p className="text-sm text-[#5f6b52]">Clear answers to how the tools work and when to use them.</p>
       </div>
       <Accordion type="multiple" defaultValue={["q1", "q2"]} className="space-y-2">
         {FAQ_ITEMS.map((item) => (
           <AccordionItem
             key={item.id}
             value={item.id}
-            className="rounded-lg border border-white/10 bg-[#343434] px-4"
+            className="rounded-lg border border-[#d2c1a8] bg-[#e3d4be] px-4"
           >
             <AccordionTrigger className="text-sm font-medium">{item.question}</AccordionTrigger>
-            <AccordionContent className="text-sm text-[hsl(var(--muted))]">{item.answer}</AccordionContent>
+            <AccordionContent className="text-sm text-[#5f6b52]">{item.answer}</AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>

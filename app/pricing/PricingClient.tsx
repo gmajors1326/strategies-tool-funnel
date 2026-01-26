@@ -166,18 +166,18 @@ export function PricingClient() {
         {notice ? <AppPanel className="text-sm">{notice}</AppPanel> : null}
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'plans' | 'tokens')}>
-          <TabsList className="bg-white/5 text-white/70">
+          <TabsList className="bg-[#e3d4be] text-[#5f6b52] border border-[#d2c1a8]">
             <TabsTrigger value="plans">Plans</TabsTrigger>
             <TabsTrigger value="tokens">Tokens</TabsTrigger>
           </TabsList>
 
           <TabsContent value="plans">
             <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-              <div className="space-y-3 text-sm text-white/60">
+              <div className="space-y-3 text-sm text-[#5f6b52]">
                 <p>
                   Simple tiers, clear limits. Upgrade when you need higher runs or exports. Cancel anytime.
                 </p>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/40">Monthly plans</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[#7a6a55]">Monthly plans</p>
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {(Object.keys(PLAN_CATALOG) as PlanTier[]).map((tier) => {
@@ -189,31 +189,31 @@ export function PricingClient() {
                   return (
                     <div
                       key={tier}
-                      className={`rounded-2xl border border-white/10 bg-[#3a3a3a] p-6 text-center shadow-[0_24px_40px_rgba(0,0,0,0.35)] ring-1 ${accents.ring}`}
+                      className={`rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] p-6 text-center text-[#2f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)] ring-1 ${accents.ring}`}
                     >
-                      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
+                      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#e3d4be]">
                         <span className={`h-3 w-3 rounded-full ${accents.dot}`} />
                       </div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6a5c4a]">
                         {plan.displayName}
                       </p>
                       <p className={`mt-2 text-3xl font-semibold ${accents.text}`}>
                         {plan.monthlyPrice === 0 ? '$0' : `$${plan.monthlyPrice}`}
                       </p>
-                      <p className="text-xs text-white/50">{plan.monthlyPrice === 0 ? '7-day trial' : 'per month'}</p>
-                      <p className="mt-3 text-xs text-white/50">
+                      <p className="text-xs text-[#6a5c4a]">{plan.monthlyPrice === 0 ? '7-day trial' : 'per month'}</p>
+                      <p className="mt-3 text-xs text-[#6a5c4a]">
                         {tier === 'free' ? 'Try everything free for 7 days.' : 'Upgrade to unlock more.'}
                       </p>
 
-                      <div className="mt-4 space-y-2 text-xs text-white/70">
+                      <div className="mt-4 space-y-2 text-xs text-[#3f4a36]">
                         {plan.features.slice(0, 6).map((item) => (
-                          <div key={item} className="border-t border-white/5 pt-2">
+                          <div key={item} className="border-t border-[#d8c9b2] pt-2">
                             {item}
                           </div>
                         ))}
                       </div>
 
-                      <div className="mt-4 space-y-1 text-[11px] text-white/50">
+                      <div className="mt-4 space-y-1 text-[11px] text-[#6a5c4a]">
                         <div>Daily tokens: {DAILY_TOKENS[tier].toLocaleString()}</div>
                         <div>Rollover: {rollover.enabled ? `up to ${rollover.capDays} days` : 'none'}</div>
                         <div>History: {plan.entitlements.historyDepth === 'unlimited' ? 'Unlimited' : plan.entitlements.historyDepth}</div>
@@ -250,75 +250,75 @@ export function PricingClient() {
             <div
               ref={comparisonRef}
               id="comparison"
-              className="mt-6 rounded-xl border border-white/10 bg-[#3a3a3a] p-4 text-sm text-white/70"
+              className="mt-6 rounded-xl border border-[#d2c1a8] bg-[#eadcc7] p-4 text-sm text-[#4f5b45] shadow-[0_12px_24px_rgba(48,40,28,0.18)]"
             >
-              <div className="mb-3 text-xs uppercase text-white/50">Plan comparison</div>
+              <div className="mb-3 text-xs uppercase text-[#6a5c4a]">Plan comparison</div>
               <div className="overflow-x-auto">
                 <div className="min-w-[640px] space-y-2 text-xs">
                   <div className="grid grid-cols-4 gap-2">
                     <div />
-                    <div className="rounded-md border border-white/10 px-3 py-2 text-center">Trial</div>
-                    <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-center font-semibold shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2 text-center">Trial</div>
+                    <div className="rounded-md border border-[#d2c1a8] bg-[#e3d4be] px-3 py-2 text-center font-semibold shadow-[0_0_0_1px_rgba(210,193,168,0.8)]">
                       Pro
                     </div>
-                    <div className="rounded-md border border-white/10 px-3 py-2 text-center">Elite</div>
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2 text-center">Elite</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2">
-                    <div className="rounded-md border border-white/10 px-3 py-2">Daily tokens</div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">200 / day</div>
-                    <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">Daily tokens</div>
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">200 / day</div>
+                    <div className="rounded-md border border-[#d2c1a8] bg-[#e3d4be] px-3 py-2 shadow-[0_0_0_1px_rgba(210,193,168,0.8)]">
                       2,000 / day
                     </div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">6,000 / day</div>
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">6,000 / day</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2">
-                    <div className="rounded-md border border-white/10 px-3 py-2">Rollover</div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">—</div>
-                    <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">Rollover</div>
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">—</div>
+                    <div className="rounded-md border border-[#d2c1a8] bg-[#e3d4be] px-3 py-2 shadow-[0_0_0_1px_rgba(210,193,168,0.8)]">
                       Up to 7 days
                     </div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">Up to 30 days</div>
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">Up to 30 days</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2" id="compare-save">
-                    <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('save')}`}>Save to Vault</div>
-                    <div className={`rounded-md border border-white/10 px-3 py-2 text-white/40 ${rowClass('save')}`}>—</div>
-                    <div className={`rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)] ${rowClass('save')}`}>✓</div>
-                    <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('save')}`}>✓</div>
+                    <div className={`rounded-md border border-[#d2c1a8] px-3 py-2 ${rowClass('save')}`}>Save to Vault</div>
+                    <div className={`rounded-md border border-[#d2c1a8] px-3 py-2 text-[#7a6a55] ${rowClass('save')}`}>—</div>
+                    <div className={`rounded-md border border-[#d2c1a8] bg-[#e3d4be] px-3 py-2 shadow-[0_0_0_1px_rgba(210,193,168,0.8)] ${rowClass('save')}`}>✓</div>
+                    <div className={`rounded-md border border-[#d2c1a8] px-3 py-2 ${rowClass('save')}`}>✓</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2" id="compare-export">
-                    <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('export')}`}>Export JSON/CSV</div>
-                    <div className={`rounded-md border border-white/10 px-3 py-2 text-white/40 ${rowClass('export')}`}>—</div>
-                    <div className={`rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)] ${rowClass('export')}`}>✓</div>
-                    <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('export')}`}>✓</div>
+                    <div className={`rounded-md border border-[#d2c1a8] px-3 py-2 ${rowClass('export')}`}>Export JSON/CSV</div>
+                    <div className={`rounded-md border border-[#d2c1a8] px-3 py-2 text-[#7a6a55] ${rowClass('export')}`}>—</div>
+                    <div className={`rounded-md border border-[#d2c1a8] bg-[#e3d4be] px-3 py-2 shadow-[0_0_0_1px_rgba(210,193,168,0.8)] ${rowClass('export')}`}>✓</div>
+                    <div className={`rounded-md border border-[#d2c1a8] px-3 py-2 ${rowClass('export')}`}>✓</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2" id="compare-pdf">
-                    <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('pdf')}`}>Export PDF</div>
-                    <div className={`rounded-md border border-white/10 px-3 py-2 text-white/40 ${rowClass('pdf')}`}>—</div>
-                    <div className={`rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)] ${rowClass('pdf')}`}>Limited</div>
-                    <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('pdf')}`}>✓</div>
+                    <div className={`rounded-md border border-[#d2c1a8] px-3 py-2 ${rowClass('pdf')}`}>Export PDF</div>
+                    <div className={`rounded-md border border-[#d2c1a8] px-3 py-2 text-[#7a6a55] ${rowClass('pdf')}`}>—</div>
+                    <div className={`rounded-md border border-[#d2c1a8] bg-[#e3d4be] px-3 py-2 shadow-[0_0_0_1px_rgba(210,193,168,0.8)] ${rowClass('pdf')}`}>Limited</div>
+                    <div className={`rounded-md border border-[#d2c1a8] px-3 py-2 ${rowClass('pdf')}`}>✓</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2">
-                    <div className="rounded-md border border-white/10 px-3 py-2">Cooldowns</div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">Standard</div>
-                    <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">Cooldowns</div>
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">Standard</div>
+                    <div className="rounded-md border border-[#d2c1a8] bg-[#e3d4be] px-3 py-2 shadow-[0_0_0_1px_rgba(210,193,168,0.8)]">
                       Reduced
                     </div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">None</div>
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">None</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2">
-                    <div className="rounded-md border border-white/10 px-3 py-2">Usage history depth</div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">Last 3 runs</div>
-                    <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">Usage history depth</div>
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">Last 3 runs</div>
+                    <div className="rounded-md border border-[#d2c1a8] bg-[#e3d4be] px-3 py-2 shadow-[0_0_0_1px_rgba(210,193,168,0.8)]">
                       Last 20 runs
                     </div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">Unlimited</div>
+                    <div className="rounded-md border border-[#d2c1a8] px-3 py-2">Unlimited</div>
                   </div>
                 </div>
               </div>
@@ -354,12 +354,12 @@ export function PricingClient() {
               ))}
             </div>
 
-            <div className="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 text-sm">
-              <div className="text-xs uppercase text-[hsl(var(--muted))] mb-2">Tokens explained</div>
-              <p className="text-sm text-[hsl(var(--muted))]">
+            <div className="mt-6 rounded-xl border border-[#d2c1a8] bg-[#eadcc7] p-4 text-sm text-[#2f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
+              <div className="text-xs uppercase text-[#6a5c4a] mb-2">Tokens explained</div>
+              <p className="text-sm text-[#5f6b52]">
                 Bonus tokens never expire and stack on top of your daily plan limits.
               </p>
-              <div className="mt-3 text-xs text-[hsl(var(--muted))]">
+              <div className="mt-3 text-xs text-[#5f6b52]">
                 You’ve used today’s AI tokens. Tokens reset automatically at {formatLocalTime(resetTime || undefined)} or
                 you can buy more.
               </div>
@@ -377,7 +377,7 @@ export function PricingClient() {
           >
             {loadingAction === STRIPE_CATALOG.tokenPacks.starter.priceId ? 'Redirecting…' : 'Buy tokens'}
           </Button>
-          <Link href="/help" className="text-xs text-white/50">
+          <Link href="/help" className="text-xs text-[#6a5c4a]">
             Questions? Read how limits work.
           </Link>
         </div>

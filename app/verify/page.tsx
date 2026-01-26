@@ -8,7 +8,7 @@ export default function VerifyPage() {
     <Suspense
       fallback={
         <div className="relative min-h-screen bg-[#7d9b76] text-foreground flex items-center justify-center p-4">
-          <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#3a3a3a] p-6 text-sm text-[hsl(var(--muted))] shadow-[0_24px_40px_rgba(0,0,0,0.35)]">
+          <div className="relative w-full max-w-md rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] p-6 text-sm text-[#5f6b52] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
             Loading verification…
           </div>
         </div>

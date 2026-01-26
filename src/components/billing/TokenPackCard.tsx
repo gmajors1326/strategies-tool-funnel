@@ -15,11 +15,11 @@ export function TokenPackCard({ title, price, tokens, runsEstimate, bestFor, chi
     <Card className="space-y-4">
       <div className="space-y-1">
         <p className="text-sm font-semibold">{title}</p>
-        <p className="text-xs text-[hsl(var(--muted))]">{bestFor}</p>
+        <p className="text-xs text-[#5f6b52]">{bestFor}</p>
       </div>
       {price ? <div className="text-xl font-semibold">{price}</div> : null}
       <div className="text-2xl font-semibold">{tokens.toLocaleString()} tokens</div>
-      <p className="text-xs text-[hsl(var(--muted))]">{runsEstimate}</p>
+      <p className="text-xs text-[#5f6b52]">{runsEstimate}</p>
       {children}
     </Card>
   )

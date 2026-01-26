@@ -46,12 +46,12 @@ export default function HomePage() {
       </section>
 
       <section className="container mx-auto px-4 pb-10">
-        <div className="mx-auto max-w-5xl rounded-2xl border border-white/10 bg-[#3a3a3a] px-6 py-5 text-white shadow-[0_24px_40px_rgba(0,0,0,0.35)]">
+        <div className="mx-auto max-w-5xl rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] px-6 py-5 text-[#2f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-white/60">7-day trial</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-[#6a5c4a]">7-day trial</p>
               <p className="text-lg font-semibold">Try every tool free for 7 days.</p>
-              <p className="text-sm text-white/60">After the trial, choose Pro ($39) or Elite ($99) to keep access.</p>
+              <p className="text-sm text-[#5f6b52]">After the trial, choose Pro ($39) or Elite ($99) to keep access.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button asChild>
@@ -75,10 +75,10 @@ export default function HomePage() {
               </div>
             </div>
 
-          {tools.length === 0 ? (
-            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-6 text-center text-sm text-[hsl(var(--muted))]">
-              No tools available.
-            </div>
+            {tools.length === 0 ? (
+              <div className="rounded-xl border border-[#d2c1a8] bg-[#eadcc7] p-6 text-center text-sm text-[#5f6b52] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
+                No tools available.
+              </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {tools.map((tool) => {
@@ -88,36 +88,36 @@ export default function HomePage() {
                     key={tool.id}
                     className="p-4 space-y-3"
                   >
-                    <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted))]">
+                    <div className="flex items-center gap-2 text-[11px] text-[#5f6b52]">
                       {meta?.label ? (
-                        <span className="rounded-full border border-[hsl(var(--border))] px-2 py-0.5">
+                        <span className="rounded-full border border-[#d2c1a8] px-2 py-0.5">
                           {meta.label}
                         </span>
                       ) : null}
                       {meta?.startHere ? (
-                        <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] px-2 py-0.5 text-[hsl(var(--text))]">
+                        <span className="rounded-full border border-[#d2c1a8] bg-[#e3d4be] px-2 py-0.5 text-[#2f3b2b]">
                           Start here
                         </span>
                       ) : null}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[hsl(var(--text))]">{tool.name}</p>
-                      <p className="text-xs text-[hsl(var(--muted))]">{meta?.promise || tool.description}</p>
+                      <p className="text-sm font-semibold text-[#2f3b2b]">{tool.name}</p>
+                      <p className="text-xs text-[#5f6b52]">{meta?.promise || tool.description}</p>
                     </div>
                     {meta?.outputs?.length ? (
-                      <div className="text-xs text-[hsl(var(--muted))]">
+                      <div className="text-xs text-[#5f6b52]">
                         Outputs:{' '}
                         {meta.outputs.map((out) => (
                           <span
                             key={out}
-                            className="mr-1 inline-flex items-center rounded-md border border-[hsl(var(--border))] px-2 py-0.5"
+                            className="mr-1 inline-flex items-center rounded-md border border-[#d2c1a8] px-2 py-0.5"
                           >
                             {out}
                           </span>
                         ))}
                       </div>
                     ) : null}
-                    <div className="flex items-center justify-between text-xs text-[hsl(var(--muted))]">
+                    <div className="flex items-center justify-between text-xs text-[#5f6b52]">
                       <span>{tool.tokensPerRun ? `${tool.tokensPerRun} tokens/run` : 'Tokens TBD'}</span>
                     </div>
                     <div className="flex flex-col gap-2">
@@ -138,8 +138,8 @@ export default function HomePage() {
                   </AppCard>
                 )
               })}
-              <AppCard className="p-4 space-y-2 text-sm text-[hsl(var(--muted))]">
-                <p className="text-[hsl(var(--text))] font-semibold">More tools coming soon</p>
+              <AppCard className="p-4 space-y-2 text-sm text-[#5f6b52]">
+                <p className="text-[#2f3b2b] font-semibold">More tools coming soon</p>
                 <p>We&apos;re launching in tight batches.</p>
               </AppCard>
             </div>
