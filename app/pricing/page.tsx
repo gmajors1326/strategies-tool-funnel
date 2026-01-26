@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export default function PricingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[hsl(var(--bg))] text-[hsl(var(--text))]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#7d9b76] text-[hsl(var(--text))]" />}>
       <PricingClient />
     </Suspense>
   )

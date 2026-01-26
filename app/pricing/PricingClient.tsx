@@ -143,7 +143,7 @@ export function PricingClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[#2f2f2f] text-white">
+    <div className="min-h-screen bg-[#7d9b76] text-white">
       <div className="mx-auto max-w-6xl space-y-8 px-6 py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
