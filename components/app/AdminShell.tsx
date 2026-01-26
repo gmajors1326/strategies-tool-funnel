@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { AdminNav } from '@/components/app/AdminNav'
+import { AdminSessionBadge } from '@/components/app/AdminSessionBadge'
 
 type AdminShellProps = {
   children: ReactNode
@@ -17,7 +18,12 @@ export function AdminShell({ children }: AdminShellProps) {
             <AdminNav />
           </div>
         </aside>
-        <main className="flex-1 space-y-6">{children}</main>
+        <main className="flex-1 space-y-6">
+          <div className="flex items-center justify-end">
+            <AdminSessionBadge />
+          </div>
+          {children}
+        </main>
       </div>
     </div>
   )

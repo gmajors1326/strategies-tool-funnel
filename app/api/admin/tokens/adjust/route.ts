@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/adminAuth'
+import { rateLimitAdminAction, requireAdminAccess } from '@/lib/adminAuth'
+import { rateLimitConfigs } from '@/lib/rate-limit'
 import { createLedgerEntry, getTokenBalance } from '@/src/lib/tokens/ledger'
-import { logAdminAudit } from '@/src/lib/admin/audit'
 
 export async function POST(req: Request) {
   try {
-    const admin = await requireAdmin()
     const body = await req.json()
     const userId = String(body.userId || '')
     const tokensDelta = Number(body.tokensDelta)
@@ -18,19 +17,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: { message: 'tokensDelta must be a non-zero integer' } }, { status: 400 })
     }
 
+    const admin = await requireAdminAccess(req, {
+      action: 'admin.tokens.adjust',
+      policy: 'admin',
+      target: userId,
+      meta: { tokensDelta, reason },
+    })
+
+    const rateLimit = await rateLimitAdminAction(admin, 'tokens.adjust', rateLimitConfigs.adminSensitiveAction)
+    if (!rateLimit.success) {
+      const headers = new Headers()
+      Object.entries(rateLimit.headers).forEach(([key, value]) => {
+        if (value) headers.set(key, value)
+      })
+      return NextResponse.json(
+        { error: { message: 'Rate limit exceeded' } },
+        { status: 429, headers }
+      )
+    }
+
     await createLedgerEntry({
       userId,
       eventType: 'admin_adjustment',
       tokensDelta,
       reason,
-    })
-
-    await logAdminAudit({
-      actorId: admin.userId,
-      actorEmail: admin.email,
-      action: 'admin.tokens.adjust',
-      target: userId,
-      meta: { tokensDelta, reason },
     })
 
     const balance = await getTokenBalance(userId)

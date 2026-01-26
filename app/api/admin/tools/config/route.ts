@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/adminAuth'
+import { requireAdminAccess } from '@/lib/adminAuth'
 import { listTools } from '@/src/lib/tools/registry'
-import { logAdminAudit } from '@/src/lib/admin/audit'
 
 // TODO: replace (tool-registry): persist tool config to database.
 let mockToolConfig = listTools({ includeHidden: true }).map((tool) => ({
@@ -13,22 +12,20 @@ let mockToolConfig = listTools({ includeHidden: true }).map((tool) => ({
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-  await requireAdmin()
+export async function GET(request: Request) {
+  await requireAdminAccess(request, { action: 'admin.tools.config.list', policy: 'admin' })
   // TODO: replace (tool-registry): load tool config from database.
   return NextResponse.json({ tools: mockToolConfig })
 }
 
 export async function POST(request: NextRequest) {
-  const admin = await requireAdmin()
   const body = await request.json()
+  await requireAdminAccess(request, {
+    action: 'admin.tools.config_update',
+    policy: 'admin',
+    meta: { toolCount: Array.isArray(body?.tools) ? body.tools.length : undefined },
+  })
   // TODO: replace (tool-registry): validate and persist tool config updates.
   mockToolConfig = body.tools ?? mockToolConfig
-  await logAdminAudit({
-    actorId: admin.userId,
-    actorEmail: admin.email,
-    action: 'admin.tools.config_update',
-    meta: { toolCount: mockToolConfig.length },
-  })
   return NextResponse.json({ status: 'ok', tools: mockToolConfig })
 }

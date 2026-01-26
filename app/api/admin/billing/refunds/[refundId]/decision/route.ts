@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/lib/adminAuth'
-import { logAdminAudit } from '@/src/lib/admin/audit'
+import { rateLimitAdminAction, requireAdminAccess } from '@/lib/adminAuth'
+import { rateLimitConfigs } from '@/lib/rate-limit'
 
 const decisionSchema = z.object({
   decision: z.enum(['approve', 'deny', 'partial', 'credit']),
@@ -15,15 +15,13 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ refundId: string }> }
 ) {
-  const admin = await requireAdmin()
   const body = await request.json()
   const data = decisionSchema.parse(body)
   const { refundId } = await params
 
-  await logAdminAudit({
-    actorId: admin.userId,
-    actorEmail: admin.email,
+  const admin = await requireAdminAccess(request, {
     action: 'admin.refund.decision',
+    policy: 'admin',
     target: refundId,
     meta: {
       decision: data.decision,
@@ -31,6 +29,18 @@ export async function POST(
       reason: data.reason,
     },
   })
+
+  const rateLimit = await rateLimitAdminAction(admin, 'refund.decision', rateLimitConfigs.adminSensitiveAction)
+  if (!rateLimit.success) {
+    const headers = new Headers()
+    Object.entries(rateLimit.headers).forEach(([key, value]) => {
+      if (value) headers.set(key, value)
+    })
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      { status: 429, headers }
+    )
+  }
 
   // TODO: replace (billing): issue refund decision through billing provider.
   return NextResponse.json({

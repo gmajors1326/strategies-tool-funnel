@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin, canSupport } from '@/lib/adminAuth'
+import { requireAdminAccess } from '@/lib/adminAuth'
 import { prisma } from '@/lib/db'
-import { logAdminAudit } from '@/src/lib/admin/audit'
 
 function maskSecret(secret: string) {
   if (secret.length <= 6) return '***'
   return `${secret.slice(0, 3)}***${secret.slice(-3)}`
 }
 
-export async function GET() {
-  const admin = await requireAdmin()
-  if (!canSupport(admin.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+export async function GET(request: Request) {
+  await requireAdminAccess(request, {
+    action: 'admin.webhooks.secrets.list',
+    policy: 'support',
+  })
 
   const secrets = await prisma.webhookSecret.findMany({
     orderBy: { createdAt: 'desc' },
@@ -36,11 +35,6 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const admin = await requireAdmin()
-  if (!canSupport(admin.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
   const body = await request.json()
   const customerId = String(body?.customerId || '').trim()
   const secret = String(body?.secret || '').trim()
@@ -48,6 +42,12 @@ export async function POST(request: NextRequest) {
   if (!customerId || !secret) {
     return NextResponse.json({ error: 'Missing customerId or secret' }, { status: 400 })
   }
+
+  await requireAdminAccess(request, {
+    action: 'admin.webhooks.secret_rotate',
+    policy: 'support',
+    meta: { customerId },
+  })
 
   await prisma.webhookSecret.updateMany({
     where: { customerId, active: true },
@@ -60,14 +60,6 @@ export async function POST(request: NextRequest) {
       secret,
       active: true,
     },
-  })
-
-  await logAdminAudit({
-    actorId: admin.userId,
-    actorEmail: admin.email,
-    action: 'admin.webhooks.secret_rotate',
-    target: created.id,
-    meta: { customerId },
   })
 
   return NextResponse.json({

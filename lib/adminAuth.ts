@@ -1,3 +1,5 @@
+import { checkRateLimit, rateLimitConfigs } from '@/lib/rate-limit'
+import { logAdminAudit } from '@/src/lib/admin/audit'
 import { requireAdmin as requireAppAdmin } from '@/src/lib/auth/requireAdmin'
 
 export type AdminRole = 'admin' | 'support' | 'analyst'
@@ -7,6 +9,8 @@ export type AdminSession = {
   email: string
   role: AdminRole
 }
+
+export type AdminAccessPolicy = 'any' | 'admin' | 'support' | 'analytics'
 
 type AdminIdentity = {
   userId: string
@@ -47,13 +51,66 @@ export function resolveAdminRole(identity: AdminIdentity): AdminRole | null {
   return null
 }
 
-export async function requireAdmin(): Promise<AdminSession> {
+export async function getAdminSession(): Promise<AdminSession> {
   const admin = await requireAppAdmin()
+  const role = resolveAdminRole({ userId: admin.id, email: admin.email }) ?? 'admin'
   return {
     userId: admin.id,
     email: admin.email,
-    role: 'admin',
+    role,
   }
+}
+
+export async function requireAdmin(): Promise<AdminSession> {
+  return getAdminSession()
+}
+
+export async function requireAdminAccess(
+  request: Request,
+  options: {
+    action: string
+    policy?: AdminAccessPolicy
+    target?: string | null
+    meta?: Record<string, any>
+  }
+): Promise<AdminSession> {
+  const admin = await getAdminSession()
+  const policy = options.policy ?? 'any'
+
+  if (policy === 'admin' && admin.role !== 'admin') {
+    throw forbidden('admin role required')
+  }
+  if (policy === 'support' && !canSupport(admin.role)) {
+    throw forbidden('support role required')
+  }
+  if (policy === 'analytics' && !canViewAnalytics(admin.role)) {
+    throw forbidden('analytics role required')
+  }
+
+  const url = new URL(request.url)
+  await logAdminAudit({
+    actorId: admin.userId,
+    actorEmail: admin.email,
+    action: options.action,
+    target: options.target ?? null,
+    meta: {
+      role: admin.role,
+      method: request.method,
+      path: url.pathname,
+      ...options.meta,
+    },
+  })
+
+  return admin
+}
+
+export async function rateLimitAdminAction(
+  admin: AdminSession,
+  action: string,
+  config = rateLimitConfigs.adminSensitiveAction
+) {
+  const identifier = `admin:${admin.userId}:${action}`
+  return checkRateLimit(identifier, config)
 }
 
 export function canViewAnalytics(role: AdminRole) {
@@ -62,4 +119,10 @@ export function canViewAnalytics(role: AdminRole) {
 
 export function canSupport(role: AdminRole) {
   return role === 'admin' || role === 'support'
+}
+
+function forbidden(reason: string) {
+  const err = new Error(`Forbidden: admin access denied. Reason: ${reason}`) as any
+  err.status = 403
+  return err
 }

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/src/lib/auth/requireAdmin'
+import { requireAdminAccess } from '@/lib/adminAuth'
 import { prisma } from '@/src/lib/prisma'
-import { logAdminAudit } from '@/src/lib/admin/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,8 +10,8 @@ const updateSchema = z.object({
   isAdmin: z.boolean(),
 })
 
-export async function GET() {
-  await requireAdmin()
+export async function GET(request: NextRequest) {
+  await requireAdminAccess(request, { action: 'admin.access.list', policy: 'admin' })
   const admins = await prisma.user.findMany({
     where: { isAdmin: true },
     select: { id: true, email: true, name: true, createdAt: true },
@@ -22,7 +21,6 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const admin = await requireAdmin()
   const body = await request.json()
   const { email, isAdmin } = updateSchema.parse(body)
   const normalizedEmail = email.trim().toLowerCase()
@@ -36,6 +34,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
 
+  await requireAdminAccess(request, {
+    action: isAdmin ? 'admin.access.grant' : 'admin.access.revoke',
+    policy: 'admin',
+    target: user.id,
+    meta: { email: normalizedEmail, name: user.name ?? null, isAdmin },
+  })
+
   if (user.isAdmin === isAdmin) {
     return NextResponse.json({ ok: true, user })
   }
@@ -44,14 +49,6 @@ export async function POST(request: NextRequest) {
     where: { email: normalizedEmail },
     data: { isAdmin },
     select: { id: true, email: true, isAdmin: true, name: true },
-  })
-
-  await logAdminAudit({
-    actorId: admin.id,
-    actorEmail: admin.email,
-    action: isAdmin ? 'admin.access.grant' : 'admin.access.revoke',
-    target: updated.id,
-    meta: { email: updated.email, name: updated.name ?? null, isAdmin },
   })
 
   return NextResponse.json({ ok: true, user: updated })

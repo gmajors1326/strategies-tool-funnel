@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/adminAuth'
+import { requireAdminAccess } from '@/lib/adminAuth'
 import { buildAnalytics, buildEmptyAnalytics } from '@/src/lib/analytics/buildAnalytics'
 
 export const dynamic = 'force-dynamic'
@@ -16,7 +16,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    await requireAdmin()
+    await requireAdminAccess(req, {
+      action: 'admin.analytics.view',
+      policy: 'analytics',
+      meta: { filters },
+    })
   } catch (err: any) {
     const status = err?.status || 403
     return NextResponse.json({ error: 'Unauthorized' }, { status })

@@ -275,6 +275,18 @@ export const rateLimitConfigs = {
     maxRequests: 5, // 5 requests per 15 minutes
   },
 
+  // Rate limit for admin actions
+  adminAction: {
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 30, // 30 actions per minute
+  },
+
+  // Stricter rate limit for sensitive admin actions
+  adminSensitiveAction: {
+    windowMs: 60 * 1000, // 1 minute
+    maxRequests: 10, // 10 actions per minute
+  },
+
   // Rate limit for OTP requests (already implemented, but can use this)
   otpRequest: {
     windowMs: 60 * 1000, // 1 minute

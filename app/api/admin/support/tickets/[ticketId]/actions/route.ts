@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/lib/adminAuth'
-import { logAdminAudit } from '@/src/lib/admin/audit'
+import { requireAdminAccess } from '@/lib/adminAuth'
 
 const actionSchema = z.object({
   actionType: z.string(),
@@ -14,15 +13,13 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ ticketId: string }> }
 ) {
-  const admin = await requireAdmin()
   const body = await request.json()
   const { actionType, payload } = actionSchema.parse(body)
   const { ticketId } = await params
 
-  await logAdminAudit({
-    actorId: admin.userId,
-    actorEmail: admin.email,
+  await requireAdminAccess(request, {
     action: 'admin.support.action',
+    policy: 'support',
     target: ticketId,
     meta: { actionType, payload },
   })

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server'
-import { requireAdmin, canSupport } from '@/lib/adminAuth'
+import { requireAdminAccess } from '@/lib/adminAuth'
 import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-  const admin = await requireAdmin()
-  if (!canSupport(admin.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+export async function GET(request: Request) {
+  await requireAdminAccess(request, {
+    action: 'admin.webhooks.deliveries.list',
+    policy: 'support',
+  })
 
   const deliveries = await prisma.webhookDelivery.findMany({
     orderBy: { receivedAt: 'desc' },

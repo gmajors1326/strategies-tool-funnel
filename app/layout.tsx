@@ -3,6 +3,7 @@ import { League_Spartan, Poppins } from "next/font/google"
 import { headers } from "next/headers"
 import "./globals.css"
 import { SiteHeader } from "@/src/components/marketing/SiteHeader"
+import { SiteFooter } from "@/src/components/marketing/SiteFooter"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -31,8 +32,11 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.className} ${leagueSpartan.variable}`}>
-        <SiteHeader pathname={pathname} />
-        {children}
+        <div className="flex min-h-screen flex-col">
+          <SiteHeader pathname={pathname} />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+        </div>
       </body>
     </html>
   )

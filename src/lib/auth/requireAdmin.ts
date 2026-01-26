@@ -21,7 +21,8 @@ export async function requireAdmin(): Promise<AdminUser> {
     try {
       const json = Buffer.from(adminSession, 'base64url').toString('utf8')
       const parsed = JSON.parse(json) as { userId?: string; email?: string; role?: string }
-      if (parsed?.role === 'admin' && parsed.email) {
+      const role = parsed?.role
+      if ((role === 'admin' || role === 'support' || role === 'analyst') && parsed.email) {
         return { id: parsed.userId || 'admin-user', email: parsed.email, provider: 'app-auth' }
       }
     } catch {
@@ -43,8 +44,20 @@ export async function requireAdmin(): Promise<AdminUser> {
   if (!email) throw forbidden('missing email on session user')
 
   // 2) Quick env allowlist (fast unblock / emergency)
-  const allow = parseEmailAllowlist(process.env.ADMIN_EMAILS)
-  if (allow.has(email)) {
+  const allow = parseEmailAllowlist(process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL)
+  const supportAllow = parseEmailAllowlist(process.env.ADMIN_SUPPORT_EMAILS)
+  const analystAllow = parseEmailAllowlist(process.env.ADMIN_ANALYST_EMAILS)
+  const allowIds = parseEmailAllowlist(process.env.ADMIN_USER_IDS)
+  const supportIds = parseEmailAllowlist(process.env.ADMIN_SUPPORT_USER_IDS)
+  const analystIds = parseEmailAllowlist(process.env.ADMIN_ANALYST_USER_IDS)
+  if (
+    allow.has(email) ||
+    supportAllow.has(email) ||
+    analystAllow.has(email) ||
+    allowIds.has(u.id) ||
+    supportIds.has(u.id) ||
+    analystIds.has(u.id)
+  ) {
     return { id: u.id, email, provider: 'app-auth' }
   }
 

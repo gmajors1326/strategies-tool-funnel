@@ -820,42 +820,12 @@ const analyticsSignalReaderRunner = async (req: RunRequest) => {
   const rawMetrics = String(req.input.last30 ?? '').trim()
   const priority = String(req.input.priority ?? 'watch_time').trim()
 
+  const metricsMissing = !rawMetrics || rawMetrics.length < 40
   const missingNotes = [
     'Paste last 10 posts metrics (views, avg watch time, completion rate).',
     'Include follows gained, profile visits, saves, shares per post.',
     'Add topic/format for each post (hook style, length, CTA).',
   ]
-
-  if (!rawMetrics || rawMetrics.length < 40) {
-    return {
-      output: normalizeToolOutput('analytics-signal-reader', {
-        summary: {
-          primaryIssue: 'unknown',
-          confidence: 0.1,
-          oneSentenceDiagnosis: 'Insufficient input to diagnose performance.',
-        },
-        signals: [],
-        prioritizedFixes: [],
-        next7Days: [
-          { day: 1, reelIdea: 'Collect metrics', hook: 'Bring me your last 10 posts', shotPlan: ['Export insights'], cta: 'comment' },
-          { day: 2, reelIdea: 'Organize data', hook: 'Turn raw insights into a simple table', shotPlan: ['List posts by topic'], cta: 'comment' },
-          { day: 3, reelIdea: 'Baseline audit', hook: 'Spot your top 3 hooks', shotPlan: ['Rank by retention'], cta: 'save' },
-          { day: 4, reelIdea: 'Retention check', hook: 'Where do people drop off?', shotPlan: ['Mark drop-off timestamps'], cta: 'save' },
-          { day: 5, reelIdea: 'CTA audit', hook: 'Are your CTAs aligned?', shotPlan: ['Map CTA to goal'], cta: 'comment' },
-          { day: 6, reelIdea: 'Format audit', hook: 'Which format actually wins?', shotPlan: ['Compare lengths'], cta: 'save' },
-          { day: 7, reelIdea: 'Plan tests', hook: 'Pick 2 fixes to test', shotPlan: ['Draft next 2 reels'], cta: 'follow' },
-        ],
-        stopDoing: [],
-        experiment: {
-          name: 'Baseline data collection',
-          hypothesis: 'Clear metrics reveal the real bottleneck.',
-          steps: ['Export last 30 days insights', 'List top 10 posts with metrics', 'Add topic and hook notes'],
-          successMetric: 'Complete data for analysis',
-        },
-        notes: missingNotes,
-      }),
-    }
-  }
 
   const system = [
     'You are an Instagram growth analyst in 2026 (Reels-first, retention-obsessed).',
@@ -886,8 +856,9 @@ const analyticsSignalReaderRunner = async (req: RunRequest) => {
 
   const user = [
     `Priority focus: ${priority || 'watch_time'}`,
+    `Missing input: ${metricsMissing ? missingNotes.join(' ') : 'None'}`,
     'Metrics/notes (messy paste allowed):',
-    rawMetrics,
+    rawMetrics || '(missing metrics)',
     '',
     'Analyze signals, diagnose issues, and produce actionable fixes.',
     'If something is missing, mention it in notes and proceed with best-effort.',
@@ -912,29 +883,6 @@ const dmIntelligenceEngineRunner = async (req: RunRequest) => {
   const goal = String(req.input.goal ?? '').trim()
   const tone = String(req.input.tone ?? 'calm').trim()
   const offerOneLiner = String(req.input.offerOneLiner ?? '').trim()
-
-  if (!leadMessage) {
-    return {
-      output: normalizeToolOutput('dm-intelligence-engine', {
-        context: { leadType: 'unknown', intent: 'unknown' },
-        bestReply: {
-          message: 'Paste the lead message so I can draft a response.',
-          tone: 'calm',
-          length: 'short',
-        },
-        alternatives: [
-          { label: 'softer', message: 'Paste the lead message for a softer reply.' },
-          { label: 'firmer', message: 'Paste the lead message for a firmer reply.' },
-          { label: 'qualify', message: 'Paste the lead message to qualify them.' },
-        ],
-        nextQuestions: ['What did they say?', 'What is their goal?', 'What have they tried?'],
-        doNotSay: ['Generic pitches without context', 'Hard closes without qualification', 'Vague promises'],
-        followUpPlan: [
-          { when: 'same_day', message: 'Send the lead message so I can help.' },
-        ],
-      }),
-    }
-  }
 
   const system = [
     'You are a DM conversion strategist in 2026.',
@@ -962,9 +910,10 @@ const dmIntelligenceEngineRunner = async (req: RunRequest) => {
     `Goal: ${goal || '(missing)'}`,
     `Tone: ${tone || 'calm'}`,
     `Offer one-liner: ${offerOneLiner || '(missing)'}`,
+    `Missing input: ${leadMessage ? 'None' : 'Lead message'}`,
     '',
     'Lead message:',
-    leadMessage,
+    leadMessage || '(missing lead message)',
   ].join('\n')
 
   const result = await runAIJson({
@@ -985,27 +934,6 @@ const offerClarityCheckRunner = async (req: RunRequest) => {
   const offer = String(req.input.offer ?? '').trim()
   const audience = String(req.input.audience ?? '').trim()
   const price = String(req.input.price ?? '').trim()
-
-  if (!offer) {
-    return {
-      output: normalizeToolOutput('offer-clarity-check', {
-        score: { clarity: 10, specificity: 10, believability: 10 },
-        diagnosis: {
-          confusingParts: ['Offer text is missing.'],
-          missingInfo: ['Who it is for', 'What they get', 'Timeframe/results'],
-          risk: 'high',
-        },
-        rewrites: [
-          { format: 'one_liner', text: 'Paste your offer so I can clarify it.' },
-          { format: 'two_lines', text: 'Paste your offer so I can rewrite it.' },
-          { format: 'bullet_offer', text: 'Paste your offer to structure it.' },
-        ],
-        proofToAdd: ['Specific outcomes', 'Timeframe', 'Proof/examples'],
-        pricingFrame: ['Anchor value vs price', 'Risk reversal'],
-        ctaOptions: ['Comment “details”', 'DM “offer”', 'Book a call'],
-      }),
-    }
-  }
 
   const system = [
     'You are a direct-response offer clarity strategist in 2026.',
@@ -1030,9 +958,10 @@ const offerClarityCheckRunner = async (req: RunRequest) => {
   const user = [
     `Audience: ${audience || '(missing)'}`,
     `Price: ${price || '(missing)'}`,
+    `Missing input: ${offer ? 'None' : 'Offer description'}`,
     '',
     'Offer:',
-    offer,
+    offer || '(missing offer description)',
   ].join('\n')
 
   const result = await runAIJson({
@@ -1053,23 +982,6 @@ const reelScriptBuilderRunner = async (req: RunRequest) => {
   const topic = String(req.input.topic ?? '').trim()
   const angle = String(req.input.angle ?? '').trim()
   const lengthSeconds = Number(req.input.lengthSeconds ?? 15)
-
-  if (!topic) {
-    return {
-      output: normalizeToolOutput('reel-script-builder', {
-        hookOptions: ['Paste a topic so I can generate hooks.'],
-        script: {
-          onScreen: ['Add a topic', 'Add a topic', 'Add a topic', 'Add a topic'],
-          voiceover: ['Add a topic', 'Add a topic', 'Add a topic', 'Add a topic'],
-        },
-        shotPlan: ['Provide a topic', 'Provide a topic', 'Provide a topic', 'Provide a topic'],
-        loopEnding: 'Paste a topic to craft a loop.',
-        caption: 'Paste a topic to draft a caption.',
-        cta: 'save',
-        hashtags: ['topic', 'niche', 'reels', 'creator', 'growth', 'content', 'marketing', 'tips', 'strategy', 'social'],
-      }),
-    }
-  }
 
   const system = [
     'You are a Reels scriptwriter in 2026 focused on retention.',
@@ -1092,9 +1004,10 @@ const reelScriptBuilderRunner = async (req: RunRequest) => {
   ].join('\n')
 
   const user = [
-    `Topic: ${topic}`,
+    `Topic: ${topic || '(missing)'}`,
     `Angle: ${angle || 'truth'}`,
     `Length (seconds): ${Number.isFinite(lengthSeconds) ? lengthSeconds : 15}`,
+    `Missing input: ${topic ? 'None' : 'Topic'}`,
   ].join('\n')
 
   const result = await runAIJson({

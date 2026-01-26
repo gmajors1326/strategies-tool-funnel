@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/adminAuth'
+import { rateLimitAdminAction, requireAdminAccess } from '@/lib/adminAuth'
+import { rateLimitConfigs } from '@/lib/rate-limit'
 import { grantBonusRuns } from '@/src/lib/tool/bonusRuns'
-import { logAdminAudit } from '@/src/lib/admin/audit'
 
 export async function POST(req: Request) {
   try {
-    const admin = await requireAdmin()
     const body = await req.json()
 
     const userId = String(body.userId || '')
@@ -24,19 +23,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: { message: 'expiresAt must be a valid ISO date string' } }, { status: 400 })
     }
 
-    const row = await grantBonusRuns({
-      userId,
-      toolId,
-      runsGranted,
-      reason,
-      expiresAt: expiresAt ?? null,
-      grantedBy: admin.userId,
-    })
-
-    await logAdminAudit({
-      actorId: admin.userId,
-      actorEmail: admin.email,
+    const admin = await requireAdminAccess(req, {
       action: 'admin.bonus_runs.grant',
+      policy: 'admin',
       target: userId,
       meta: {
         toolId,
@@ -44,6 +33,27 @@ export async function POST(req: Request) {
         reason,
         expiresAt: expiresAt?.toISOString?.() ?? null,
       },
+    })
+
+    const rateLimit = await rateLimitAdminAction(admin, 'bonus_runs.grant', rateLimitConfigs.adminAction)
+    if (!rateLimit.success) {
+      const headers = new Headers()
+      Object.entries(rateLimit.headers).forEach(([key, value]) => {
+        if (value) headers.set(key, value)
+      })
+      return NextResponse.json(
+        { error: { message: 'Rate limit exceeded' } },
+        { status: 429, headers }
+      )
+    }
+
+    const row = await grantBonusRuns({
+      userId,
+      toolId,
+      runsGranted,
+      reason,
+      expiresAt: expiresAt ?? null,
+      grantedBy: admin.userId,
     })
 
     return NextResponse.json({ ok: true, bonus: row })

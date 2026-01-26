@@ -3,7 +3,7 @@ type NormalizeResult = {
   changed: boolean
 }
 
-const ensureString = (value: any, fallback = ''): NormalizeResult => {
+const ensureString = (value: any, fallback = 'Needs more input.'): NormalizeResult => {
   if (typeof value === 'string') return { output: value, changed: false }
   return { output: fallback, changed: true }
 }
@@ -23,21 +23,25 @@ const ensureEnum = (value: any, allowed: string[], fallback: string): NormalizeR
   return { output: fallback, changed: true }
 }
 
-const ensureStringArray = (value: any, length?: number): NormalizeResult => {
+const ensureStringArray = (value: any, length?: number, fallback = 'Needs more input.'): NormalizeResult => {
   const arrResult = ensureArray(value)
   let changed = arrResult.changed
   const arr = (arrResult.output as any[]).map((item) => {
-    const s = ensureString(item)
+    const s = ensureString(item, fallback)
     if (s.changed) changed = true
     return s.output
   })
   if (typeof length === 'number') {
     if (arr.length !== length) changed = true
     if (arr.length < length) {
-      while (arr.length < length) arr.push('')
+      while (arr.length < length) arr.push(fallback)
     } else if (arr.length > length) {
       arr.length = length
     }
+  }
+  if (arr.length === 0) {
+    arr.push(fallback)
+    changed = true
   }
   return { output: arr, changed }
 }

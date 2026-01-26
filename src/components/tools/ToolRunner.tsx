@@ -411,7 +411,7 @@ export function ToolRunner(props: {
   const canExportTemplates = Boolean(ui?.entitlements?.canExportTemplates)
   const degraded = Boolean(result?.degraded)
   const canExportEffective = canExport && !degraded
-  const canSeeHistoryEffective = canSeeHistory && !degraded
+  const canSeeHistoryEffective = canSeeHistory
   const canSaveToVaultEffective = canSaveToVault && !degraded
   const canExportTemplatesEffective = canExportTemplates && !degraded
   const planLocked = !canExportEffective || !canSaveToVaultEffective || !canExportTemplatesEffective
@@ -1547,7 +1547,9 @@ export function ToolRunner(props: {
               </div>
             ) : (
               <p className="mt-2 text-sm text-muted-foreground">
-                {degraded ? 'History is unavailable during database outage.' : 'No runs yet.'}
+                {degraded
+                  ? 'History is temporarily unavailable from the server. Local history appears after you run a tool.'
+                  : 'No runs yet.'}
               </p>
             )}
           </div>

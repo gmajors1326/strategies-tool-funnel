@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/adminAuth'
+import { requireAdminAccess } from '@/lib/adminAuth'
 import { listTicketsForAdmin } from '@/src/lib/support/tickets'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    await requireAdmin()
+    await requireAdminAccess(request, {
+      action: 'admin.support.tickets.list',
+      policy: 'support',
+    })
   } catch (err: any) {
     const status = err?.status || 403
     return NextResponse.json({ error: 'Unauthorized', tickets: [] }, { status })
