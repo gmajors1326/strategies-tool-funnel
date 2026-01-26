@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
         leadId = customer.id
         await stripe.customers.update(customer.id, {
           metadata: {
+            lead_type: 'open_tools',
             lead_source: source,
             captured_at: new Date().toISOString(),
           },
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
         const customer = await stripe.customers.create({
           email,
           metadata: {
+            lead_type: 'open_tools',
             lead_source: source,
             captured_at: new Date().toISOString(),
           },

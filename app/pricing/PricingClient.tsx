@@ -3,8 +3,10 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { PLAN_CONFIG, type PlanKey } from '@/src/lib/billing/planConfig'
-import { PLAN_SKUS, TOKEN_PACK_SKUS } from '@/src/lib/billing/skus'
+import { PLAN_CATALOG, getPlanTierFromPlanId, type PlanTier } from '@/src/lib/billing/planCatalog'
+import { STRIPE_CATALOG } from '@/src/lib/billing/stripeCatalog'
+import { DAILY_TOKENS } from '@/src/lib/billing/tokenEconomy'
+import { getRolloverPolicy } from '@/src/lib/billing/tokenRollover'
 import { CurrentPlanPill } from '@/src/components/billing/CurrentPlanPill'
 import { TokenPackCard } from '@/src/components/billing/TokenPackCard'
 import { Button } from '@/src/components/ui/Button'
@@ -19,74 +21,6 @@ type UiConfigSummary = {
   usage: { tokensRemaining: number; resetsAtISO: string }
 }
 
-const PLAN_FEATURES = {
-  free: [
-    'Limited daily AI runs',
-    'Access to core tools',
-    'Basic outputs',
-    'Standard cooldowns',
-    'Community support',
-  ],
-  pro: [
-    'Higher daily AI tokens',
-    'Pro-only tools unlocked',
-    'Faster or no cooldowns',
-    'Save to Vault / templates',
-    'Exports (PDF/CSV/templates)',
-    'Priority support',
-  ],
-  team: [
-    'Highest limits',
-    'Shared workspace',
-    'Central billing',
-    'Admin controls',
-    'Priority support',
-  ],
-  business: [
-    'Highest limits',
-    'Shared workspace',
-    'Central billing',
-    'Admin controls',
-    'Priority support',
-  ],
-}
-
-const PLAN_LIMITS = {
-  free: (tokens: number) => [
-    `Daily AI tokens: ${tokens.toLocaleString()}`,
-    'Cooldowns: Standard',
-    'Exports/Save: Limited',
-  ],
-  pro: (tokens: number) => [
-    `Daily AI tokens: ${tokens.toLocaleString()}`,
-    'Cooldowns: Faster',
-    'Exports/Save: Included',
-  ],
-  team: (tokens: number) => [
-    `Daily AI tokens: ${tokens.toLocaleString()}`,
-    'Cooldowns: Fastest',
-    'Exports/Save: Included',
-  ],
-  business: (tokens: number) => [
-    `Daily AI tokens: ${tokens.toLocaleString()}`,
-    'Cooldowns: Fastest',
-    'Exports/Save: Included',
-  ],
-}
-
-const TOKEN_PACK_BEST_FOR: Record<string, string> = {
-  small: 'Best for occasional spikes',
-  medium: 'Best for weekly growth pushes',
-  large: 'Best for heavy testing',
-}
-
-function getPlanLabel(planId?: string | null) {
-  if (planId === 'pro_monthly') return 'Pro'
-  if (planId === 'team') return 'Team'
-  if (planId === 'lifetime') return 'Lifetime'
-  return 'Free'
-}
-
 export function PricingClient() {
   const searchParams = useSearchParams()
   const reason = searchParams.get('reason')
@@ -96,6 +30,7 @@ export function PricingClient() {
 
   const [activeTab, setActiveTab] = React.useState<'plans' | 'tokens'>('plans')
   const [uiConfig, setUiConfig] = React.useState<UiConfigSummary | null>(null)
+  const [loadingAction, setLoadingAction] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     if (tabParam === 'tokens' || reason === 'tokens') {
@@ -135,13 +70,14 @@ export function PricingClient() {
     }
   }, [])
 
-  const currentPlanLabel = uiConfig ? getPlanLabel(uiConfig.user.planId) : null
+  const currentTier: PlanTier = getPlanTierFromPlanId(uiConfig?.user?.planId)
+  const currentPlanLabel = uiConfig ? PLAN_CATALOG[currentTier].displayName : null
   const tokensRemaining = uiConfig?.usage?.tokensRemaining ?? null
   const resetTime = uiConfig?.usage?.resetsAtISO ?? null
 
   const avgTokensPerRun = React.useMemo(() => {
-    const avg = Math.round((PLAN_CONFIG.pro.tokensPerDay || 25000) / (PLAN_CONFIG.pro.runsPerDay || 50))
-    return Math.max(100, avg)
+    const avg = Math.round(DAILY_TOKENS.pro / 50)
+    return Math.max(40, avg)
   }, [])
 
   const notice =
@@ -166,34 +102,44 @@ export function PricingClient() {
   const rowClass = (key: string) =>
     feature === key ? 'ring-1 ring-[hsl(var(--ring))] border-[hsl(var(--ring))]' : 'border-[hsl(var(--border))]'
 
-  async function checkoutSku(sku: string) {
+  async function checkout(priceId: string, mode: 'subscription' | 'payment') {
+    setLoadingAction(priceId)
     void fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         eventName: 'checkout_started',
-        meta: { sku, type: sku.startsWith('tokens_') ? 'tokens' : 'plan', reason },
+        meta: { priceId, mode, reason },
       }),
     })
-    const res = await fetch('/api/billing/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sku }),
-    })
-    const data = await res.json()
-    if (data?.url) window.location.href = data.url
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId, mode, returnTo: `/pricing?tab=${mode === 'payment' ? 'tokens' : 'plans'}` }),
+      })
+      const data = await res.json()
+      if (data?.url) window.location.href = data.url
+    } finally {
+      setLoadingAction(null)
+    }
   }
 
   async function openPortal() {
-    const res = await fetch('/api/billing/portal', { method: 'POST' })
-    const data = await res.json()
-    if (data?.url) window.location.href = data.url
+    setLoadingAction('portal')
+    try {
+      const res = await fetch('/api/billing/portal', { method: 'POST' })
+      const data = await res.json()
+      if (data?.url) window.location.href = data.url
+    } finally {
+      setLoadingAction(null)
+    }
   }
 
-  const PLAN_ACCENTS: Record<PlanKey, { ring: string; text: string; dot: string }> = {
+  const PLAN_ACCENTS: Record<PlanTier, { ring: string; text: string; dot: string }> = {
     free: { ring: 'ring-emerald-400/40', text: 'text-emerald-300', dot: 'bg-emerald-400' },
     pro: { ring: 'ring-violet-400/40', text: 'text-violet-300', dot: 'bg-violet-400' },
-    business: { ring: 'ring-sky-400/40', text: 'text-sky-300', dot: 'bg-sky-400' },
+    elite: { ring: 'ring-sky-400/40', text: 'text-sky-300', dot: 'bg-sky-400' },
   }
 
   return (
@@ -234,62 +180,70 @@ export function PricingClient() {
                 <p className="text-xs uppercase tracking-[0.2em] text-white/40">Monthly plans</p>
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {PLAN_SKUS.filter((plan) => plan.planId !== 'lifetime').map((plan) => {
-                const planKey: PlanKey =
-                  plan.planId === 'team' ? 'business' : plan.planId === 'pro_monthly' ? 'pro' : 'free'
-                const features = PLAN_FEATURES[planKey]
-                const limits = PLAN_LIMITS[planKey](PLAN_CONFIG[planKey].tokensPerDay)
-                const isCurrent = uiConfig?.user?.planId === plan.planId
-                const accents = PLAN_ACCENTS[planKey]
-                return (
-                  <div
-                    key={plan.id}
-                    className={`rounded-2xl border border-white/10 bg-[#3a3a3a] p-6 text-center shadow-[0_24px_40px_rgba(0,0,0,0.35)] ring-1 ${accents.ring}`}
-                  >
-                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
-                      <span className={`h-3 w-3 rounded-full ${accents.dot}`} />
-                    </div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
-                      {plan.title}
-                    </p>
-                    <p className={`mt-2 text-3xl font-semibold ${accents.text}`}>{plan.priceDisplay}</p>
-                    {plan.billingInterval ? (
-                      <p className="text-xs text-white/50">per {plan.billingInterval}</p>
-                    ) : (
-                      <p className="text-xs text-white/50">always free</p>
-                    )}
-                    <p className="mt-3 text-xs text-white/50">{plan.subtitle}</p>
+                {(Object.keys(PLAN_CATALOG) as PlanTier[]).map((tier) => {
+                  const plan = PLAN_CATALOG[tier]
+                  const accents = PLAN_ACCENTS[tier]
+                  const isCurrent = currentTier === tier
+                  const stripePlan = tier === 'free' ? null : STRIPE_CATALOG.plans[tier]
+                  const rollover = getRolloverPolicy(tier)
+                  return (
+                    <div
+                      key={tier}
+                      className={`rounded-2xl border border-white/10 bg-[#3a3a3a] p-6 text-center shadow-[0_24px_40px_rgba(0,0,0,0.35)] ring-1 ${accents.ring}`}
+                    >
+                      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
+                        <span className={`h-3 w-3 rounded-full ${accents.dot}`} />
+                      </div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+                        {plan.displayName}
+                      </p>
+                      <p className={`mt-2 text-3xl font-semibold ${accents.text}`}>
+                        {plan.monthlyPrice === 0 ? '$0' : `$${plan.monthlyPrice}`}
+                      </p>
+                      <p className="text-xs text-white/50">{plan.monthlyPrice === 0 ? 'always free' : 'per month'}</p>
+                      <p className="mt-3 text-xs text-white/50">
+                        {tier === 'free' ? 'Start with the essentials.' : 'Upgrade to unlock more.'}
+                      </p>
 
-                    <div className="mt-4 space-y-2 text-xs text-white/70">
-                      {features.map((item) => (
-                        <div key={item} className="border-t border-white/5 pt-2">
-                          {item}
-                        </div>
-                      ))}
-                    </div>
+                      <div className="mt-4 space-y-2 text-xs text-white/70">
+                        {plan.features.slice(0, 6).map((item) => (
+                          <div key={item} className="border-t border-white/5 pt-2">
+                            {item}
+                          </div>
+                        ))}
+                      </div>
 
-                    <div className="mt-4 space-y-1 text-[11px] text-white/50">
-                      {limits.map((item) => (
-                        <div key={item}>{item}</div>
-                      ))}
-                    </div>
+                      <div className="mt-4 space-y-1 text-[11px] text-white/50">
+                        <div>Daily tokens: {DAILY_TOKENS[tier].toLocaleString()}</div>
+                        <div>Rollover: {rollover.enabled ? `up to ${rollover.capDays} days` : 'none'}</div>
+                        <div>History: {plan.entitlements.historyDepth === 'unlimited' ? 'Unlimited' : plan.entitlements.historyDepth}</div>
+                      </div>
 
-                    <div className="mt-5 flex flex-col gap-2">
-                      <Button
-                        onClick={() => {
-                          if (isCurrent) return openPortal()
-                          return checkoutSku(plan.id)
-                        }}
-                      >
-                        {isCurrent ? 'Manage plan' : planKey === 'free' ? 'Start free' : 'Unlock Pro'}
-                      </Button>
-                      <Link href={`/pricing?tab=plans#${planKey}`} className="text-xs text-white/50">
-                        See what&apos;s included
-                      </Link>
+                      <div className="mt-5 flex flex-col gap-2">
+                        {tier === 'free' ? (
+                          <Button onClick={() => window.location.assign('/tools')}>Get started</Button>
+                        ) : (
+                          <Button
+                            onClick={() => {
+                              if (isCurrent) return
+                              if (stripePlan?.priceId) {
+                                return checkout(stripePlan.priceId, 'subscription')
+                              }
+                            }}
+                            disabled={isCurrent || loadingAction === stripePlan?.priceId}
+                          >
+                            {isCurrent ? 'Current plan' : loadingAction === stripePlan?.priceId ? 'Redirecting…' : 'Upgrade'}
+                          </Button>
+                        )}
+                        {isCurrent && tier !== 'free' ? (
+                          <Button variant="outline" onClick={() => openPortal()} disabled={loadingAction === 'portal'}>
+                            {loadingAction === 'portal' ? 'Opening…' : 'Manage plan'}
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
               </div>
             </div>
 
@@ -298,7 +252,7 @@ export function PricingClient() {
               id="comparison"
               className="mt-6 rounded-xl border border-white/10 bg-[#3a3a3a] p-4 text-sm text-white/70"
             >
-              <div className="text-xs uppercase text-white/50 mb-3">Plan comparison</div>
+              <div className="mb-3 text-xs uppercase text-white/50">Plan comparison</div>
               <div className="overflow-x-auto">
                 <div className="min-w-[640px] space-y-2 text-xs">
                   <div className="grid grid-cols-4 gap-2">
@@ -307,25 +261,25 @@ export function PricingClient() {
                     <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-center font-semibold shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
                       Pro
                     </div>
-                    <div className="rounded-md border border-white/10 px-3 py-2 text-center">Team</div>
+                    <div className="rounded-md border border-white/10 px-3 py-2 text-center">Elite</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2">
                     <div className="rounded-md border border-white/10 px-3 py-2">Daily tokens</div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">1,000 / day</div>
+                    <div className="rounded-md border border-white/10 px-3 py-2">200 / day</div>
                     <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
-                      10,000 / day
+                      2,000 / day
                     </div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">30,000 / day</div>
+                    <div className="rounded-md border border-white/10 px-3 py-2">6,000 / day</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2">
-                    <div className="rounded-md border border-white/10 px-3 py-2">Tool access</div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">Core tools</div>
+                    <div className="rounded-md border border-white/10 px-3 py-2">Rollover</div>
+                    <div className="rounded-md border border-white/10 px-3 py-2">—</div>
                     <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
-                      All tools
+                      Up to 7 days
                     </div>
-                    <div className="rounded-md border border-white/10 px-3 py-2">All tools</div>
+                    <div className="rounded-md border border-white/10 px-3 py-2">Up to 30 days</div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-2" id="compare-save">
@@ -336,7 +290,7 @@ export function PricingClient() {
                   </div>
 
                   <div className="grid grid-cols-4 gap-2" id="compare-export">
-                    <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('export')}`}>Export (JSON / CSV / Template)</div>
+                    <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('export')}`}>Export JSON/CSV</div>
                     <div className={`rounded-md border border-white/10 px-3 py-2 text-white/40 ${rowClass('export')}`}>—</div>
                     <div className={`rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)] ${rowClass('export')}`}>✓</div>
                     <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('export')}`}>✓</div>
@@ -345,7 +299,7 @@ export function PricingClient() {
                   <div className="grid grid-cols-4 gap-2" id="compare-pdf">
                     <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('pdf')}`}>Export PDF</div>
                     <div className={`rounded-md border border-white/10 px-3 py-2 text-white/40 ${rowClass('pdf')}`}>—</div>
-                    <div className={`rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)] ${rowClass('pdf')}`}>✓</div>
+                    <div className={`rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)] ${rowClass('pdf')}`}>Limited</div>
                     <div className={`rounded-md border border-white/10 px-3 py-2 ${rowClass('pdf')}`}>✓</div>
                   </div>
 
@@ -353,7 +307,7 @@ export function PricingClient() {
                     <div className="rounded-md border border-white/10 px-3 py-2">Cooldowns</div>
                     <div className="rounded-md border border-white/10 px-3 py-2">Standard</div>
                     <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
-                      Reduced / none
+                      Reduced
                     </div>
                     <div className="rounded-md border border-white/10 px-3 py-2">None</div>
                   </div>
@@ -384,27 +338,26 @@ export function PricingClient() {
 
           <TabsContent value="tokens">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {TOKEN_PACK_SKUS.map((pack) => {
-                const packKey = pack.packId.replace('tokens_', '')
-                const bestFor = TOKEN_PACK_BEST_FOR[packKey] || 'Best for quick boosts'
-                return (
-                  <TokenPackCard
-                    key={pack.id}
-                    title={pack.title}
-                    tokens={pack.tokensGranted}
-                    bestFor={bestFor}
-                    runsEstimate={`≈ ${Math.round(pack.tokensGranted / avgTokensPerRun)} runs`}
-                  >
-                    <Button onClick={() => checkoutSku(pack.id)}>Buy tokens</Button>
-                  </TokenPackCard>
-                )
-              })}
+              {Object.entries(STRIPE_CATALOG.tokenPacks).map(([key, pack]) => (
+                <TokenPackCard
+                  key={key}
+                  title={`${pack.displayName} Pack`}
+                  price={`$${pack.price}`}
+                  tokens={pack.tokens}
+                  bestFor="Bonus tokens never expire."
+                  runsEstimate={`≈ ${Math.round(pack.tokens / avgTokensPerRun)} runs`}
+                >
+                  <Button onClick={() => checkout(pack.priceId, 'payment')} disabled={loadingAction === pack.priceId}>
+                    {loadingAction === pack.priceId ? 'Redirecting…' : 'Buy tokens'}
+                  </Button>
+                </TokenPackCard>
+              ))}
             </div>
 
             <div className="mt-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 text-sm">
               <div className="text-xs uppercase text-[hsl(var(--muted))] mb-2">Tokens explained</div>
               <p className="text-sm text-[hsl(var(--muted))]">
-                Tokens are pay-as-you-go runs for AI-heavy tools. Packs stack on top of plan limits.
+                Bonus tokens never expire and stack on top of your daily plan limits.
               </p>
               <div className="mt-3 text-xs text-[hsl(var(--muted))]">
                 You’ve used today’s AI tokens. Tokens reset automatically at {formatLocalTime(resetTime || undefined)} or
@@ -417,8 +370,12 @@ export function PricingClient() {
         <FaqBlock title="FAQ" />
 
         <div className="flex justify-between">
-          <Button variant="outline" onClick={() => checkoutSku('tokens_small')}>
-            Buy tokens
+          <Button
+            variant="outline"
+            onClick={() => checkout(STRIPE_CATALOG.tokenPacks.starter.priceId, 'payment')}
+            disabled={loadingAction === STRIPE_CATALOG.tokenPacks.starter.priceId}
+          >
+            {loadingAction === STRIPE_CATALOG.tokenPacks.starter.priceId ? 'Redirecting…' : 'Buy tokens'}
           </Button>
           <Link href="/help" className="text-xs text-white/50">
             Questions? Read how limits work.

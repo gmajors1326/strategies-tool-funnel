@@ -391,17 +391,11 @@ export function ToolRunner(props: {
   const [tokensAllowance, setTokensAllowance] = React.useState<number | null>(null)
   const [tokensResetAt, setTokensResetAt] = React.useState<string | null>(null)
   const [authLoaded, setAuthLoaded] = React.useState(false)
-  const [authStatus, setAuthStatus] = React.useState<{ signedIn: boolean; guest: boolean; email?: string | null }>({
+  const [authStatus, setAuthStatus] = React.useState<{ signedIn: boolean; email?: string | null }>({
     signedIn: false,
-    guest: false,
     email: null,
   })
   const [showGate, setShowGate] = React.useState(false)
-  const [guestEmail, setGuestEmail] = React.useState('')
-  const [guestName, setGuestName] = React.useState('')
-  const [guestSendLink, setGuestSendLink] = React.useState(true)
-  const [guestBusy, setGuestBusy] = React.useState(false)
-  const [guestError, setGuestError] = React.useState<string | null>(null)
   const isDev = process.env.NODE_ENV !== 'production'
 
   function debugLog(message: string, meta?: Record<string, any>) {
@@ -690,7 +684,6 @@ export function ToolRunner(props: {
       const data = await res.json()
       setAuthStatus({
         signedIn: Boolean(data?.signedIn),
-        guest: Boolean(data?.guest),
         email: data?.email ?? null,
       })
       setAuthLoaded(true)
@@ -817,57 +810,11 @@ export function ToolRunner(props: {
     if (!authLoaded) {
       await refreshAuth()
     }
-    if (!authStatus.signedIn && !authStatus.guest) {
+    if (!authStatus.signedIn) {
       setShowGate(true)
       return
     }
     return runToolInternal()
-  }
-
-  async function handleGuestContinue() {
-    setGuestError(null)
-    if (!guestName.trim()) {
-      setGuestError('Please enter your name.')
-      return
-    }
-    if (!guestEmail.trim()) {
-      setGuestError('Please enter your email.')
-      return
-    }
-    setGuestBusy(true)
-    try {
-      const res = await fetch('/api/leads/guest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: guestEmail, source: 'tool_run_gate', toolId }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => null)
-        setGuestError(data?.error || 'Failed to continue as guest.')
-        setGuestBusy(false)
-        return
-      }
-      const leadData = await res.json().catch(() => null)
-      if (guestSendLink) {
-        await fetch('/api/auth/start', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: guestName,
-            email: guestEmail,
-            next: `/tools/${toolSlug}`,
-            stripeCustomerId: leadData?.stripeCustomerId,
-          }),
-        })
-      }
-      setAuthStatus({ signedIn: false, guest: true, email: guestEmail })
-      setShowGate(false)
-      await runToolInternal()
-    } catch {
-      setGuestError('Failed to continue as guest.')
-    } finally {
-      setGuestBusy(false)
-    }
   }
 
   async function copy(text: string, label: string) {
@@ -1437,41 +1384,14 @@ export function ToolRunner(props: {
 
           {showGate ? (
             <div className="space-y-3 rounded-md border bg-muted/20 p-3 text-sm">
-              <div className="font-semibold">Choose how you want to continue</div>
-              <p className="text-xs text-muted-foreground">
-                Guest access saves your email and lets you run tools right now.
-              </p>
+              <div className="font-semibold">Sign in to run this tool</div>
+              <p className="text-xs text-muted-foreground">Choose one of the options below to continue.</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 <Button variant="outline" onClick={() => router.push(`/verify?next=/tools/${toolSlug}`)}>
-                  I already have an account → Log in
+                  Sign in
                 </Button>
                 <Button variant="secondary" onClick={() => router.push('/signup')}>
-                  Create account
-                </Button>
-              </div>
-              <div className="space-y-2 pt-2">
-                <Input
-                  placeholder="Your name"
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                />
-                <Input
-                  type="email"
-                  placeholder="you@email.com"
-                  value={guestEmail}
-                  onChange={(e) => setGuestEmail(e.target.value)}
-                />
-                <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={guestSendLink}
-                    onChange={(e) => setGuestSendLink(e.target.checked)}
-                  />
-                  Email me a sign-in link
-                </label>
-                {guestError ? <p className="text-xs text-destructive">{guestError}</p> : null}
-                <Button className="w-full" onClick={handleGuestContinue} disabled={guestBusy}>
-                  {guestBusy ? 'Continuing...' : 'Continue as Guest'}
+                  Create Account
                 </Button>
               </div>
             </div>
@@ -1530,19 +1450,6 @@ export function ToolRunner(props: {
               </div>
             )
           })()}
-          {authStatus.guest ? (
-            <div className="rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
-              Create an account to save and export results.
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Button size="sm" onClick={() => router.push('/signup')}>
-                  Upgrade to account
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => router.push('/verify')}>
-                  Sign in
-                </Button>
-              </div>
-            </div>
-          ) : null}
           {result?.error ? (
             <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 text-sm">
               <div className="font-medium">

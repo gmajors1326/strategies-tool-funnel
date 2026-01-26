@@ -52,32 +52,11 @@ export async function POST(request: NextRequest) {
     console.error('[auth/start] Error:', errorMessage)
     console.error('[auth/start] Stack:', error instanceof Error ? error.stack : 'No stack')
 
-    if (
-      errorMessage.includes('No email provider configured') ||
-      errorMessage.includes('Gmail SMTP enabled but')
-    ) {
+    if (errorMessage.includes('RESEND_API_KEY is not configured')) {
       return NextResponse.json(
         {
           error: 'Email provider not configured',
           code: 'email_not_configured',
-          dbHost,
-          dbName,
-          details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
-        },
-        { status: 500 }
-      )
-    }
-
-    if (
-      errorMessage.includes('eauth') ||
-      errorMessage.includes('invalid login') ||
-      errorMessage.includes('username and password not accepted') ||
-      errorMessage.includes('535')
-    ) {
-      return NextResponse.json(
-        {
-          error: 'Email authentication failed',
-          code: 'gmail_auth_failed',
           dbHost,
           dbName,
           details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,

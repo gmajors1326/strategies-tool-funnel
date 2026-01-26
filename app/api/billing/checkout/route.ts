@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireUser } from '@/src/lib/auth/requireUser'
-import { getSku } from '@/src/lib/billing/skus'
+import { getPlanByPriceId, getTokenPackByPriceId } from '@/src/lib/billing/stripeCatalog'
 import { ensureStripeCustomer, getStripe } from '@/src/lib/billing/stripe'
 
-async function createSession(request: NextRequest, skuId: string) {
+async function createSession(
+  request: NextRequest,
+  params: { mode: 'subscription' | 'payment'; priceId: string; returnTo?: string }
+) {
   const user = await requireUser()
-  const sku = getSku(skuId)
-  if (!sku) {
-    return NextResponse.json({ error: 'Invalid sku' }, { status: 400 })
-  }
-
-  if (!sku.stripePriceId) {
+  const { mode, priceId, returnTo } = params
+  if (!priceId) {
     return NextResponse.json({ error: 'Missing Stripe price ID' }, { status: 400 })
   }
 
@@ -22,28 +21,38 @@ async function createSession(request: NextRequest, skuId: string) {
       ? process.env.NEXT_PUBLIC_APP_URL
       : `${request.nextUrl.protocol}//${request.nextUrl.host}`
 
-  const isSubscription = sku.mode === 'subscription'
-  const planId = 'planId' in sku ? sku.planId : null
+  const isSubscription = mode === 'subscription'
+  const plan = isSubscription ? getPlanByPriceId(priceId) : null
+  const pack = !isSubscription ? getTokenPackByPriceId(priceId) : null
+  const planId = plan?.planId ?? null
+  if (isSubscription && !plan) {
+    return NextResponse.json({ error: 'Unknown subscription price ID' }, { status: 400 })
+  }
+  if (!isSubscription && !pack) {
+    return NextResponse.json({ error: 'Unknown token pack price ID' }, { status: 400 })
+  }
+  const cancelUrl = returnTo && returnTo.startsWith('/') ? returnTo : `/pricing?tab=${isSubscription ? 'plans' : 'tokens'}`
   const session = await stripe.checkout.sessions.create({
     mode: isSubscription ? 'subscription' : 'payment',
     customer: customer.stripeCustomerId,
     allow_promotion_codes: true,
-    line_items: [{ price: sku.stripePriceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/pricing?tab=${sku.id.startsWith('tokens_') ? 'tokens' : 'plans'}`,
+    cancel_url: `${appUrl}${cancelUrl}`,
     metadata: {
       userId: user.id,
-      sku: sku.id,
-      planId,
+      planId: planId ?? '',
+      packId: pack?.packId ?? '',
+      tokensGranted: pack?.tokens ? String(pack.tokens) : '',
     },
     subscription_data: isSubscription
       ? {
-          metadata: { userId: user.id, sku: sku.id, planId: planId ?? '' },
+          metadata: { userId: user.id, planId: planId ?? '' },
         }
       : undefined,
     payment_intent_data: !isSubscription
       ? {
-          metadata: { userId: user.id, sku: sku.id },
+          metadata: { userId: user.id, tokensGranted: pack?.tokens ? String(pack.tokens) : '' },
         }
       : undefined,
     automatic_tax: process.env.STRIPE_TAX_ENABLED === 'true' ? { enabled: true } : undefined,
@@ -54,11 +63,15 @@ async function createSession(request: NextRequest, skuId: string) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
-  const skuId = String(body?.sku || '')
-  return createSession(request, skuId)
+  const mode = body?.mode === 'payment' ? 'payment' : 'subscription'
+  const priceId = String(body?.priceId || '')
+  const returnTo = typeof body?.returnTo === 'string' ? body.returnTo : undefined
+  return createSession(request, { mode, priceId, returnTo })
 }
 
 export async function GET(request: NextRequest) {
-  const skuId = String(request.nextUrl.searchParams.get('sku') || '')
-  return createSession(request, skuId)
+  const mode = request.nextUrl.searchParams.get('mode') === 'payment' ? 'payment' : 'subscription'
+  const priceId = String(request.nextUrl.searchParams.get('priceId') || '')
+  const returnTo = request.nextUrl.searchParams.get('returnTo') || undefined
+  return createSession(request, { mode, priceId, returnTo })
 }

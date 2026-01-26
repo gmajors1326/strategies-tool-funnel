@@ -1,5 +1,7 @@
+import { STRIPE_CATALOG } from '@/src/lib/billing/stripeCatalog'
+
 export type TokenPack = {
-  packId: 'small' | 'medium' | 'large'
+  packId: 'starter' | 'growth' | 'power'
   stripePriceId: string
   tokensGranted: number
   displayName: string
@@ -8,24 +10,22 @@ export type TokenPack = {
 
 export const TOKEN_PACKS: TokenPack[] = [
   {
-    packId: 'small',
-    stripePriceId: process.env.STRIPE_TOKEN_PACK_SMALL_PRICE_ID || '',
-    tokensGranted: 5000,
-    displayName: 'Token Pack: Small',
+    packId: 'starter',
+    stripePriceId: STRIPE_CATALOG.tokenPacks.starter.priceId,
+    tokensGranted: STRIPE_CATALOG.tokenPacks.starter.tokens,
+    displayName: 'Starter',
   },
   {
-    packId: 'medium',
-    stripePriceId: process.env.STRIPE_TOKEN_PACK_MEDIUM_PRICE_ID || '',
-    tokensGranted: 25000,
-    displayName: 'Token Pack: Medium',
-    bonusPercent: 10,
+    packId: 'growth',
+    stripePriceId: STRIPE_CATALOG.tokenPacks.growth.priceId,
+    tokensGranted: STRIPE_CATALOG.tokenPacks.growth.tokens,
+    displayName: 'Growth',
   },
   {
-    packId: 'large',
-    stripePriceId: process.env.STRIPE_TOKEN_PACK_LARGE_PRICE_ID || '',
-    tokensGranted: 100000,
-    displayName: 'Token Pack: Large',
-    bonusPercent: 20,
+    packId: 'power',
+    stripePriceId: STRIPE_CATALOG.tokenPacks.power.priceId,
+    tokensGranted: STRIPE_CATALOG.tokenPacks.power.tokens,
+    displayName: 'Power',
   },
 ]
 

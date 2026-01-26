@@ -17,6 +17,7 @@ import { buildLock } from '@/src/lib/tools/accessGate'
 import { prisma } from '@/src/lib/prisma'
 import { getActiveOrg, getMembership, logToolRun } from '@/src/lib/orgs/orgs'
 import { requireUser } from '@/src/lib/auth/requireUser'
+import { getSession } from '@/lib/auth.server'
 import { validateInput } from '@/src/lib/tools/validate'
 import { assertDbReadyOnce, isProviderError, normalizePrismaError } from '@/src/lib/prisma/guards'
 import { dbHealthCheck } from '@/src/lib/db/dbHealth'
@@ -67,7 +68,6 @@ export async function POST(request: NextRequest) {
 
   log('request_start', { dryRun: data.dryRun ?? false })
 
-  const leadCaptured = request.cookies.get('leadCaptured')?.value === 'true'
   const dbHealth = await dbHealthCheck()
   let degraded = !dbHealth.ok
   log('db_health', { ok: dbHealth.ok, error: dbHealth.error })
@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
   }
 
   const runDegraded = async () => {
+    const cookieSession = await getSession()
     let tool: ReturnType<typeof getToolMeta> | null = null
     try {
       tool = getToolMeta(data.toolId)
@@ -119,8 +120,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const allowDevGuest = process.env.NODE_ENV !== 'production'
-    if (!leadCaptured && !allowDevGuest) {
+    if (!cookieSession) {
       return NextResponse.json<RunResponse>(
         {
           status: 'error',
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
     try {
       log('runner_start', { degraded: true })
       const result = await runner(data, {
-        user: { id: leadCaptured ? 'lead_guest' : 'dev_guest', planId: 'free' },
+        user: { id: cookieSession.userId, planId: (cookieSession.plan as any) || 'free' },
         toolMeta: tool,
         usage: { aiTokensRemaining: 0 },
         logger: { info: () => {}, error: () => {} },
@@ -213,17 +213,8 @@ export async function POST(request: NextRequest) {
 
   if (!degraded) {
     try {
-      if (!leadCaptured) {
-        await assertDbReadyOnce()
-        session = await requireUser()
-      } else {
-        try {
-          await assertDbReadyOnce()
-          session = await requireUser()
-        } catch {
-          session = null
-        }
-      }
+      await assertDbReadyOnce()
+      session = await requireUser()
     } catch (err: any) {
       const msg = String(err?.message || err || '')
       const looksLikeDb =
@@ -232,8 +223,6 @@ export async function POST(request: NextRequest) {
         authDbError = msg || 'Unknown error'
         log('auth_db_failed', { message: authDbError })
         degraded = true
-      } else if (leadCaptured) {
-        session = null
       } else {
         return NextResponse.json<RunResponse>(
           {
@@ -248,72 +237,25 @@ export async function POST(request: NextRequest) {
   }
 
   if (degraded) {
+    const cookieSession = await getSession()
+    if (!cookieSession) {
+      return NextResponse.json<RunResponse>(
+        {
+          status: 'error',
+          error: { message: 'Unauthorized.', code: 'AUTH_ERROR' },
+          requestId,
+          degraded: true,
+          degradedReason: 'DB_UNAVAILABLE',
+          disabledFeatures: [...disabledFeatures],
+        },
+        { status: 401, headers: { 'x-request-id': requestId } }
+      )
+    }
     return runDegraded()
   }
 
-  if (!session && leadCaptured) {
-    log('lead_guest_session', { leadCaptured: true })
-    let tool: ReturnType<typeof getToolMeta> | null = null
-    try {
-      tool = getToolMeta(data.toolId)
-    } catch {
-      tool = null
-    }
-
-    if (!tool) {
-      return NextResponse.json<RunResponse>(
-        {
-          status: 'error',
-          error: { message: 'Tool not found.', code: 'TOOL_ERROR' },
-          requestId,
-        },
-        { status: 404, headers: { 'x-request-id': requestId } }
-      )
-    }
-
-    try {
-        log('runner_start', { leadGuest: true })
-        const result = await runnerRegistry[tool.id](data, {
-        user: { id: 'lead_guest', planId: 'free' },
-        toolMeta: tool,
-        usage: { aiTokensRemaining: 100000 },
-        logger: { info: () => {}, error: () => {} },
-      })
-        log('runner_finish', { leadGuest: true })
-
-      return NextResponse.json<RunResponse>(
-        {
-          status: 'ok',
-          output: result.output,
-          runId,
-          requestId,
-          metering: {
-            chargedTokens: 0,
-            remainingTokens: 0,
-            aiTokensUsed: 0,
-            aiTokensCap: 0,
-            runsUsed: 0,
-            runsCap: 0,
-            resetsAtISO: new Date().toISOString(),
-            meteringMode: 'trial',
-          },
-        },
-        { status: 200, headers: { 'x-request-id': requestId } }
-      )
-    } catch (err: any) {
-      return NextResponse.json<RunResponse>(
-        {
-          status: 'error',
-          error: { message: err?.message || 'Tool error.', code: 'TOOL_ERROR' },
-          requestId,
-        },
-        { status: 500, headers: { 'x-request-id': requestId } }
-      )
-    }
-  }
-
   if (!session) {
-    log('auth_missing', { leadCaptured })
+    log('auth_missing', {})
     return NextResponse.json<RunResponse>(
       {
         status: 'error',

@@ -1,61 +1,22 @@
 import { Resend } from 'resend'
-import nodemailer from 'nodemailer'
 
-const USE_GMAIL_SMTP = process.env.USE_GMAIL_SMTP?.toLowerCase().trim() === 'true'
 const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim()
 const RESEND_FROM = process.env.RESEND_FROM?.trim() || 'onboarding@resend.dev'
 const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME?.trim() || 'The Strategy Tools'
-const GMAIL_USER = process.env.GMAIL_USER?.trim()
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD?.trim()
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim() || 'admin@example.com'
 
 let resend: Resend | null = null
-let gmailTransporter: nodemailer.Transporter | null = null
-
-// Initialize email providers (allow fallback)
-if (USE_GMAIL_SMTP) {
-  if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-    console.error('[email] Gmail SMTP enabled but GMAIL_USER or GMAIL_APP_PASSWORD missing')
-  } else {
-    gmailTransporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: GMAIL_USER,
-        pass: GMAIL_APP_PASSWORD,
-      },
-    })
-    console.info('[email] Gmail SMTP initialized')
-  }
-}
 
 if (RESEND_API_KEY) {
   resend = new Resend(RESEND_API_KEY)
   console.info('[email] Resend initialized')
-}
-
-if (!gmailTransporter && !resend) {
-  console.error(
-    '[email] No email provider configured - USE_GMAIL_SMTP:',
-    USE_GMAIL_SMTP,
-    'RESEND_API_KEY:',
-    RESEND_API_KEY ? 'set' : 'missing'
-  )
+} else {
+  console.error('[email] RESEND_API_KEY is missing')
 }
 
 export async function sendMagicLink(email: string, link: string, name?: string): Promise<void> {
-  const provider = gmailTransporter ? 'gmail' : resend ? 'resend' : 'none'
-  console.info('[email] sending via', provider, 'to', email)
-
-  if (!resend && !gmailTransporter) {
-    const error =
-      'No email provider configured. USE_GMAIL_SMTP=' +
-      USE_GMAIL_SMTP +
-      ', RESEND_API_KEY=' +
-      (RESEND_API_KEY ? 'set' : 'missing') +
-      ', GMAIL_USER=' +
-      (GMAIL_USER ? 'set' : 'missing')
-    console.error('[email]', error)
-    throw new Error(error)
+  if (!resend) {
+    throw new Error('RESEND_API_KEY is not configured')
   }
 
   const subject = 'Your sign-in link'
@@ -83,41 +44,17 @@ export async function sendMagicLink(email: string, link: string, name?: string):
     </html>
   `
 
-  try {
-    if (gmailTransporter) {
-      const result = await gmailTransporter.sendMail({
-        from: GMAIL_USER!,
-        to: email,
-        subject,
-        html,
-      })
-      console.info('[email] Gmail result:', result.messageId)
-      return
-    }
-  } catch (error: any) {
-    console.error('[email] Gmail send failed:', error.message, error.response || error)
-  }
-
-  try {
-    if (resend) {
-      const result = await resend.emails.send({
-        from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
-        to: email,
-        subject,
-        html,
-      })
-      console.info('[email] Resend result:', result)
-      return
-    }
-  } catch (error: any) {
-    console.error('[email] Resend send failed:', error.message, error.response || error)
-  }
-
-  throw new Error('Email send failed: no provider succeeded')
+  const result = await resend.emails.send({
+    from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
+    to: email,
+    subject,
+    html,
+  })
+  console.info('[email] Resend result:', result)
 }
 
 export async function sendAdminNotification(email: string, name?: string, profileData?: any): Promise<void> {
-  console.info('[email] admin provider', resend ? 'resend' : gmailTransporter ? 'gmail' : 'none')
+  console.info('[email] admin provider', resend ? 'resend' : 'none')
   if (!ADMIN_EMAIL) return
 
   const subject = `New user verification: ${email}`
@@ -152,13 +89,6 @@ export async function sendAdminNotification(email: string, name?: string, profil
       subject,
       html,
     })
-  } else if (gmailTransporter) {
-    await gmailTransporter.sendMail({
-      from: GMAIL_USER,
-      to: ADMIN_EMAIL,
-      subject,
-      html,
-    })
   }
 }
 
@@ -179,13 +109,6 @@ export async function sendLeadNotification(email: string, source = 'open_tools',
   if (resend) {
     await resend.emails.send({
       from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
-      to: ADMIN_EMAIL,
-      subject,
-      html,
-    })
-  } else if (gmailTransporter) {
-    await gmailTransporter.sendMail({
-      from: GMAIL_USER,
       to: ADMIN_EMAIL,
       subject,
       html,

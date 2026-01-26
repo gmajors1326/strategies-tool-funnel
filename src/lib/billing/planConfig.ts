@@ -1,4 +1,4 @@
-export type PlanKey = 'free' | 'pro' | 'business'
+export type PlanKey = 'free' | 'pro' | 'elite' | 'business'
 
 export type PlanConfig = {
   price: number
@@ -15,32 +15,42 @@ export const PLAN_CONFIG: Record<PlanKey, PlanConfig> = {
   free: {
     price: 0,
     runsPerDay: 5,
-    tokensPerDay: 2000,
+    tokensPerDay: 200,
     heavyTools: false,
     orgs: false,
     title: 'Free',
     subtitle: 'Get started with core tools.',
-    highlights: ['5 runs/day', '2,000 tokens/day', 'No heavy AI tools'],
+    highlights: ['5 runs/day', '200 tokens/day', 'Core tools'],
   },
   pro: {
     price: 39,
     runsPerDay: 50,
-    tokensPerDay: 25000,
+    tokensPerDay: 2000,
     heavyTools: true,
     orgs: false,
     title: 'Pro',
     subtitle: 'For serious creators scaling output.',
-    highlights: ['50 runs/day', '25,000 tokens/day', 'Heavy AI tools'],
+    highlights: ['50 runs/day', '2,000 tokens/day', 'All 5 tools'],
+  },
+  elite: {
+    price: 99,
+    runsPerDay: 200,
+    tokensPerDay: 6000,
+    heavyTools: true,
+    orgs: false,
+    title: 'Elite',
+    subtitle: 'For high-volume growth teams.',
+    highlights: ['200 runs/day', '6,000 tokens/day', 'All exports'],
   },
   business: {
-    price: 129,
+    price: 99,
     runsPerDay: 200,
-    tokensPerDay: 100000,
+    tokensPerDay: 6000,
     heavyTools: true,
     orgs: true,
-    title: 'Business',
-    subtitle: 'For teams that need scale.',
-    highlights: ['200 runs/day', '100,000 tokens/day', 'Org seats enabled'],
+    title: 'Elite',
+    subtitle: 'For high-volume growth teams.',
+    highlights: ['200 runs/day', '6,000 tokens/day', 'All exports'],
   },
 }
 
@@ -57,7 +67,7 @@ export const getPlanConfig = (plan: PlanKey) => PLAN_CONFIG[plan]
 
 export const getPlanKeyFromEntitlement = (planId?: string): PlanKey => {
   if (planId === 'pro_monthly') return 'pro'
-  if (planId === 'team') return 'business'
+  if (planId === 'team') return 'elite'
   if (planId === 'lifetime') return 'pro'
   return 'free'
 }

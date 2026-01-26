@@ -213,7 +213,7 @@ const TOOL_REGISTRY_SEED: Record<ToolId, ToolMetaSeed> = {
     ],
     planEntitlements: planEntitlementsAll,
     aiLevel: 'light',
-    tokensPerRun: 15,
+    tokensPerRun: 40,
     dailyRunsByPlan: {
       free: 1,
       pro_monthly: 50,
@@ -326,7 +326,7 @@ const TOOL_REGISTRY_SEED: Record<ToolId, ToolMetaSeed> = {
     ],
     planEntitlements: planEntitlementsAll,
     aiLevel: 'light',
-    tokensPerRun: 15,
+    tokensPerRun: 50,
     dailyRunsByPlan: {
       free: 1,
       pro_monthly: 50,
@@ -436,7 +436,7 @@ const TOOL_REGISTRY_SEED: Record<ToolId, ToolMetaSeed> = {
     ],
     planEntitlements: planEntitlementsAll,
     aiLevel: 'light',
-    tokensPerRun: 20,
+    tokensPerRun: 80,
     dailyRunsByPlan: {
       free: 1,
       pro_monthly: 50,
@@ -543,7 +543,7 @@ const TOOL_REGISTRY_SEED: Record<ToolId, ToolMetaSeed> = {
     ],
     planEntitlements: planEntitlementsPaid,
     aiLevel: 'light',
-    tokensPerRun: 25,
+    tokensPerRun: 60,
     dailyRunsByPlan: {
       free: 0,
       pro_monthly: 50,
@@ -659,7 +659,7 @@ const TOOL_REGISTRY_SEED: Record<ToolId, ToolMetaSeed> = {
     ],
     planEntitlements: planEntitlementsPaid,
     aiLevel: 'heavy',
-    tokensPerRun: 35,
+    tokensPerRun: 90,
     dailyRunsByPlan: {
       free: 0,
       pro_monthly: 25,

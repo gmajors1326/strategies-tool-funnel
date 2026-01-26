@@ -11,7 +11,7 @@ type LeadRow = {
   verified: string
 }
 
-async function fetchLeads(type: 'guest' | 'signup') {
+async function fetchLeads(type: 'open_tools') {
   if (!process.env.STRIPE_SECRET_KEY) return []
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: '2023-10-16',
@@ -47,11 +47,8 @@ async function fetchLeads(type: 'guest' | 'signup') {
 }
 
 export default async function AdminLeadsPage() {
-  const [guests, signups] = await Promise.all([fetchLeads('guest'), fetchLeads('signup')])
-  const rows: Array<{ title: string; data: LeadRow[] }> = [
-    { title: 'Guests', data: guests },
-    { title: 'Signups', data: signups },
-  ]
+  const [opens] = await Promise.all([fetchLeads('open_tools')])
+  const rows: Array<{ title: string; data: LeadRow[] }> = [{ title: 'Open tools', data: opens }]
 
   return (
     <div className="space-y-6">

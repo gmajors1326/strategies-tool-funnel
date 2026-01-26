@@ -1,8 +1,8 @@
 export const dailyAiTokenCapByPlan: Record<'free' | 'pro_monthly' | 'team' | 'lifetime', number> = {
-  free: 2000,
-  pro_monthly: 25000,
-  team: 100000,
-  lifetime: 25000,
+  free: 200,
+  pro_monthly: 2000,
+  team: 6000,
+  lifetime: 2000,
 }
 
 export const dailyRunCapByPlan: Record<'free' | 'pro_monthly' | 'team' | 'lifetime', number> = {
@@ -13,7 +13,7 @@ export const dailyRunCapByPlan: Record<'free' | 'pro_monthly' | 'team' | 'lifeti
 }
 
 export const orgAiTokenCapByPlan: Record<'business' | 'enterprise', number> = {
-  business: 100000,
+  business: 6000,
   enterprise: 200000,
 }
 

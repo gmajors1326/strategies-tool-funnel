@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { prisma } from '@/src/lib/prisma'
 import { getStripe } from '@/src/lib/billing/stripe'
-import { getSkuByPriceId, getSku } from '@/src/lib/billing/skus'
+import { getPlanByPriceId } from '@/src/lib/billing/stripeCatalog'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,10 +34,7 @@ async function upsertEntitlementPlan(userId: string, planId: string) {
   })
 }
 
-async function handleTokenPurchase(userId: string, skuId: string, paymentIntentId?: string | null) {
-  const sku = getSku(skuId)
-  if (!sku || !('tokensGranted' in sku)) return
-  const tokensGranted = typeof sku.tokensGranted === 'number' ? sku.tokensGranted : 0
+async function handleTokenPurchase(userId: string, tokensGranted: number, paymentIntentId?: string | null) {
   try {
     await prisma.tokenLedger.create({
       data: {
@@ -73,9 +70,9 @@ async function recordPurchase(userId: string, sku: string, sessionId: string, pa
 
 async function updateSubscriptionFromStripe(subscription: Stripe.Subscription) {
   const priceId = subscription.items.data[0]?.price?.id
-  const sku = priceId ? getSkuByPriceId(priceId) : null
+  const plan = priceId ? getPlanByPriceId(priceId) : null
   const userId = subscription.metadata?.userId || (await resolveUserIdFromCustomer(subscription.customer as string))
-  if (!userId || !sku || !('planId' in sku)) return
+  if (!userId || !plan) return
 
   await prisma.billingSubscription.upsert({
     where: { stripeSubscriptionId: subscription.id },
@@ -100,9 +97,17 @@ async function updateSubscriptionFromStripe(subscription: Stripe.Subscription) {
   })
 
   if (ACTIVE_STATUSES.has(subscription.status)) {
-    await upsertEntitlementPlan(userId, sku.planId)
+    await upsertEntitlementPlan(userId, plan.planId)
   } else if (INACTIVE_STATUSES.has(subscription.status)) {
     await upsertEntitlementPlan(userId, 'free')
+  }
+}
+
+async function updateCustomerMetadata(customerId: string, metadata: Record<string, string>) {
+  try {
+    await getStripe().customers.update(customerId, { metadata })
+  } catch {
+    // ignore stripe metadata failures
   }
 }
 
@@ -130,35 +135,60 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch {
-    return NextResponse.json({ received: true, duplicate: true })
+    // ignore duplicate or DB unavailable
   }
 
-  try {
-    const stripe = getStripe()
+  const stripe = getStripe()
 
+  try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session
-      const skuId = session.metadata?.sku || ''
       const userId = session.metadata?.userId || (await resolveUserIdFromCustomer(session.customer as string))
       const paymentIntentId =
         typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || null
+      const tokensGranted = Number(session.metadata?.tokensGranted || 0)
+      const planId = session.metadata?.planId || ''
 
-      if (userId && skuId) {
-        await recordPurchase(userId, skuId, session.id, paymentIntentId)
+      if (userId) {
+        await recordPurchase(userId, planId || `tokens_${session.metadata?.packId || 'pack'}`, session.id, paymentIntentId)
+        if (session.mode === 'payment' && tokensGranted) {
+          await handleTokenPurchase(userId, tokensGranted, paymentIntentId)
+        }
       }
-
-      if (session.mode === 'payment' && userId && skuId) {
-        await handleTokenPurchase(userId, skuId, paymentIntentId)
+      if (session.customer) {
+        await updateCustomerMetadata(session.customer as string, {
+          plan: planId || '',
+          plan_active: session.mode === 'subscription' ? 'true' : '',
+          bonus_tokens_add: tokensGranted ? String(tokensGranted) : '',
+          last_purchase_at: new Date().toISOString(),
+        })
       }
     }
 
     if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
-      await updateSubscriptionFromStripe(event.data.object as Stripe.Subscription)
+      const subscription = event.data.object as Stripe.Subscription
+      await updateSubscriptionFromStripe(subscription)
+      const priceId = subscription.items.data[0]?.price?.id || ''
+      const plan = priceId ? getPlanByPriceId(priceId) : null
+      if (plan && subscription.customer) {
+        await updateCustomerMetadata(subscription.customer as string, {
+          plan: plan.planId,
+          plan_active: ACTIVE_STATUSES.has(subscription.status) ? 'true' : 'false',
+          last_purchase_at: new Date().toISOString(),
+        })
+      }
     }
 
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription
       await updateSubscriptionFromStripe(subscription)
+      if (subscription.customer) {
+        await updateCustomerMetadata(subscription.customer as string, {
+          plan: 'free',
+          plan_active: 'false',
+          last_purchase_at: new Date().toISOString(),
+        })
+      }
     }
 
     if (event.type === 'invoice.payment_succeeded') {
@@ -182,37 +212,59 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent
+      const tokensGranted = Number(paymentIntent.metadata?.tokensGranted || 0)
+      if (tokensGranted && paymentIntent.customer) {
+        await updateCustomerMetadata(paymentIntent.customer as string, {
+          bonus_tokens_add: String(tokensGranted),
+          last_purchase_at: new Date().toISOString(),
+        })
+      }
+    }
+
     if (event.type === 'charge.refunded') {
       const charge = event.data.object as Stripe.Charge
       const paymentIntentId = charge.payment_intent as string | null
       if (paymentIntentId) {
-        const purchase = await prisma.purchase.findUnique({
+        await prisma.purchase.updateMany({
           where: { stripePaymentIntentId: paymentIntentId },
+          data: { status: 'refunded' },
         })
-        if (purchase) {
-          const sku = getSku(purchase.sku)
-          if (sku && 'tokensGranted' in sku) {
-            const tokensGranted = typeof sku.tokensGranted === 'number' ? sku.tokensGranted : 0
-            await prisma.tokenLedger.create({
-              data: {
-                user_id: purchase.userId,
-                event_type: 'refund',
-                tokens_delta: -tokensGranted,
-                reason: 'refund',
-                stripe_payment_intent_id: paymentIntentId,
-              },
-            })
-          }
-          await prisma.purchase.update({
-            where: { stripePaymentIntentId: paymentIntentId },
-            data: { status: 'refunded' },
-          })
-        }
       }
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
+    // DB fallback: update Stripe metadata to avoid retries
+    try {
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as Stripe.Checkout.Session
+        if (session.customer) {
+          await updateCustomerMetadata(session.customer as string, {
+            plan: session.metadata?.planId || '',
+            plan_active: session.mode === 'subscription' ? 'true' : '',
+            bonus_tokens_add: session.metadata?.tokensGranted || '',
+            last_purchase_at: new Date().toISOString(),
+          })
+        }
+      }
+      if (event.type === 'customer.subscription.updated') {
+        const subscription = event.data.object as Stripe.Subscription
+        const priceId = subscription.items.data[0]?.price?.id || ''
+        const plan = priceId ? getPlanByPriceId(priceId) : null
+        if (plan && subscription.customer) {
+          await updateCustomerMetadata(subscription.customer as string, {
+            plan: plan.planId,
+            plan_active: ACTIVE_STATUSES.has(subscription.status) ? 'true' : 'false',
+            last_purchase_at: new Date().toISOString(),
+          })
+        }
+      }
+    } catch {
+      // ignore fallback failures
+    }
+
+    return NextResponse.json({ received: true, degraded: true })
   }
 }

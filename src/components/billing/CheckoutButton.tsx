@@ -5,7 +5,7 @@ import { Button } from '@/src/components/ui/Button'
 
 type CheckoutButtonProps = {
   label: string
-  payload: Record<string, any>
+  payload: { mode: 'subscription' | 'payment'; priceId: string; returnTo?: string }
 }
 
 export function CheckoutButton({ label, payload }: CheckoutButtonProps) {

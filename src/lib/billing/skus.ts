@@ -1,10 +1,11 @@
-import { PLAN_CONFIG } from '@/src/lib/billing/planConfig'
+import { PLAN_CATALOG } from '@/src/lib/billing/planCatalog'
+import { STRIPE_CATALOG } from '@/src/lib/billing/stripeCatalog'
 import { TOKEN_PACKS } from '@/src/lib/billing/tokenPacks'
 
 export type PlanSku = {
   id: string
-  mode: 'subscription' | 'payment'
-  planId: 'free' | 'pro_monthly' | 'team' | 'lifetime'
+  mode: 'subscription'
+  planId: 'free' | 'pro_monthly' | 'team'
   stripePriceId?: string
   title: string
   subtitle: string
@@ -30,41 +31,30 @@ export const PLAN_SKUS: PlanSku[] = [
     id: 'plan_free',
     mode: 'subscription',
     planId: 'free',
-    title: 'Free',
+    title: PLAN_CATALOG.free.displayName,
     subtitle: 'Try the toolkit. Learn what works.',
-    priceDisplay: formatPrice(PLAN_CONFIG.free.price),
+    priceDisplay: formatPrice(PLAN_CATALOG.free.monthlyPrice),
   },
   {
     id: 'plan_pro_monthly',
     mode: 'subscription',
     planId: 'pro_monthly',
-    title: 'Pro',
+    title: PLAN_CATALOG.pro.displayName,
     subtitle: 'Unlimited momentum. Deeper outputs.',
-    priceDisplay: formatPrice(PLAN_CONFIG.pro.price),
+    priceDisplay: formatPrice(PLAN_CATALOG.pro.monthlyPrice),
     billingInterval: 'month',
     featured: true,
-    stripePriceId:
-      process.env.STRIPE_PRICE_ID_PRO_MONTHLY || process.env.STRIPE_PLAN_PRO_PRICE_ID || '',
+    stripePriceId: STRIPE_CATALOG.plans.pro.priceId,
   },
   {
-    id: 'plan_team_monthly',
+    id: 'plan_elite_monthly',
     mode: 'subscription',
     planId: 'team',
-    title: 'Team',
+    title: PLAN_CATALOG.elite.displayName,
     subtitle: 'For serious operators.',
-    priceDisplay: formatPrice(PLAN_CONFIG.business.price),
+    priceDisplay: formatPrice(PLAN_CATALOG.elite.monthlyPrice),
     billingInterval: 'month',
-    stripePriceId:
-      process.env.STRIPE_PRICE_ID_TEAM_MONTHLY || process.env.STRIPE_PLAN_BUSINESS_PRICE_ID || '',
-  },
-  {
-    id: 'plan_lifetime',
-    mode: 'payment',
-    planId: 'lifetime',
-    title: 'Lifetime',
-    subtitle: 'Pay once. Unlock forever.',
-    priceDisplay: '$799',
-    stripePriceId: process.env.STRIPE_PRICE_ID_LIFETIME || '',
+    stripePriceId: STRIPE_CATALOG.plans.elite.priceId,
   },
 ]
 
@@ -73,14 +63,9 @@ export const TOKEN_PACK_SKUS: TokenPackSku[] = TOKEN_PACKS.map((pack) => ({
   mode: 'payment',
   packId: pack.packId,
   title: pack.displayName,
-  subtitle: pack.bonusPercent ? `${pack.bonusPercent}% bonus tokens` : 'Best for occasional spikes',
+  subtitle: 'Bonus tokens never expire',
   tokensGranted: pack.tokensGranted,
-  stripePriceId:
-    pack.packId === 'small'
-      ? process.env.STRIPE_PRICE_ID_TOKENS_SMALL || process.env.STRIPE_TOKEN_PACK_SMALL_PRICE_ID || ''
-      : pack.packId === 'medium'
-        ? process.env.STRIPE_PRICE_ID_TOKENS_MEDIUM || process.env.STRIPE_TOKEN_PACK_MEDIUM_PRICE_ID || ''
-        : process.env.STRIPE_PRICE_ID_TOKENS_LARGE || process.env.STRIPE_TOKEN_PACK_LARGE_PRICE_ID || '',
+  stripePriceId: pack.stripePriceId,
 }))
 
 export const PLAN_SKUS_BY_ID = Object.fromEntries(PLAN_SKUS.map((sku) => [sku.id, sku]))

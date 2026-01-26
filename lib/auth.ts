@@ -3,7 +3,6 @@ import { prisma } from './db'
 import { hash, compare } from 'bcryptjs'
 
 const SESSION_COOKIE_NAME = 'strategy-tools-session'
-const GUEST_COOKIE_NAME = 'strategy-tools-guest'
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 const IS_PRODUCTION =
   process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production'
@@ -22,12 +21,6 @@ type MagicLinkPayload = {
   exp: number
 }
 
-type GuestTokenPayload = {
-  email: string
-  stripeCustomerId?: string
-  iat: number
-  exp: number
-}
 
 export type SessionCookie = {
   name: string
@@ -121,16 +114,6 @@ export function verifyMagicLinkToken(token: string): MagicLinkPayload | null {
   return payload
 }
 
-export function signGuestToken(payload: GuestTokenPayload): string {
-  return signPayload(payload)
-}
-
-export function verifyGuestToken(token: string): GuestTokenPayload | null {
-  const payload = verifyPayload<GuestTokenPayload>(token)
-  if (!payload?.email || !payload.exp) return null
-  if (Date.now() > payload.exp) return null
-  return payload
-}
 
 export async function getSessionFromCookieValue(cookieValue?: string | null): Promise<Session | null> {
   if (!cookieValue) return null
@@ -187,9 +170,6 @@ export function getSessionCookieName() {
   return SESSION_COOKIE_NAME
 }
 
-export function getGuestCookieName() {
-  return GUEST_COOKIE_NAME
-}
 
 export async function hashOtp(code: string): Promise<string> {
   return hash(code, 10)

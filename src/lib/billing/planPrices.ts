@@ -1,5 +1,7 @@
+import { STRIPE_CATALOG } from '@/src/lib/billing/stripeCatalog'
+
 export type PlanPrice = {
-  planId: 'pro' | 'business'
+  planId: 'pro' | 'elite'
   stripePriceId: string
   displayName: string
 }
@@ -7,13 +9,13 @@ export type PlanPrice = {
 export const PLAN_PRICES: PlanPrice[] = [
   {
     planId: 'pro',
-    stripePriceId: process.env.STRIPE_PLAN_PRO_PRICE_ID || '',
+    stripePriceId: STRIPE_CATALOG.plans.pro.priceId,
     displayName: 'Pro Plan',
   },
   {
-    planId: 'business',
-    stripePriceId: process.env.STRIPE_PLAN_BUSINESS_PRICE_ID || '',
-    displayName: 'Business Plan',
+    planId: 'elite',
+    stripePriceId: STRIPE_CATALOG.plans.elite.priceId,
+    displayName: 'Elite Plan',
   },
 ]
 

@@ -48,15 +48,20 @@ export async function requireAdmin(): Promise<AdminUser> {
   }
 
   // 3) DB-backed admin flag (real source of truth)
-  const db = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true, isAdmin: true },
-  })
+  try {
+    const db = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, isAdmin: true },
+    })
 
-  if (!db) throw forbidden('no prisma user for this email')
-  if (!db.isAdmin) throw forbidden('user is not admin')
+    if (!db) throw forbidden('no prisma user for this email')
+    if (!db.isAdmin) throw forbidden('user is not admin')
 
-  return { id: u.id, email, provider: 'app-auth', prismaUserId: db.id }
+    return { id: u.id, email, provider: 'app-auth', prismaUserId: db.id }
+  } catch (err: any) {
+    const msg = String(err?.message || '')
+    throw forbidden(`db unavailable (${msg})`)
+  }
 }
 
 function parseEmailAllowlist(raw?: string) {

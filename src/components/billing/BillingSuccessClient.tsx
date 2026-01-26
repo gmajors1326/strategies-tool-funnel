@@ -96,8 +96,8 @@ export function BillingSuccessClient({ expectedType, confirmedLabel }: Props) {
       <div className="mx-auto max-w-2xl space-y-3 px-6 pb-12">
         <p className="text-sm text-[hsl(var(--muted))]">{confirmedLabel ?? 'You’re unlocked.'}</p>
         <div className="flex flex-wrap gap-2">
-          <Link href="/app">
-            <Button>Back to tools</Button>
+          <Link href="/tools">
+            <Button>Continue to tools</Button>
           </Link>
           <Link href="/account/usage">
             <Button variant="outline">View usage</Button>
