@@ -52,6 +52,9 @@ export default function HelpPage() {
           <Link href="/account/usage">
             <Button>View usage</Button>
           </Link>
+          <Link href="/app/support">
+            <Button variant="outline">Submit support ticket</Button>
+          </Link>
           <Link href="/pricing">
             <Button variant="outline">See pricing</Button>
           </Link>
