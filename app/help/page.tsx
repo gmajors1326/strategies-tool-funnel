@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 export default function HelpPage() {
   return (
-    <div className="min-h-screen bg-[hsl(var(--bg))] text-[hsl(var(--text))]">
+    <div className="min-h-screen bg-[#7d9b76] text-[hsl(var(--text))]">
       <div className="mx-auto max-w-3xl space-y-6 px-6 py-10">
         <div>
           <h1 className="text-2xl font-semibold">Billing help</h1>

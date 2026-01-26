@@ -58,14 +58,18 @@ export default async function ToolPage({
 
   if (!tool || !isLaunchTool(tool.id)) {
     return (
-      <div className="space-y-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-6">
-        <h1 className="text-lg font-semibold">Tool not available yet</h1>
-        <p className="text-sm text-[hsl(var(--muted))]">
-          This tool isn&apos;t part of the current launch set.
-        </p>
-        <a href="/app/explore" className="text-sm font-semibold underline">
-          Back to Explore
-        </a>
+      <div className="min-h-screen bg-[#7d9b76] text-[hsl(var(--text))]">
+        <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6">
+          <div className="rounded-2xl border border-white/10 bg-[#3a3a3a] p-6 shadow-[0_24px_40px_rgba(0,0,0,0.35)]">
+            <h1 className="text-lg font-semibold">Tool not available yet</h1>
+            <p className="text-sm text-[hsl(var(--muted))]">
+              This tool isn&apos;t part of the current launch set.
+            </p>
+            <a href="/app/explore" className="text-sm font-semibold underline">
+              Back to Explore
+            </a>
+          </div>
+        </div>
       </div>
     )
   }
@@ -73,15 +77,17 @@ export default async function ToolPage({
   const fields = mapFields(tool.fields)
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-4 px-4 sm:px-6">
-      <ToolRunner
-        toolId={tool.id}
-        toolSlug={tool.id}
-        toolName={tool.name}
-        toolMeta={tool}
-        fields={fields}
-        tokensCost={tool.tokensPerRun}
-      />
+    <div className="min-h-screen bg-[#7d9b76] text-[hsl(var(--text))]">
+      <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6">
+        <ToolRunner
+          toolId={tool.id}
+          toolSlug={tool.id}
+          toolName={tool.name}
+          toolMeta={tool}
+          fields={fields}
+          tokensCost={tool.tokensPerRun}
+        />
+      </div>
     </div>
   )
 }

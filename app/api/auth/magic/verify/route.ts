@@ -16,10 +16,7 @@ export async function GET(request: NextRequest) {
   }
 
   const email = payload.email
-  const safeNext =
-    payload.next && payload.next.startsWith('/') && !payload.next.startsWith('//')
-      ? payload.next
-      : '/account'
+  const safeNext = '/'
 
   let sessionUserId = `email:${email}`
   let sessionPlan = 'free'

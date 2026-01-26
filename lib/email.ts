@@ -2,7 +2,7 @@ import { Resend } from 'resend'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim()
 const RESEND_FROM = process.env.RESEND_FROM?.trim() || 'onboarding@resend.dev'
-const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME?.trim() || 'The Strategy Tools'
+const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME?.trim() || 'Free Spirit Marketing'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim() || 'admin@example.com'
 
 let resend: Resend | null = null
@@ -19,7 +19,7 @@ export async function sendMagicLink(email: string, link: string, name?: string):
     throw new Error('RESEND_API_KEY is not configured')
   }
 
-  const subject = 'Your sign-in link'
+  const subject = 'Free Spirit Marketing sign-in link'
   const html = `
     <!DOCTYPE html>
     <html>
@@ -29,7 +29,7 @@ export async function sendMagicLink(email: string, link: string, name?: string):
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #1b1b1b; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #2f4f3a 0%, #5ea972 100%); padding: 36px 20px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">The Strategy Tools</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">Free Spirit Marketing</h1>
         </div>
         <div style="background: #ffffff; padding: 32px 20px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
           ${name ? `<p style="font-size: 16px; margin-bottom: 16px;">Hi ${name},</p>` : '<p style="font-size: 16px; margin-bottom: 16px;">Hi there,</p>'}
@@ -57,7 +57,7 @@ export async function sendAdminNotification(email: string, name?: string, profil
   console.info('[email] admin provider', resend ? 'resend' : 'none')
   if (!ADMIN_EMAIL) return
 
-  const subject = `New user verification: ${email}`
+  const subject = `Free Spirit Marketing new user verification: ${email}`
   const html = `
     <!DOCTYPE html>
     <html>
@@ -77,7 +77,7 @@ export async function sendAdminNotification(email: string, name?: string, profil
             ${profileData.biggestFriction ? `<li><strong>Biggest Friction:</strong> ${profileData.biggestFriction}</li>` : ''}
           </ul>
         ` : ''}
-        <p style="margin-top: 20px; font-size: 14px; color: #666;">This is an automated notification from The Strategy Tools.</p>
+        <p style="margin-top: 20px; font-size: 14px; color: #666;">This is an automated notification from Free Spirit Marketing.</p>
       </body>
     </html>
   `
@@ -93,7 +93,7 @@ export async function sendAdminNotification(email: string, name?: string, profil
 }
 
 export async function sendLeadNotification(email: string, source = 'open_tools', ip?: string): Promise<void> {
-  const subject = 'New Lead: Open Tools'
+  const subject = 'Free Spirit Marketing new lead'
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333;">
       <h2>New Lead Captured</h2>
