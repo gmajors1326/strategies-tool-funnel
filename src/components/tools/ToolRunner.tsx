@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { RefreshCw } from 'lucide-react'
+import { ChevronDown, RefreshCw, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -192,6 +192,8 @@ function mapDesiredToCtaGoal(action?: string) {
   }
 }
 
+const EMPTY_PLACEHOLDER = 'Needs more input.'
+
 function summarizeText(value: unknown, limit = 120) {
   try {
     if (typeof value === 'string') return value.slice(0, limit)
@@ -204,6 +206,22 @@ function summarizeText(value: unknown, limit = 120) {
 
 function isPrimitive(value: any) {
   return value === null || value === undefined || ['string', 'number', 'boolean'].includes(typeof value)
+}
+
+function renderPrimitiveValue(value: any, limit = 120) {
+  if (value === null || value === undefined) return EMPTY_PLACEHOLDER
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return EMPTY_PLACEHOLDER
+    return trimmed.length > limit ? `${trimmed.slice(0, limit)}...` : trimmed
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  try {
+    const json = JSON.stringify(value)
+    return json.length > limit ? `${json.slice(0, limit)}...` : json
+  } catch {
+    return EMPTY_PLACEHOLDER
+  }
 }
 
 function ExpandableText({ text, limit = 220 }: { text: string; limit?: number }) {
@@ -238,7 +256,7 @@ function ValueRenderer({
     return <span>{String(value)}</span>
   }
   if (Array.isArray(value)) {
-    if (value.length === 0) return <span className="text-muted-foreground">—</span>
+    if (value.length === 0) return <span className="text-muted-foreground">{EMPTY_PLACEHOLDER}</span>
     const allPrimitive = value.every((item) => isPrimitive(item))
     if (allPrimitive) {
       return (
@@ -266,7 +284,7 @@ function ValueRenderer({
               {fields.map((key) => (
                 <div key={key} className="flex gap-2">
                   <span className="text-muted-foreground">{key}</span>
-                  <span className="font-medium">{summarizeText(obj[key], 140)}</span>
+                  <span className="font-medium">{renderPrimitiveValue(obj[key], 140)}</span>
                 </div>
               ))}
             </div>
@@ -281,7 +299,7 @@ function ValueRenderer({
 
   if (typeof value === 'object') {
     const entries = Object.entries(value as Record<string, any>)
-    if (entries.length === 0) return <span className="text-muted-foreground">—</span>
+    if (entries.length === 0) return <span className="text-muted-foreground">{EMPTY_PLACEHOLDER}</span>
     if (depth >= 2) {
       return (
         <pre className="whitespace-pre-wrap rounded-md border bg-muted/30 p-2 text-xs">
@@ -303,7 +321,7 @@ function ValueRenderer({
     )
   }
 
-  return <span>{summarizeText(value)}</span>
+  return <span>{renderPrimitiveValue(value)}</span>
 }
 
 function SectionBlock({
@@ -321,10 +339,13 @@ function SectionBlock({
 }) {
   const [showJson, setShowJson] = React.useState(false)
   return (
-    <details className="rounded-md border bg-muted/10 p-2" open={defaultOpen}>
+    <details className="group rounded-md border bg-muted/10 p-2" open={defaultOpen}>
       <summary className="cursor-pointer list-none">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">{title}</h3>
+          <div className="flex items-center gap-2">
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+            <h3 className="text-sm font-semibold">{title}</h3>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -1218,7 +1239,10 @@ export function ToolRunner(props: {
                     setTimeout(() => setMsg(null), 1200)
                   }}
                 >
-                  Load example
+                  <span className="inline-flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                    Load example
+                  </span>
                 </Button>
               </div>
             ) : null}
