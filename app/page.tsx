@@ -105,7 +105,10 @@ export default function HomePage() {
                       <span>{tool.tokensPerRun ? `${tool.tokensPerRun} tokens/run` : 'Tokens TBD'}</span>
                     </div>
                     <Link href={`/tools/${tool.id}`} className="block">
-                      <Button className="w-full" variant="outline">
+                      <Button
+                        className="w-full border-transparent bg-[#7ee6a3] text-[#0f2d1b] hover:bg-[#98efb6] hover:text-[#0f2d1b]"
+                        variant="outline"
+                      >
                         Open Tool
                       </Button>
                     </Link>

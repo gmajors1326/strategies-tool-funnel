@@ -32,7 +32,7 @@ export function ToolCard({ tool }: ToolCardProps) {
         </Link>
       ) : (
         <Link href={`/app/tools/${tool.id}`} className="block">
-          <Button className="w-full">Open Tool</Button>
+          <Button className="w-full bg-[#7ee6a3] text-[#0f2d1b] hover:bg-[#98efb6]">Open Tool</Button>
         </Link>
       )}
     </div>
