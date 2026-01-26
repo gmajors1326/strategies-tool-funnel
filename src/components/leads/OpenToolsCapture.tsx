@@ -113,7 +113,7 @@ export function OpenToolsCapture({ redirectTo = "/tools" }: { redirectTo?: strin
       </div>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#6b8b62] p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#5f7f57] p-4">
           <div className="w-full max-w-sm rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-5">
             <div className="text-base font-semibold text-[hsl(var(--text))]">
               Enter your email to access tools

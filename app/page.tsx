@@ -19,7 +19,7 @@ export default function HomePage() {
   }, [allTools])
 
   return (
-    <div className="min-h-screen bg-[#6b8b62] text-foreground">
+    <div className="min-h-screen bg-[#5f7f57] text-foreground">
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-6 pb-12 md:pt-12 md:pb-20">
         <motion.div
