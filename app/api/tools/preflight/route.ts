@@ -9,6 +9,7 @@ import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@
 import { getTokenBalance } from '@/src/lib/tokens/ledger'
 import { getActiveOrg, getMembership } from '@/src/lib/orgs/orgs'
 import { assertDbReadyOnce, isProviderError, normalizePrismaError } from '@/src/lib/prisma/guards'
+import { getFreeTrialStatus } from '@/src/lib/usage/freeTrial'
 
 export const dynamic = 'force-dynamic'
 
@@ -77,10 +78,22 @@ export async function POST(request: NextRequest) {
         ? orgAiTokenCapByPlan.enterprise
         : personalCaps.tokensPerDay
 
+    const trialStatus =
+      personalPlan === 'free' && !orgPlanKey ? await getFreeTrialStatus(userId, 'free') : null
+    const trialExpired = Boolean(trialStatus?.expired)
+
     const usage = await ensureUsageWindow(userId)
     const tokenBalance = await getTokenBalance(userId)
 
     const results: ToolPreflightResult[] = data.toolIds.map((toolId) => {
+      if (trialExpired) {
+        return {
+          toolId,
+          status: 'locked',
+          lockCode: 'locked_plan',
+          message: 'Your 7-day free trial has ended. Choose Pro or Elite to keep running tools.',
+        }
+      }
       if (membership?.role === 'viewer') {
         return { toolId, status: 'locked', lockCode: 'locked_role', message: 'Viewer seats cannot run tools.' }
       }

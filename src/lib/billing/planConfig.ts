@@ -18,9 +18,9 @@ export const PLAN_CONFIG: Record<PlanKey, PlanConfig> = {
     tokensPerDay: 200,
     heavyTools: false,
     orgs: false,
-    title: 'Free',
-    subtitle: 'Get started with core tools.',
-    highlights: ['5 runs/day', '200 tokens/day', 'Core tools'],
+    title: '7-Day Free Trial',
+    subtitle: 'Try the core tools for 7 days.',
+    highlights: ['5 runs/day', '200 tokens/day', '7-day access'],
   },
   pro: {
     price: 39,

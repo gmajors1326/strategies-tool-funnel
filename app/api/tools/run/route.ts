@@ -21,6 +21,7 @@ import { getSession } from '@/lib/auth.server'
 import { validateInput } from '@/src/lib/tools/validate'
 import { assertDbReadyOnce, isProviderError, normalizePrismaError } from '@/src/lib/prisma/guards'
 import { dbHealthCheck } from '@/src/lib/db/dbHealth'
+import { getFreeTrialStatus } from '@/src/lib/usage/freeTrial'
 
 const requestSchema = z.object({
   toolId: z.string(),
@@ -299,6 +300,8 @@ export async function POST(request: NextRequest) {
       ? orgAiTokenCapByPlan.enterprise
       : personalCaps.tokensPerDay
 
+  const trialStatus = personalPlan === 'free' && !orgPlanKey ? await getFreeTrialStatus(userId, 'free') : null
+
   const summarizeValue = (value: unknown, limit = 180) => {
     try {
       if (typeof value === 'string') return value.slice(0, limit)
@@ -373,6 +376,25 @@ export async function POST(request: NextRequest) {
     const res = NextResponse.json(payload, init)
     res.headers.set('x-request-id', requestId)
     return res
+  }
+
+  if (trialStatus?.expired) {
+    log('locked_trial_expired')
+    await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
+    await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
+    return jsonWithRequestId(
+      {
+        status: 'locked',
+        lock: buildLock({
+          code: 'locked_plan',
+          message: 'Your 7-day free trial has ended. Choose Pro or Elite to keep running tools.',
+          cta: { type: 'upgrade', href: '/pricing' },
+        }),
+        inputEcho: data.input ?? {},
+        requestId,
+      },
+      { status: 403 }
+    )
   }
 
   if (!tool) {

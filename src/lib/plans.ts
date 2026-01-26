@@ -11,7 +11,7 @@ export type PlanConfig = {
 export const PLAN_CONFIGS: Record<PlanId, PlanConfig> = {
   free: {
     id: 'free',
-    name: 'Free',
+    name: '7-Day Free Trial',
     dailyRunCap: 3,
     dailyAiTokenCap: 2000,
     allowTokenOverage: false,

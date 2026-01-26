@@ -88,7 +88,7 @@ export function PricingClient() {
         : reason === 'cooldown'
           ? 'Pro skips most cooldowns.'
           : intent === 'signup'
-            ? 'Choose a plan to start your membership. Free starts instantly.'
+          ? 'Choose a plan to start your membership. The 7-day trial starts instantly.'
             : null
 
   const comparisonRef = React.useRef<HTMLDivElement | null>(null)
@@ -200,9 +200,9 @@ export function PricingClient() {
                       <p className={`mt-2 text-3xl font-semibold ${accents.text}`}>
                         {plan.monthlyPrice === 0 ? '$0' : `$${plan.monthlyPrice}`}
                       </p>
-                      <p className="text-xs text-white/50">{plan.monthlyPrice === 0 ? 'always free' : 'per month'}</p>
+                      <p className="text-xs text-white/50">{plan.monthlyPrice === 0 ? '7-day trial' : 'per month'}</p>
                       <p className="mt-3 text-xs text-white/50">
-                        {tier === 'free' ? 'Start with the essentials.' : 'Upgrade to unlock more.'}
+                        {tier === 'free' ? 'Try everything free for 7 days.' : 'Upgrade to unlock more.'}
                       </p>
 
                       <div className="mt-4 space-y-2 text-xs text-white/70">
@@ -221,7 +221,7 @@ export function PricingClient() {
 
                       <div className="mt-5 flex flex-col gap-2">
                         {tier === 'free' ? (
-                          <Button onClick={() => window.location.assign('/tools')}>Get started</Button>
+                          <Button onClick={() => window.location.assign('/tools')}>Start trial</Button>
                         ) : (
                           <Button
                             onClick={() => {
@@ -257,7 +257,7 @@ export function PricingClient() {
                 <div className="min-w-[640px] space-y-2 text-xs">
                   <div className="grid grid-cols-4 gap-2">
                     <div />
-                    <div className="rounded-md border border-white/10 px-3 py-2 text-center">Free</div>
+                    <div className="rounded-md border border-white/10 px-3 py-2 text-center">Trial</div>
                     <div className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-center font-semibold shadow-[0_0_0_1px_rgba(255,255,255,0.12)]">
                       Pro
                     </div>

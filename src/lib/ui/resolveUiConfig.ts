@@ -9,6 +9,7 @@ import { getTokenBalance } from '@/src/lib/tokens/ledger'
 import { getActiveOrg, getMembership } from '@/src/lib/orgs/orgs'
 import { getPlanCaps, getPlanKeyFromEntitlement, getPlanKeyFromOrgPlan } from '@/src/lib/billing/planConfig'
 import { requireUser } from '@/src/lib/auth/requireUser'
+import { getFreeTrialStatus } from '@/src/lib/usage/freeTrial'
 
 type UserPlanState = {
   user: { id: string; email: string; planId: 'free' | 'pro_monthly' | 'team' | 'lifetime' }
@@ -43,6 +44,9 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
     : orgPlan === 'enterprise'
       ? orgAiTokenCapByPlan.enterprise
       : personalCaps.tokensPerDay
+  const trialStatus =
+    user.planId === 'free' && !orgPlanKey ? await getFreeTrialStatus(user.id, 'free') : null
+  const trialExpired = Boolean(trialStatus?.expired)
   const usageWindow = await ensureUsageWindow(user.id)
   const tokenBalance = await getTokenBalance(user.id)
 
@@ -57,7 +61,11 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
       let reason: string | undefined
       let cta = { label: 'Run tool', href: `/app/tools/${tool.id}` }
 
-      if (membership?.role === 'viewer') {
+      if (trialExpired) {
+        lockState = 'locked'
+        reason = 'Your 7-day free trial has ended. Choose Pro or Elite to keep running tools.'
+        cta = { label: 'Choose a plan', href: '/pricing' }
+      } else if (membership?.role === 'viewer') {
         lockState = 'locked'
         reason = 'Viewer role cannot run tools'
         cta = { label: 'Upgrade seat', href: `/orgs/${activeOrg?.slug}/members` }

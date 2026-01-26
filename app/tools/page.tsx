@@ -35,7 +35,7 @@ export default function ToolsIndexPage() {
               <CardContent className="space-y-3 p-5">
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-semibold text-slate-100">{tool.name}</h2>
-                  {tool.isFree ? <Badge>Free</Badge> : null}
+                  {tool.isFree ? <Badge>Trial</Badge> : null}
                   {isLaunch ? <Badge>Available now</Badge> : null}
                 </div>
                 <p className="text-sm text-slate-400">{tool.description}</p>

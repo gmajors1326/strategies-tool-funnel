@@ -19,7 +19,7 @@ export default function VerifyClient() {
   const nextPath =
     nextParam.startsWith('/') && !nextParam.startsWith('//')
       ? nextParam
-      : '/account'
+      : '/'
 
   const handleStart = async (e: React.FormEvent) => {
     e.preventDefault()

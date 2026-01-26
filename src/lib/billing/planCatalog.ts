@@ -20,10 +20,10 @@ export type PlanCatalogEntry = {
 export const PLAN_CATALOG: Record<PlanTier, PlanCatalogEntry> = {
   free: {
     tier: 'free',
-    displayName: 'Free',
+    displayName: '7-Day Free Trial',
     monthlyPrice: 0,
     internalPlanId: 'free',
-    features: ['200 daily tokens', 'Core tools', 'Standard cooldowns', '3-run history', 'Basic exports'],
+    features: ['200 daily tokens', 'Core tools', 'Standard cooldowns', '3-run history', 'Basic exports', '7-day access'],
     entitlements: {
       canSaveVault: false,
       canExportJsonCsv: false,

@@ -12,7 +12,7 @@ export default async function AdminToolsPage() {
         <p className="text-sm text-[hsl(var(--muted))]">Manage tool settings.</p>
       </div>
       <Table
-        headers={['Tool', 'AI Level', 'Tokens/Run', 'Runs/Day (Free)']}
+        headers={['Tool', 'AI Level', 'Tokens/Run', 'Runs/Day (Trial)']}
         rows={listTools({ includeHidden: true }).map((tool) => [
           <Link key={tool.id} href={`/admin/tools/${tool.id}`} className="text-red-300 hover:text-red-200">
             {tool.name}

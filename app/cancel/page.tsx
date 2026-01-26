@@ -19,7 +19,7 @@ export default function CancelPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-card-foreground/70 text-center">
-            You can continue using the free tools, or try again when you&apos;re ready.
+            You can continue your 7-day trial, or try again when you&apos;re ready.
           </p>
           <div className="flex flex-col gap-2">
             <Button asChild className="w-full">

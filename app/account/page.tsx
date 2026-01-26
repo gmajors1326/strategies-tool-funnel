@@ -130,13 +130,15 @@ export default function AccountPage() {
             <AppCardHeader>
               <AppCardTitle>Your Plan</AppCardTitle>
               <AppCardDescription>
-                Current plan: {plan === 'FREE' ? 'Free' : plan.replace('_', ' ')}
+                Current plan: {plan === 'FREE' ? '7-Day Free Trial' : plan.replace('_', ' ')}
               </AppCardDescription>
             </AppCardHeader>
             <AppCardContent>
               {plan === 'FREE' && (
                 <div>
-                  <p className="text-[hsl(var(--muted))] mb-4">Upgrade to unlock premium tools and unlimited saves.</p>
+                  <p className="text-[hsl(var(--muted))] mb-4">
+                    Upgrade to keep access after your 7-day trial ends.
+                  </p>
                   <Button asChild>
                     <Link href="/#offers">View Plans</Link>
                   </Button>
@@ -167,7 +169,7 @@ export default function AccountPage() {
                   <Sparkles className="h-12 w-12 text-[hsl(var(--muted))] mx-auto mb-4" />
                   <p className="text-[hsl(var(--muted))] mb-4">No saved results yet</p>
                   <Button asChild variant="outline">
-                    <Link href="/">Try Free Tools</Link>
+                    <Link href="/">Start 7-day trial</Link>
                   </Button>
                 </div>
               ) : (

@@ -31,7 +31,7 @@ const FAQ_ITEMS = [
     id: "q5",
     question: "What’s the difference between free and Pro access?",
     answer:
-      "Free access lets you test the core logic of each tool. Pro unlocks higher usage, saving results, exporting outputs, and deeper diagnostics. Nothing essential is hidden — Pro simply removes friction.",
+      "The 7-day trial lets you test the core logic of each tool. Pro unlocks higher usage, saving results, exporting outputs, and deeper diagnostics. Nothing essential is hidden — Pro simply removes friction.",
   },
   {
     id: "q6",

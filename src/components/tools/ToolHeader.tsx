@@ -12,7 +12,7 @@ export function ToolHeader(props: {
   const { name, description, category, tokensCost, isFree, access, resetAtText } = props
 
   const pill = (() => {
-    if (isFree) return <Badge>Free</Badge>
+    if (isFree) return <Badge>Trial</Badge>
     if (access === 'locked_plan') return <Badge variant="destructive">Pro</Badge>
     if (access === 'locked_time') return <Badge variant="secondary">Resets</Badge>
     return <Badge variant="outline">{tokensCost ?? 0} tokens</Badge>
