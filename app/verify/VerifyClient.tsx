@@ -62,8 +62,7 @@ export default function VerifyClient() {
   }
 
   return (
-    <div className="relative min-h-screen bg-hero-cactus text-foreground flex items-center justify-center p-4">
-      <div className="pointer-events-none absolute inset-0 bg-cactus-glow" />
+    <div className="relative min-h-screen bg-[#7d9b76] text-foreground flex items-center justify-center p-4">
       <AppCard className="relative w-full max-w-md">
         <AppCardHeader>
           <AppCardTitle>Email Sign-In</AppCardTitle>
