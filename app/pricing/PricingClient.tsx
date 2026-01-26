@@ -143,19 +143,19 @@ export function PricingClient() {
   }
 
   return (
-    <div className="min-h-screen bg-[#7d9b76] text-white">
+    <div className="min-h-screen bg-[#6b8b62] text-[#f2f5ef]">
       <div className="mx-auto max-w-6xl space-y-8 px-6 py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
-            <div className="inline-flex items-center rounded-sm bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.25em] text-white/70">
+            <div className="inline-flex items-center rounded-sm bg-[#e3d4be] px-3 py-1 text-xs uppercase tracking-[0.25em] text-[#6a5c4a]">
               Our Plans
             </div>
             <h1 className="text-2xl font-semibold">Pick the momentum that fits.</h1>
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-[#e6efe0]">
               Upgrade when you need more runs, exports, and advanced tools.
             </p>
             {tokensRemaining !== null ? (
-              <p className="text-xs text-white/50">
+              <p className="text-xs text-[#e6efe0]">
                 Tokens remaining: {tokensRemaining.toLocaleString()} · Reset at {formatLocalTime(resetTime || undefined)}
               </p>
             ) : null}

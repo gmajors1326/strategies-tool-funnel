@@ -1507,11 +1507,7 @@ export function ToolRunner(props: {
           ) : null}
 
           <div className="space-y-2 pt-2">
-            <Button
-              className="w-full bg-[#7ee6a3] text-[#0f2d1b] hover:bg-[#98efb6] disabled:bg-[#7ee6a3] disabled:text-[#0f2d1b]"
-              onClick={runTool}
-              disabled={busy || isLocked}
-            >
+            <Button className="w-full" onClick={runTool} disabled={busy || isLocked}>
               {isLocked
                 ? access === 'locked_tokens'
                   ? 'Locked - Buy tokens'
@@ -1690,11 +1686,7 @@ export function ToolRunner(props: {
       </Card>
       </div>
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[hsl(var(--border))] bg-[hsl(var(--bg))] p-3 lg:hidden">
-        <Button
-          className="w-full bg-[#7ee6a3] text-[#0f2d1b] hover:bg-[#98efb6] disabled:bg-[#7ee6a3] disabled:text-[#0f2d1b]"
-          onClick={runTool}
-          disabled={busy || isLocked}
-        >
+        <Button className="w-full" onClick={runTool} disabled={busy || isLocked}>
           {isLocked
             ? access === 'locked_tokens'
               ? 'Locked - Buy tokens'

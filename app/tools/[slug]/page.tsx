@@ -58,7 +58,7 @@ export default async function ToolPage({
 
   if (!tool || !isLaunchTool(tool.id)) {
     return (
-      <div className="min-h-screen bg-[#7d9b76] text-[hsl(var(--text))]">
+      <div className="min-h-screen bg-[#6b8b62] text-[hsl(var(--text))]">
         <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6">
           <div className="rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] p-6 text-[#2f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
             <h1 className="text-lg font-semibold">Tool not available yet</h1>
@@ -77,7 +77,7 @@ export default async function ToolPage({
   const fields = mapFields(tool.fields)
 
   return (
-    <div className="min-h-screen bg-[#7d9b76] text-[hsl(var(--text))]">
+    <div className="min-h-screen bg-[#6b8b62] text-[hsl(var(--text))]">
       <div className="mx-auto w-full max-w-6xl space-y-4 px-4 py-8 sm:px-6">
         <ToolRunner
           toolId={tool.id}

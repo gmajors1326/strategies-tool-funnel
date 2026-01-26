@@ -13,9 +13,9 @@ export function Button({ variant = 'primary', className, asChild = false, ...pro
   const base =
     'inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors disabled:opacity-60'
   const variants = {
-    primary: 'bg-red-600 text-white hover:bg-red-500',
-    outline: 'border border-[hsl(var(--border))] text-[hsl(var(--text))] hover:bg-[hsl(var(--surface-3))]',
-    ghost: 'text-[hsl(var(--text))] hover:bg-[hsl(var(--surface-3))]',
+    primary: 'bg-[#1f3b2b] text-white hover:bg-[#7ee6a3] hover:text-[#1f3b2b]',
+    outline: 'border border-[#1f3b2b] bg-[#1f3b2b] text-white hover:bg-[#7ee6a3] hover:text-[#1f3b2b]',
+    ghost: 'bg-[#1f3b2b] text-white hover:bg-[#7ee6a3] hover:text-[#1f3b2b]',
   }
 
   const Comp = asChild ? Slot : 'button'

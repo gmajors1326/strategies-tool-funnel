@@ -33,7 +33,7 @@ export function ToolCard({ tool }: ToolCardProps) {
       ) : (
         <div className="flex flex-col gap-2">
           <Link href={`/app/tools/${tool.id}`} className="block">
-            <Button className="w-full bg-[#7ee6a3] text-[#0f2d1b] hover:bg-[#98efb6]">Open Tool</Button>
+            <Button className="w-full">Open Tool</Button>
           </Link>
           <Link href="/help" className="block">
             <Button className="w-full" variant="outline">

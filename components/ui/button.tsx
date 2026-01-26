@@ -19,19 +19,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90",
+          "bg-[#1f3b2b] text-white hover:bg-[#7ee6a3] hover:text-[#1f3b2b]",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-[#1f3b2b] text-white hover:bg-[#7ee6a3] hover:text-[#1f3b2b]",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground shadow-none",
+          "border border-[#1f3b2b] bg-[#1f3b2b] text-white hover:bg-[#7ee6a3] hover:text-[#1f3b2b] shadow-none",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-none",
+          "bg-[#1f3b2b] text-white hover:bg-[#7ee6a3] hover:text-[#1f3b2b] shadow-none",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground shadow-none",
+          "bg-[#1f3b2b] text-white hover:bg-[#7ee6a3] hover:text-[#1f3b2b] shadow-none",
         link:
-          "text-primary underline-offset-4 hover:underline shadow-none",
+          "text-[#1f3b2b] underline-offset-4 hover:underline shadow-none",
         admin:
-          "rounded-md h-9 px-4 text-sm bg-primary text-primary-foreground shadow-none hover:bg-primary/90",
+          "rounded-md h-9 px-4 text-sm bg-[#1f3b2b] text-white shadow-none hover:bg-[#7ee6a3] hover:text-[#1f3b2b]",
       },
       size: {
         default: "h-11 px-5",

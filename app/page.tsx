@@ -19,7 +19,7 @@ export default function HomePage() {
   }, [allTools])
 
   return (
-    <div className="min-h-screen bg-[#7d9b76] text-foreground">
+    <div className="min-h-screen bg-[#6b8b62] text-foreground">
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-6 pb-12 md:pt-12 md:pb-20">
         <motion.div
@@ -31,7 +31,7 @@ export default function HomePage() {
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 text-[#1f3b2b] drop-shadow-[0_6px_18px_rgba(0,0,0,0.2)]">
             The Calm Content Companion
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-white mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
+          <p className="text-lg sm:text-xl md:text-2xl text-[#f2f5ef] mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
             Strategic engagement tools that turn conversations into revenue.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
@@ -70,8 +70,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-white">Tools</h2>
-                <p className="text-sm text-white/70">The core toolkit.</p>
+                <h2 className="text-lg font-semibold text-[#f2f5ef]">Tools</h2>
+                <p className="text-sm text-[#e6efe0]">The core toolkit.</p>
               </div>
             </div>
 
@@ -122,12 +122,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <Link href={`/tools/${tool.id}`} className="block">
-                        <Button
-                          className="w-full border-transparent bg-[#7ee6a3] text-[#0f2d1b] hover:bg-[#98efb6] hover:text-[#0f2d1b]"
-                          variant="outline"
-                        >
-                          Open Tool
-                        </Button>
+                        <Button className="w-full">Open Tool</Button>
                       </Link>
                       <Link href="/help" className="block">
                         <Button className="w-full" variant="outline">
@@ -144,7 +139,7 @@ export default function HomePage() {
               </AppCard>
             </div>
           )}
-          <div className="mt-4 text-xs text-white/70">
+          <div className="mt-4 text-xs text-[#e6efe0]">
             New? Start with Hook Analyzer → then CTA Match → then Caption.
           </div>
         </div>
@@ -160,8 +155,8 @@ export default function HomePage() {
       {/* Final CTA */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6 text-white">Ready to Get Started?</h2>
-          <p className="text-xl text-[hsl(var(--muted))] mb-8">
+          <h2 className="text-4xl font-bold mb-6 text-[#f2f5ef]">Ready to Get Started?</h2>
+          <p className="text-xl text-[#e6efe0] mb-8">
             Start your 7-day trial. Pick Pro or Elite when you&apos;re ready.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
