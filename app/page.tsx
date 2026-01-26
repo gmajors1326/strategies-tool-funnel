@@ -46,11 +46,11 @@ export default function HomePage() {
       </section>
 
       <section className="container mx-auto px-4 pb-10">
-        <div className="mx-auto max-w-5xl rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] px-6 py-5 text-[#2f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
+        <div className="mx-auto max-w-5xl rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] px-6 py-5 text-[#1f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-[#1f3b2b]">7-day trial</p>
-              <p className="text-lg font-semibold">Try every tool free for 7 days.</p>
+              <p className="text-lg font-semibold text-[#1f3b2b]">Try every tool free for 7 days.</p>
               <p className="text-sm text-[#1f3b2b]">After the trial, choose Pro ($39) or Elite ($99) to keep access.</p>
             </div>
             <div className="flex flex-wrap gap-3">
