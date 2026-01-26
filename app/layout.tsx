@@ -17,7 +17,7 @@ const leagueSpartan = League_Spartan({
 })
 
 export const metadata: Metadata = {
-  title: "The Strategy Tools",
+  title: "Free Spirit Marketing",
   description: "Premium tools for strategic engagement and conversion",
 }
 

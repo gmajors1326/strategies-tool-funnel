@@ -2,7 +2,7 @@ import { Resend } from 'resend'
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim()
 const RESEND_FROM = process.env.RESEND_FROM?.trim() || 'onboarding@resend.dev'
-const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME?.trim() || 'Free Spirit Marketing'
+const RESEND_FROM_NAME = 'Free Spirit Marketing'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.trim() || 'admin@example.com'
 
 let resend: Resend | null = null
