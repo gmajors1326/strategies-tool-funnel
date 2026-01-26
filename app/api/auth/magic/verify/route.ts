@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     sessionUserId = user.id
     sessionPlan = user.plan
   } catch {
-    // DB unavailable - fall back to stateless session for degraded mode
+    return NextResponse.redirect(new URL(`/verify?error=db_unavailable`, request.url))
   }
 
   if (payload.stripeCustomerId && process.env.STRIPE_SECRET_KEY) {
