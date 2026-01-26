@@ -838,7 +838,7 @@ export function ToolRunner(props: {
           requestId,
         })
         if (res.status === 401) {
-          router.push(`/verify?next=/tools/${toolSlug}`)
+          router.push('/verify?next=/')
         }
         return
       }
@@ -1479,7 +1479,7 @@ export function ToolRunner(props: {
               <div className="font-semibold">Sign in to run this tool</div>
               <p className="text-xs text-muted-foreground">Choose one of the options below to continue.</p>
               <div className="grid gap-2 sm:grid-cols-2">
-                <Button variant="outline" onClick={() => router.push(`/verify?next=/tools/${toolSlug}`)}>
+                <Button variant="outline" onClick={() => router.push('/verify?next=/')}>
                   Sign in
                 </Button>
                 <Button variant="secondary" onClick={() => router.push('/signup')}>

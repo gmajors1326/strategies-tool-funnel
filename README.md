@@ -1,4 +1,4 @@
-# The Strategy Tools
+# Free Spirit Marketing
 
 Premium funnel landing page with embedded interactive tools for strategic engagement and conversion.
 
@@ -47,7 +47,7 @@ SESSION_SECRET="your-session-secret-here-min-32-chars"
 # Email (Resend - default)
 RESEND_API_KEY="re_xxxxxxxxxxxxx"
 RESEND_FROM="hello@yourdomain.com"
-RESEND_FROM_NAME="The Strategy Tools"
+RESEND_FROM_NAME="Free Spirit Marketing"
 
 # Email (Gmail SMTP - optional fallback)
 USE_GMAIL_SMTP=false
@@ -61,9 +61,8 @@ ADMIN_EMAIL="admin@example.com"
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_xxxxxxxxxxxxx"
 STRIPE_SECRET_KEY="sk_test_xxxxxxxxxxxxx"
 STRIPE_WEBHOOK_SECRET="whsec_xxxxxxxxxxxxx"
-STRIPE_PRICE_ID_DM_ENGINE="price_xxxxxxxxxxxxx"
-STRIPE_PRICE_ID_THE_STRATEGY="price_xxxxxxxxxxxxx"
-STRIPE_PRICE_ID_ALL_ACCESS="price_xxxxxxxxxxxxx"
+STRIPE_PRICE_ID_PRO_MONTHLY="price_xxxxxxxxxxxxx"
+STRIPE_PRICE_ID_ELITE_MONTHLY="price_xxxxxxxxxxxxx"
 
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
@@ -103,14 +102,12 @@ npm run seed:knowledge
 ### 4. Stripe Setup
 
 1. Create products in Stripe Dashboard:
-   - DM Engine
-   - The Strategy
-   - All Access
+   - Pro
+   - Elite
 
 2. Copy the Price IDs and add them to `.env`:
-   - `STRIPE_PRICE_ID_DM_ENGINE`
-   - `STRIPE_PRICE_ID_THE_STRATEGY`
-   - `STRIPE_PRICE_ID_ALL_ACCESS`
+   - `STRIPE_PRICE_ID_PRO_MONTHLY`
+   - `STRIPE_PRICE_ID_ELITE_MONTHLY`
 
 3. Set up webhook endpoint in Stripe Dashboard:
    - URL: `https://your-domain.com/api/stripe/webhook`
@@ -270,7 +267,7 @@ strategy-tools-funnel/
 
 ## Features
 
-### Free Tools
+### Trial Tools
 - **Engagement Diagnostic (Lite)**: Get engagement tier and actionable insight
 - **DM Opener Generator (Lite)**: Generate DM openers based on scenario
 - **Hook Repurposer™**: Turn one hook into multiple strategic angles
@@ -289,17 +286,15 @@ strategy-tools-funnel/
 - **Knowledge Vault**: Database-backed intelligence ensures consistent, premium outputs
 - **Rate Limiting**: Plan-based daily AI usage caps
   - Anonymous: No AI access
-  - Verified Free: 3 AI calls/day (preview)
-  - DM Engine: 20 AI calls/day
-  - The Strategy: 30 AI calls/day
-  - All Access: 50 AI calls/day
+- Trial: 3 AI calls/day (preview)
+- Pro: 30 AI calls/day
+- Elite: 50 AI calls/day
 - **Cost Controls**: Token tracking, cost estimation, usage logging
 - Saved Results & Exports
 
 ### Plans
-- **DM Engine**: DM flows and follow-ups
-- **The Strategy**: Full engagement system
-- **All Access**: Everything in DM Engine + The Strategy
+- **Pro**: Core tools, higher limits, saves and exports
+- **Elite**: Unlimited history, all exports, highest limits
 
 ## Testing
 

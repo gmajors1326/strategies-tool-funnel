@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { AppCard, AppCardContent, AppCardDescription, AppCardHeader, AppCardTitle } from '@/components/ui/AppCard'
 import { AppPanel } from '@/components/ui/AppPanel'
@@ -9,17 +8,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export default function VerifyClient() {
-  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [sent, setSent] = useState(false)
-  const nextParam = searchParams.get('next') ?? ''
-  const nextPath =
-    nextParam.startsWith('/') && !nextParam.startsWith('//')
-      ? nextParam
-      : '/'
+  const nextPath = '/'
 
   const handleStart = async (e: React.FormEvent) => {
     e.preventDefault()

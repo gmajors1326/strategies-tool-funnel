@@ -10,7 +10,6 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
   if (pathname.startsWith('/admin')) return null
   const session = await getSession()
   const isSignedIn = Boolean(session?.userId)
-  const returnTo = pathname || '/'
 
   return (
     <div className="container mx-auto px-4 pt-6">
@@ -32,7 +31,7 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
           </form>
         ) : (
           <Button asChild size="sm" variant="outline">
-            <Link href={`/auth?returnTo=${encodeURIComponent(returnTo)}`}>Sign In</Link>
+            <Link href="/verify?next=/">Sign In</Link>
           </Button>
         )}
         <Button asChild size="sm" variant="outline">

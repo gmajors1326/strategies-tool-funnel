@@ -94,9 +94,8 @@ Based on `.env.example`, you need to set:
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key
 - `STRIPE_SECRET_KEY` - Stripe secret key
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret
-- `STRIPE_PRICE_ID_DM_ENGINE` - DM Engine price ID
-- `STRIPE_PRICE_ID_THE_STRATEGY` - The Strategy price ID
-- `STRIPE_PRICE_ID_ALL_ACCESS` - All Access price ID
+- `STRIPE_PRICE_ID_PRO_MONTHLY` - Pro monthly price ID
+- `STRIPE_PRICE_ID_ELITE_MONTHLY` - Elite monthly price ID
 
 ### App
 - `NEXT_PUBLIC_APP_URL` - Your production URL (e.g., `https://your-domain.vercel.app`)

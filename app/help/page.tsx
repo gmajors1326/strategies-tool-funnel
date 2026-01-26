@@ -9,7 +9,33 @@ export default function HelpPage() {
     <div className="min-h-screen bg-[#7d9b76] text-[hsl(var(--text))]">
       <div className="mx-auto max-w-3xl space-y-6 px-6 py-10">
         <div>
-          <h1 className="text-2xl font-semibold">Billing help</h1>
+          <h1 className="text-2xl font-semibold">Help</h1>
+          <p className="text-sm text-[hsl(var(--muted))]">Quick guidance for starting your trial and upgrading.</p>
+        </div>
+
+        <Card className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold">Start your 7-day trial</h2>
+            <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm text-[hsl(var(--muted))]">
+              <li>Click Sign In and enter your name + email.</li>
+              <li>Open the email link to finish sign-in.</li>
+              <li>Run any tool and review the summary.</li>
+            </ol>
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold">Pro vs Elite</h2>
+            <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-[hsl(var(--muted))]">
+              <li>Pro: 2,000 daily tokens, reduced cooldowns, save + export JSON/CSV.</li>
+              <li>Elite: 6,000 daily tokens, no cooldowns, unlimited history, all exports.</li>
+            </ul>
+            <p className="mt-2 text-sm text-[hsl(var(--muted))]">
+              Your trial ends after 7 days. Choose Pro or Elite to keep access.
+            </p>
+          </div>
+        </Card>
+
+        <div>
+          <h2 className="text-xl font-semibold">Billing help</h2>
           <p className="text-sm text-[hsl(var(--muted))]">Clear answers to common billing questions.</p>
         </div>
 

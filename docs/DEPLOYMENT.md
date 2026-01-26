@@ -10,15 +10,13 @@
 
 ### 2. Stripe Setup
 - [ ] Create Stripe account (or use existing)
-- [ ] Create three products:
-  - DM Engine
-  - The Strategy
-  - All Access
+- [ ] Create two products:
+  - Pro
+  - Elite
 - [ ] Create prices for each product (one-time payment)
 - [ ] Copy Price IDs to environment variables:
-  - `STRIPE_PRICE_ID_DM_ENGINE`
-  - `STRIPE_PRICE_ID_THE_STRATEGY`
-  - `STRIPE_PRICE_ID_ALL_ACCESS`
+  - `STRIPE_PRICE_ID_PRO_MONTHLY`
+  - `STRIPE_PRICE_ID_ELITE_MONTHLY`
 - [ ] Copy API keys:
   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
   - `STRIPE_SECRET_KEY`

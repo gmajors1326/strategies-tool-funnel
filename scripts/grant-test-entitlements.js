@@ -77,8 +77,8 @@ async function main() {
     console.log('')
     console.log('📊 Entitlements:')
     console.log(`   - DM Engine: ${planName === 'DM_ENGINE' || planName === 'ALL_ACCESS' ? '✅' : '❌'}`)
-    console.log(`   - The Strategy: ${planName === 'THE_STRATEGY' || planName === 'ALL_ACCESS' ? '✅' : '❌'}`)
-    console.log(`   - All Access: ${planName === 'ALL_ACCESS' ? '✅' : '❌'}`)
+    console.log(`   - Pro: ${planName === 'THE_STRATEGY' || planName === 'ALL_ACCESS' ? '✅' : '❌'}`)
+    console.log(`   - Elite: ${planName === 'ALL_ACCESS' ? '✅' : '❌'}`)
     console.log('')
     console.log('💡 You can now test premium features by logging in with this email.')
   } catch (error) {

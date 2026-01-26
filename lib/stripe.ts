@@ -18,9 +18,8 @@ export function getStripe(): Stripe {
 }
 
 export const PLAN_PRICE_IDS: Record<string, string> = {
-  dm_engine: process.env.STRIPE_PRICE_ID_DM_ENGINE || '',
-  the_strategy: process.env.STRIPE_PRICE_ID_THE_STRATEGY || '',
-  all_access: process.env.STRIPE_PRICE_ID_ALL_ACCESS || '',
+  pro: process.env.STRIPE_PRICE_ID_PRO_MONTHLY || '',
+  elite: process.env.STRIPE_PRICE_ID_ELITE_MONTHLY || '',
 }
 
 export async function createCheckoutSession(
@@ -37,9 +36,8 @@ export async function createCheckoutSession(
   
   if (!priceId || priceId.trim() === '') {
     const envVarMap: Record<string, string> = {
-      dm_engine: 'STRIPE_PRICE_ID_DM_ENGINE',
-      the_strategy: 'STRIPE_PRICE_ID_THE_STRATEGY',
-      all_access: 'STRIPE_PRICE_ID_ALL_ACCESS',
+      pro: 'STRIPE_PRICE_ID_PRO_MONTHLY',
+      elite: 'STRIPE_PRICE_ID_ELITE_MONTHLY',
     }
     const envVarName = envVarMap[planId] || `STRIPE_PRICE_ID_${planId.toUpperCase()}`
     const error = `Stripe price ID not configured for plan "${planId}". Please set ${envVarName} in Vercel Production environment variables.`

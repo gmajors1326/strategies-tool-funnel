@@ -7,30 +7,23 @@
 1. Go to [Stripe Dashboard → Products](https://dashboard.stripe.com/products)
 2. Click **"Add product"** for each plan:
 
-#### DM Engine
-- **Name:** DM Engine
-- **Description:** Best for confident, non-cringe DMs
-- **Pricing:** $49.00 USD (one-time)
+#### Pro
+- **Name:** Pro
+- **Description:** For serious creators scaling output
+- **Pricing:** $39.00 USD (monthly)
 - **Copy the Price ID** (starts with `price_`)
 
-#### The Strategy
-- **Name:** The Strategy
-- **Description:** Best for strategic engagement & visibility
-- **Pricing:** $49.00 USD (one-time)
-- **Copy the Price ID**
-
-#### All Access
-- **Name:** All Access
-- **Description:** Everything in DM Engine + The Strategy
-- **Pricing:** $49.00 USD (one-time)
+#### Elite
+- **Name:** Elite
+- **Description:** For high-volume growth teams
+- **Pricing:** $99.00 USD (monthly)
 - **Copy the Price ID**
 
 3. Add Price IDs to Vercel:
    - Vercel → Project → Settings → Environment Variables
    - Add each:
-     - `STRIPE_PRICE_ID_DM_ENGINE` = `price_xxxxx`
-     - `STRIPE_PRICE_ID_THE_STRATEGY` = `price_xxxxx`
-     - `STRIPE_PRICE_ID_ALL_ACCESS` = `price_xxxxx`
+     - `STRIPE_PRICE_ID_PRO_MONTHLY` = `price_xxxxx`
+     - `STRIPE_PRICE_ID_ELITE_MONTHLY` = `price_xxxxx`
    - Make sure **Production** is checked
    - Save
 

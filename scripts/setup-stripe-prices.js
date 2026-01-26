@@ -11,7 +11,7 @@ if (!STRIPE_SECRET_KEY) {
   console.log('3. Run: node scripts/setup-stripe-prices.js\n')
   console.log('OR manually create products in Stripe Dashboard:')
   console.log('- Go to: https://dashboard.stripe.com/products')
-  console.log('- Create 3 products ($49 each)')
+  console.log('- Create 2 products (Pro and Elite)')
   console.log('- Copy the Price IDs and add to Vercel\n')
   process.exit(1)
 }
@@ -27,22 +27,16 @@ const stripe = new Stripe(STRIPE_SECRET_KEY, {
 
 const PLANS = [
   {
-    name: 'DM Engine',
-    description: 'Best for confident, non-cringe DMs',
-    price: 4900, // $49.00 in cents
-    planId: 'dm_engine',
+    name: 'Pro',
+    description: 'For serious creators scaling output',
+    price: 3900, // $39.00 in cents
+    planId: 'pro',
   },
   {
-    name: 'The Strategy',
-    description: 'Best for strategic engagement & visibility',
-    price: 4900,
-    planId: 'the_strategy',
-  },
-  {
-    name: 'All Access',
-    description: 'Everything in DM Engine + The Strategy',
-    price: 4900,
-    planId: 'all_access',
+    name: 'Elite',
+    description: 'For high-volume growth teams',
+    price: 9900, // $99.00 in cents
+    planId: 'elite',
   },
 ]
 
@@ -78,9 +72,8 @@ async function setupPrices() {
   }
 
   console.log('\n📋 Add these to Vercel Production environment variables:\n')
-  console.log('STRIPE_PRICE_ID_DM_ENGINE=' + priceIds.dm_engine)
-  console.log('STRIPE_PRICE_ID_THE_STRATEGY=' + priceIds.the_strategy)
-  console.log('STRIPE_PRICE_ID_ALL_ACCESS=' + priceIds.all_access)
+  console.log('STRIPE_PRICE_ID_PRO_MONTHLY=' + priceIds.pro)
+  console.log('STRIPE_PRICE_ID_ELITE_MONTHLY=' + priceIds.elite)
   console.log('\n✅ Done!')
 }
 

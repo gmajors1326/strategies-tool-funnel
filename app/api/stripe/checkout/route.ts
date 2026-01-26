@@ -4,7 +4,7 @@ import { createCheckoutSession } from '@/lib/stripe'
 import { z } from 'zod'
 
 const checkoutSchema = z.object({
-  planId: z.enum(['dm_engine', 'the_strategy', 'all_access']),
+  planId: z.enum(['pro', 'elite']),
 })
 
 export async function POST(request: NextRequest) {
