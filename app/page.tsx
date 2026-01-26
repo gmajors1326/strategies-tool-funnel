@@ -70,7 +70,7 @@ export default function HomePage() {
                 return (
                   <AppCard
                     key={tool.id}
-                    className="p-4 space-y-3"
+                    className="p-4 space-y-3 border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] shadow-none overflow-visible"
                   >
                     <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted))]">
                       {meta?.label ? (
@@ -112,7 +112,7 @@ export default function HomePage() {
                   </AppCard>
                 )
               })}
-              <AppCard className="p-4 space-y-2 text-sm text-[hsl(var(--muted))]">
+              <AppCard className="p-4 space-y-2 text-sm text-[hsl(var(--muted))] border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] shadow-none overflow-visible">
                 <p className="text-[hsl(var(--text))] font-semibold">More tools coming soon</p>
                 <p>We&apos;re launching in tight batches.</p>
               </AppCard>
