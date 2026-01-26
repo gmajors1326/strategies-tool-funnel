@@ -400,6 +400,9 @@ export function ToolRunner(props: {
   const [busy, setBusy] = React.useState(false)
   const [result, setResult] = React.useState<RunResponse | null>(null)
   const [history, setHistory] = React.useState<any[]>([])
+  const [historyBusy, setHistoryBusy] = React.useState(false)
+  const [historySource, setHistorySource] = React.useState<'server' | 'local'>('local')
+  const [historyLastSyncAt, setHistoryLastSyncAt] = React.useState<string | null>(null)
   const [copied, setCopied] = React.useState<string | null>(null)
   const [msg, setMsg] = React.useState<string | null>(null)
   const [lockReason, setLockReason] = React.useState<LockReason>({ type: 'none' })
@@ -600,17 +603,30 @@ export function ToolRunner(props: {
 
   async function loadHistory() {
     if (!canSeeHistoryEffective) {
+      setHistorySource('local')
       setHistory(readLocalRuns(toolSlug))
       return
     }
-    const res = await fetch(`/api/tools/runs/recent?toolId=${encodeURIComponent(toolId)}`, {
-      cache: 'no-store',
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setHistory(data.runs ?? [])
-      return
+
+    setHistoryBusy(true)
+    try {
+      const res = await fetch(`/api/tools/runs/recent?toolId=${encodeURIComponent(toolId)}`, {
+        cache: 'no-store',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setHistory(data.runs ?? [])
+        setHistorySource('server')
+        setHistoryLastSyncAt(new Date().toISOString())
+        return
+      }
+    } catch {
+      // ignore
+    } finally {
+      setHistoryBusy(false)
     }
+
+    setHistorySource('local')
     setHistory(readLocalRuns(toolSlug))
   }
 
@@ -931,6 +947,15 @@ export function ToolRunner(props: {
     return lines
   }
 
+  function getSummaryPayload(output: any) {
+    if (!output) return ''
+    if (typeof output !== 'object') return output
+    if (typeof output?.summary === 'string') return output.summary
+    if (output?.summary && typeof output.summary === 'object') return output.summary
+    const lines = buildSummaryLines(output)
+    return lines.length ? lines : output
+  }
+
   function renderGenericResult(output: any) {
     if (!output || typeof output !== 'object') {
       return <ValueRenderer value={output} />
@@ -949,13 +974,6 @@ export function ToolRunner(props: {
         <div className="rounded-md border bg-muted/20 p-3 text-sm">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Summary</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => copy(JSON.stringify(output?.summary ?? summaryLines, null, 2), 'Copied summary')}
-            >
-              Copy
-            </Button>
           </div>
           <div className="mt-2 space-y-2 text-xs text-muted-foreground">
             {summaryLines.length ? (
@@ -995,18 +1013,11 @@ export function ToolRunner(props: {
 
     return (
       <div className="space-y-4">
-        <div>
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Summary</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => copy(JSON.stringify(summary, null, 2), 'Copied summary')}
-            >
-              Copy
-            </Button>
-          </div>
-          <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm">
+          <div>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Summary</h3>
+            </div>
+            <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm">
             <div className="text-xs text-muted-foreground">Primary issue</div>
             <div className="font-medium">{summary?.primaryIssue ?? '—'}</div>
             <div className="mt-2 text-xs text-muted-foreground">Diagnosis</div>
@@ -1163,17 +1174,38 @@ export function ToolRunner(props: {
 
   function renderOutput() {
     if (!result?.output) return null
+    const summaryPayload = getSummaryPayload(result.output)
+    const summaryText =
+      typeof summaryPayload === 'string' ? summaryPayload : JSON.stringify(summaryPayload, null, 2)
+    const outputText =
+      typeof result.output === 'string' ? result.output : JSON.stringify(result.output, null, 2)
+
+    let content: React.ReactNode = null
     if (typeof result.output === 'string') {
-      return (
+      content = (
         <pre className="max-h-[420px] overflow-auto rounded-md border bg-muted/30 p-3 text-xs">
           {result.output}
         </pre>
       )
+    } else if (toolId === 'analytics-signal-reader') {
+      content = renderAnalyticsSignalReader(result.output)
+    } else {
+      content = renderGenericResult(result.output)
     }
-    if (toolId === 'analytics-signal-reader') {
-      return renderAnalyticsSignalReader(result.output)
-    }
-    return renderGenericResult(result.output)
+
+    return (
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button variant="secondary" size="sm" onClick={() => copy(summaryText, 'Copied summary')}>
+            Copy Summary
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => copy(outputText, 'Copied all')}>
+            Copy All
+          </Button>
+        </div>
+        {content}
+      </div>
+    )
   }
 
   return (
@@ -1527,16 +1559,38 @@ export function ToolRunner(props: {
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium">Recent runs {canSeeHistoryEffective ? '' : '(free: last 3)'}</p>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  localStorage.removeItem(lsKey(toolSlug))
-                  setHistory([])
-                }}
-              >
-                Clear local
-              </Button>
+              <div className="flex items-center gap-2">
+                {canSeeHistoryEffective ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => loadHistory()}
+                    disabled={historyBusy}
+                  >
+                    {historyBusy ? 'Retrying...' : 'Retry server history'}
+                  </Button>
+                ) : null}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    localStorage.removeItem(lsKey(toolSlug))
+                    setHistory([])
+                  }}
+                >
+                  Clear local
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-1 text-xs text-muted-foreground">
+              {canSeeHistoryEffective
+                ? historySource === 'server'
+                  ? 'Server history synced.'
+                  : 'Server history unavailable.'
+                : 'Server history is locked on this plan.'}{' '}
+              Last sync:{' '}
+              {historyLastSyncAt ? new Date(historyLastSyncAt).toLocaleString() : 'Never'}
             </div>
 
             {canSeeHistoryEffective && history?.length ? (

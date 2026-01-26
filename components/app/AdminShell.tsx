@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react'
 import { AdminNav } from '@/components/app/AdminNav'
 import { AdminSessionBadge } from '@/components/app/AdminSessionBadge'
+import { getAdminSession } from '@/lib/adminAuth'
 
 type AdminShellProps = {
   children: ReactNode
 }
 
-export function AdminShell({ children }: AdminShellProps) {
+export async function AdminShell({ children }: AdminShellProps) {
+  const admin = await getAdminSession()
   return (
     <div className="admin-theme min-h-screen bg-[hsl(var(--bg))] text-[hsl(var(--text))]">
       <div className="mx-auto flex max-w-7xl gap-6 px-6 py-6">
@@ -15,7 +17,7 @@ export function AdminShell({ children }: AdminShellProps) {
             <p className="mb-4 text-xs uppercase tracking-[0.18em] text-[hsl(var(--muted))]">
               Admin Console
             </p>
-            <AdminNav />
+            <AdminNav role={admin.role} />
           </div>
         </aside>
         <main className="flex-1 space-y-6">
