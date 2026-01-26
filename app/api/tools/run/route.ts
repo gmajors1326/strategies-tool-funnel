@@ -1,7 +1,7 @@
 // app/api/tools/run/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import type { Prisma } from '@prisma/client'
+import type { Prisma } from '@/src/generated/prisma/client'
 import { getToolMeta } from '@/src/lib/tools/registry'
 import { runnerRegistry } from '@/src/lib/tools/runnerRegistry'
 import { addRun } from '@/src/lib/tools/runStore'

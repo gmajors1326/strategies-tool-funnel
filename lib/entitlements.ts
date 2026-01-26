@@ -1,5 +1,5 @@
 import { prisma } from './db'
-import { Plan } from '@prisma/client'
+import { Plan } from '@/src/generated/prisma/client'
 import { checkAiUsageLimit } from './ai-usage'
 import { withCache } from './cache'
 

@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@/src/generated/prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
 import { logger } from './logger'
 
 const globalForPrisma = globalThis as unknown as {
@@ -42,15 +43,12 @@ const createPrismaClient = () => {
     }
   }
 
+  const adapter = new PrismaPg({ connectionString: databaseUrl })
   const prisma = new PrismaClient({
+    adapter,
     log: process.env.NODE_ENV === 'development'
       ? [{ emit: 'event', level: 'query' }, 'error', 'warn']
       : ['error'],
-    datasources: {
-      db: {
-        url: databaseUrl,
-      },
-    },
   })
 
   if (process.env.NODE_ENV === 'development') {

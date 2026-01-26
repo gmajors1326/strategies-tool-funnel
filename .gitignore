@@ -37,6 +37,7 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 
 # prisma
+src/generated/prisma
 
 # supabase
 .supabase

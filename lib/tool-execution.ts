@@ -4,8 +4,8 @@ import { enhanceWithAi, logAiUsage, isAiEnabled, type AiStyle } from './ai'
 import { retrieveKnowledge, getPromptProfile, getPromptRubric } from './knowledge'
 import { prisma } from './db'
 import { minimizeInputsForStorage } from './privacy'
-import type { Prisma } from '@prisma/client'
-import { Plan } from '@prisma/client'
+import type { Prisma } from '@/src/generated/prisma/client'
+import { Plan } from '@/src/generated/prisma/client'
 
 export interface ToolExecutionOptions {
   toolKey: string

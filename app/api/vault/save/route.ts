@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/src/lib/db/prisma'
 import { getUserOrThrow } from '@/src/lib/auth/getUser'
 import { getEntitlements } from '@/src/lib/entitlements/getEntitlements'
-import { VaultItemKind } from '@prisma/client'
+import { VaultItemKind } from '@/src/generated/prisma/client'
 
 export async function POST(req: Request) {
   try {

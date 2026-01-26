@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
 import { grantEntitlement } from '@/lib/entitlements'
 import { prisma } from '@/lib/db'
-import { Plan } from '@prisma/client'
+import { Plan } from '@/src/generated/prisma/client'
 import Stripe from 'stripe'
 
 export async function POST(request: NextRequest) {

@@ -1,5 +1,5 @@
 import { prisma } from './db'
-import { Plan } from '@prisma/client'
+import { Plan } from '@/src/generated/prisma/client'
 
 // Daily AI usage caps by plan
 export const AI_USAGE_CAPS: Record<Plan, number> = {

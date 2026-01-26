@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/src/generated/prisma/client'
 import { prisma } from '@/src/lib/prisma'
 import { getNextResetAt, getWindowStart } from '@/src/lib/usage/reset'
 
