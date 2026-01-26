@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { getSession } from '@/lib/auth.server'
-import { resolveAdminRole } from '@/lib/adminAuth'
 
 type SiteHeaderProps = {
   pathname?: string
@@ -11,7 +10,6 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
   if (pathname.startsWith('/admin')) return null
   const session = await getSession()
   const isSignedIn = Boolean(session?.userId)
-  const isAdmin = session ? Boolean(resolveAdminRole({ userId: session.userId, email: session.email })) : false
   const returnTo = pathname || '/'
 
   return (
@@ -23,11 +21,9 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
         <Button asChild size="sm" variant="outline">
           <Link href="/pricing">Pricing</Link>
         </Button>
-        {isAdmin ? (
-          <Button asChild size="sm" variant="outline">
-            <Link href="/admin/login">Admin</Link>
-          </Button>
-        ) : null}
+        <Button asChild size="sm" variant="outline">
+          <Link href="/admin/login">Admin</Link>
+        </Button>
         {isSignedIn ? (
           <form action="/api/auth/logout" method="post">
             <Button size="sm" variant="outline" type="submit">

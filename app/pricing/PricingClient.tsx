@@ -227,7 +227,7 @@ export function PricingClient() {
                             onClick={() => {
                               if (isCurrent) return
                               if (stripePlan?.priceId) {
-                                return checkout(stripePlan.priceId, 'subscription')
+                                void checkout(stripePlan.priceId, 'subscription')
                               }
                             }}
                             disabled={isCurrent || loadingAction === stripePlan?.priceId}
