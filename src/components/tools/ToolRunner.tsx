@@ -1233,7 +1233,7 @@ export function ToolRunner(props: {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
         <CardHeader>
           <CardTitle className="text-base">Run {toolName}</CardTitle>
         </CardHeader>
@@ -1488,7 +1488,7 @@ export function ToolRunner(props: {
         </CardContent>
       </Card>
 
-      <Card className="lg:col-span-2">
+      <Card className="lg:col-span-2 border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <CardTitle className="text-base">Result</CardTitle>
           <Button
