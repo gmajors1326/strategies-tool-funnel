@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -416,6 +417,7 @@ export function ToolRunner(props: {
   const planLocked = !canExportEffective || !canSaveToVaultEffective || !canExportTemplatesEffective
   const nextToolId = getRecommendedNextToolId(toolId)
   const header = isLaunchTool(toolId) ? getLaunchHeader(toolId) : null
+  const headerStatus = busy ? { label: 'Running', spinning: true } : undefined
 
   const isLocked =
     access === 'locked_tokens' || access === 'locked_time' || access === 'locked_plan' || lockReason.type !== 'none'
@@ -1155,7 +1157,7 @@ export function ToolRunner(props: {
 
   return (
     <div className="space-y-4">
-      {header ? <ToolPageHeader title={header.title} description={header.description} /> : null}
+      {header ? <ToolPageHeader title={header.title} description={header.description} status={headerStatus} /> : null}
       <div className="flex flex-col gap-2">
         <ToolRunToolbar
           toolId={toolId}
@@ -1406,7 +1408,12 @@ export function ToolRunner(props: {
                     ? 'Locked - Wait for reset'
                     : 'Locked - Upgrade'
                 : busy
-                  ? 'Running...'
+                  ? (
+                      <span className="inline-flex items-center gap-2">
+                        <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        Running...
+                      </span>
+                    )
                   : tokensCost && tokensCost > 0
                     ? `Run (${tokensCost} tokens)`
                     : 'Run'}
@@ -1556,7 +1563,12 @@ export function ToolRunner(props: {
                 ? 'Locked - Wait for reset'
                 : 'Locked - Upgrade'
             : busy
-              ? 'Running...'
+              ? (
+                  <span className="inline-flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    Running...
+                  </span>
+                )
               : tokensCost && tokensCost > 0
                 ? `Run (${tokensCost} tokens)`
                 : 'Run'}
