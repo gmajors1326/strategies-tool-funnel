@@ -8,7 +8,7 @@ const AppCard = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "relative overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--text))] shadow-lg",
+      "rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--text))] shadow-none",
       className
     )}
     {...props}
