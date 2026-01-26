@@ -13,13 +13,7 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
 
   return (
     <div className="container mx-auto px-4 pt-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 no-print">
-        <Link
-          href="/"
-          className="text-lg font-semibold tracking-tight text-[#1f3b2b]"
-        >
-          The Calm Content Companion
-        </Link>
+      <div className="flex flex-wrap items-center gap-2 no-print">
         <Button asChild size="sm" variant="outline">
           <Link href="/">Home</Link>
         </Button>
