@@ -7,7 +7,6 @@ import { listTools } from '@/src/lib/tools/registry'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { LAUNCH_TOOL_IDS, getLaunchMeta, isLaunchTool } from '@/src/lib/tools/launchTools'
-import { OpenToolsCapture } from '@/src/components/leads/OpenToolsCapture'
 import { FaqBlock } from '@/src/components/marketing/FaqBlock'
 
 export default function HomePage() {
@@ -36,28 +35,45 @@ export default function HomePage() {
             Strategic engagement tools that turn conversations into revenue.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
-            <OpenToolsCapture redirectTo="/tools" />
+            <Button asChild size="lg">
+              <Link href="/verify?next=/">Start 7-day trial</Link>
+            </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="#faq">Learn More</Link>
+              <Link href="/help">Learn more</Link>
             </Button>
           </div>
         </motion.div>
       </section>
 
+      <section className="container mx-auto px-4 pb-10">
+        <div className="mx-auto max-w-5xl rounded-2xl border border-white/10 bg-[#3a3a3a] px-6 py-5 text-white shadow-[0_24px_40px_rgba(0,0,0,0.35)]">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/60">7-day trial</p>
+              <p className="text-lg font-semibold">Try every tool free for 7 days.</p>
+              <p className="text-sm text-white/60">After the trial, choose Pro ($39) or Elite ($99) to keep access.</p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild>
+                <Link href="/verify?next=/">Start trial</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/pricing">View plans</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Tools Section */}
       <section id="tool" className="container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-semibold text-white">Tools</h2>
-              <p className="text-sm text-white/70">The core toolkit.</p>
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Tools</h2>
+                <p className="text-sm text-white/70">The core toolkit.</p>
+              </div>
             </div>
-            <Link href="/tools/hook-analyzer">
-              <Button size="sm" variant="outline">
-                Quick start
-              </Button>
-            </Link>
-          </div>
 
           {tools.length === 0 ? (
             <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-6 text-center text-sm text-[hsl(var(--muted))]">
@@ -104,14 +120,21 @@ export default function HomePage() {
                     <div className="flex items-center justify-between text-xs text-[hsl(var(--muted))]">
                       <span>{tool.tokensPerRun ? `${tool.tokensPerRun} tokens/run` : 'Tokens TBD'}</span>
                     </div>
-                    <Link href={`/tools/${tool.id}`} className="block">
-                      <Button
-                        className="w-full border-transparent bg-[#7ee6a3] text-[#0f2d1b] hover:bg-[#98efb6] hover:text-[#0f2d1b]"
-                        variant="outline"
-                      >
-                        Open Tool
-                      </Button>
-                    </Link>
+                    <div className="flex flex-col gap-2">
+                      <Link href={`/tools/${tool.id}`} className="block">
+                        <Button
+                          className="w-full border-transparent bg-[#7ee6a3] text-[#0f2d1b] hover:bg-[#98efb6] hover:text-[#0f2d1b]"
+                          variant="outline"
+                        >
+                          Open Tool
+                        </Button>
+                      </Link>
+                      <Link href="/help" className="block">
+                        <Button className="w-full" variant="outline">
+                          Learn more
+                        </Button>
+                      </Link>
+                    </div>
                   </AppCard>
                 )
               })}
@@ -139,11 +162,11 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-4xl font-bold mb-6 text-white">Ready to Get Started?</h2>
           <p className="text-xl text-[hsl(var(--muted))] mb-8">
-            All tools are free to use. Get started now.
+            Start your 7-day trial. Pick Pro or Elite when you&apos;re ready.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg">
-              <Link href="#faq">Learn More →</Link>
+              <Link href="/help">Learn more →</Link>
             </Button>
           </div>
         </div>

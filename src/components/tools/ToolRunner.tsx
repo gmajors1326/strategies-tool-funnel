@@ -1245,6 +1245,23 @@ export function ToolRunner(props: {
   return (
     <div className="space-y-4">
       {header ? <ToolPageHeader title={header.title} description={header.description} status={headerStatus} /> : null}
+      <div className="rounded-2xl border border-white/10 bg-[#3a3a3a] p-4 text-sm text-white shadow-[0_24px_40px_rgba(0,0,0,0.35)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/60">7-day trial</p>
+            <p className="text-base font-semibold">Try every tool free for 7 days.</p>
+            <p className="text-xs text-white/60">After the trial, choose Pro ($39) or Elite ($99) to keep access.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm">
+              <Link href="/verify?next=/">Start trial</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/pricing">View plans</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
       <div className="flex flex-col gap-2">
         <ToolRunToolbar
           toolId={toolId}
