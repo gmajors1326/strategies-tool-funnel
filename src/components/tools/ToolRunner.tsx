@@ -260,7 +260,7 @@ function ValueRenderer({
     const allPrimitive = value.every((item) => isPrimitive(item))
     if (allPrimitive) {
       return (
-        <ul className="list-disc space-y-1 pl-4 text-sm">
+        <ul className="list-disc space-y-2 pl-5 text-sm leading-relaxed">
           {value.slice(0, 6).map((item, idx) => (
             <li key={`${idx}-${String(item)}`}>{String(item)}</li>
           ))}
@@ -272,7 +272,7 @@ function ValueRenderer({
     }
 
     return (
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         {value.slice(0, 6).map((item, idx) => {
           const obj = typeof item === 'object' && item ? item : { value: item }
           const fields =
@@ -280,11 +280,11 @@ function ValueRenderer({
               ? cardFields
               : Object.keys(obj).filter((key) => isPrimitive(obj[key])).slice(0, 4)
           return (
-            <div key={`${idx}-${fields.join('-')}`} className="rounded-md border bg-muted/20 p-2 text-xs">
+            <div key={`${idx}-${fields.join('-')}`} className="rounded-md border bg-muted/20 p-3 text-sm">
               {fields.map((key) => (
-                <div key={key} className="flex gap-2">
-                  <span className="text-muted-foreground">{key}</span>
-                  <span className="font-medium">{renderPrimitiveValue(obj[key], 140)}</span>
+                <div key={key} className="flex flex-col gap-1">
+                  <span className="text-xs text-muted-foreground">{key}</span>
+                  <span className="font-medium leading-relaxed">{renderPrimitiveValue(obj[key], 140)}</span>
                 </div>
               ))}
             </div>
@@ -308,11 +308,11 @@ function ValueRenderer({
       )
     }
     return (
-      <div className="grid gap-2 text-sm sm:grid-cols-2">
+      <div className="grid gap-3 text-sm sm:grid-cols-2">
         {entries.map(([key, val]) => (
-          <div key={key} className="rounded-md border bg-muted/10 p-2">
+          <div key={key} className="rounded-md border bg-muted/10 p-3">
             <div className="text-xs text-muted-foreground">{key}</div>
-            <div className="mt-1 text-sm">
+            <div className="mt-1 text-sm leading-relaxed">
               <ValueRenderer value={val} depth={depth + 1} />
             </div>
           </div>
@@ -971,15 +971,15 @@ export function ToolRunner(props: {
 
     return (
       <div className="space-y-4">
-        <div className="rounded-md border bg-muted/20 p-3 text-sm">
+        <div className="rounded-md border bg-muted/20 p-3 text-sm leading-relaxed">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Summary</h3>
           </div>
-          <div className="mt-2 space-y-2 text-xs text-muted-foreground">
+          <div className="mt-2 space-y-3 text-sm text-muted-foreground">
             {summaryLines.length ? (
               summaryLines.map((line) => (
-                <div key={line.label} className="flex flex-col gap-1">
-                  <span className="text-foreground">{line.label}</span>
+                <div key={line.label} className="flex flex-col gap-2">
+                  <span className="text-foreground text-sm font-medium">{line.label}</span>
                   <ValueRenderer value={line.value} />
                 </div>
               ))
@@ -1017,15 +1017,15 @@ export function ToolRunner(props: {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Summary</h3>
             </div>
-            <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm">
-            <div className="text-xs text-muted-foreground">Primary issue</div>
-            <div className="font-medium">{summary?.primaryIssue ?? '—'}</div>
-            <div className="mt-2 text-xs text-muted-foreground">Diagnosis</div>
-            <div>{summary?.oneSentenceDiagnosis ?? '—'}</div>
-            <div className="mt-2 text-xs text-muted-foreground">
-              Confidence: <span className="text-foreground">{summary?.confidence ?? '—'}</span>
+            <div className="mt-2 rounded-md border bg-muted/20 p-3 text-sm leading-relaxed">
+              <div className="text-xs text-muted-foreground">Primary issue</div>
+              <div className="font-medium text-sm">{summary?.primaryIssue ?? '—'}</div>
+              <div className="mt-3 text-xs text-muted-foreground">Diagnosis</div>
+              <div className="text-sm leading-relaxed">{summary?.oneSentenceDiagnosis ?? '—'}</div>
+              <div className="mt-3 text-xs text-muted-foreground">
+                Confidence: <span className="text-foreground">{summary?.confidence ?? '—'}</span>
+              </div>
             </div>
-          </div>
           {lowConfidence ? (
             <div className="mt-2 text-xs text-muted-foreground">
               Improve accuracy: add more metrics or context to your input.
