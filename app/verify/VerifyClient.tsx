@@ -59,8 +59,8 @@ export default function VerifyClient() {
     <div className="relative min-h-screen bg-[#5f7f57] text-foreground flex items-center justify-center p-4">
       <AppCard className="relative w-full max-w-md">
         <AppCardHeader>
-          <AppCardTitle>Email Sign-In</AppCardTitle>
-          <AppCardDescription>
+          <AppCardTitle className="text-[#1f3b2b]">Email Sign-In</AppCardTitle>
+          <AppCardDescription className="text-[#1f3b2b]">
             {sent
               ? 'Check your inbox for a secure sign-in link.'
               : 'Enter your email to receive a sign-in link.'}
@@ -69,7 +69,7 @@ export default function VerifyClient() {
         <AppCardContent>
           <form onSubmit={handleStart} className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-[hsl(var(--muted))]">Name</Label>
+              <Label htmlFor="name" className="text-[#1f3b2b]">Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -81,7 +81,7 @@ export default function VerifyClient() {
               />
             </div>
             <div>
-              <Label htmlFor="email" className="text-[hsl(var(--muted))]">Email</Label>
+              <Label htmlFor="email" className="text-[#1f3b2b]">Email</Label>
               <Input
                 id="email"
                 type="email"
