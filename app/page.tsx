@@ -135,9 +135,9 @@ export default function HomePage() {
                   </AppCard>
                 )
               })}
-              <AppCard className="p-4 space-y-2 text-sm text-[#5f6b52]">
-                <p className="text-[#2f3b2b] font-semibold">More tools coming soon</p>
-                <p>We&apos;re launching in tight batches.</p>
+              <AppCard className="p-4 space-y-2 text-sm text-[#1f3b2b]">
+                <p className="text-[#1f3b2b] font-semibold">More tools coming soon</p>
+                <p className="text-[#1f3b2b]">We&apos;re launching in tight batches.</p>
               </AppCard>
             </div>
           )}
