@@ -28,7 +28,7 @@ export default function HomePage() {
           transition={{ duration: 0.6 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 text-[#1f3b2b] drop-shadow-[0_6px_18px_rgba(0,0,0,0.2)]">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 text-[#eadcc7] drop-shadow-[0_6px_18px_rgba(0,0,0,0.2)]">
             The Calm Content Companion
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-[#f2f5ef] mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
