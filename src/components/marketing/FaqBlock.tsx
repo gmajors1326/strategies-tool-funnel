@@ -79,7 +79,9 @@ export function FaqBlock({ title = "FAQ's" }: { title?: string }) {
             value={item.id}
             className="rounded-lg border border-[#d2c1a8] bg-[#e3d4be] px-4"
           >
-            <AccordionTrigger className="text-sm font-medium text-[#2f3b2b]">{item.question}</AccordionTrigger>
+            <AccordionTrigger className="text-sm font-medium text-[#1f3b2b] [&>svg]:text-[#1f3b2b]">
+              {item.question}
+            </AccordionTrigger>
             <AccordionContent className="text-sm text-[#2f3b2b]">{item.answer}</AccordionContent>
           </AccordionItem>
         ))}
