@@ -65,11 +65,11 @@ const FAQ_ITEMS = [
   },
 ]
 
-export function FaqBlock({ title = "FAQ" }: { title?: string }) {
+export function FaqBlock({ title = "FAQ's" }: { title?: string }) {
   return (
     <section className="space-y-4 rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] p-6 text-[#2f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
       <div>
-        <h2 className="text-lg font-semibold text-[hsl(var(--text))]">{title}</h2>
+        <h2 className="text-lg font-semibold text-[#1f3b2b]">{title}</h2>
         <p className="text-sm text-[#2f3b2b]">Clear answers to how the tools work and when to use them.</p>
       </div>
       <Accordion type="multiple" defaultValue={["q1", "q2"]} className="space-y-2">
