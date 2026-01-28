@@ -1,13 +1,10 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { decodeSessionToken, getSessionCookieName } from '@/lib/auth'
+import { getSession } from '@/lib/auth.server'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const cookieStore = await cookies()
-  const sessionCookie = cookieStore.get(getSessionCookieName())?.value
-  const session = sessionCookie ? decodeSessionToken(sessionCookie) : null
+  const session = await getSession()
 
   return NextResponse.json({
     signedIn: Boolean(session?.userId),
