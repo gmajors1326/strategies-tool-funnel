@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { getSession } from '@/lib/auth.server'
+import { cookies } from 'next/headers'
 
 type SiteHeaderProps = {
   pathname?: string
@@ -10,6 +11,8 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
   if (pathname.startsWith('/admin')) return null
   const session = await getSession()
   const isSignedIn = Boolean(session?.userId)
+  const cookieStore = await cookies()
+  const isAdminSignedIn = Boolean(cookieStore.get('admin_session')?.value)
 
   return (
     <div className="container mx-auto px-4 pt-6">
@@ -37,7 +40,12 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
           )}
         </div>
         <Button asChild size="sm" variant="outline">
-          <Link href="/admin/login?force=1">Admin</Link>
+          <Link href="/admin" className="flex items-center gap-2">
+            <span>Admin</span>
+            {isAdminSignedIn ? (
+              <span className="h-2 w-2 rounded-full bg-[#7ee6a3]" aria-hidden="true" />
+            ) : null}
+          </Link>
         </Button>
       </div>
     </div>

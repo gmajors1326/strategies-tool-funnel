@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
 
     const session = await requireUser()
     const userId = session.id
+    const isAdmin = session.role === 'admin'
 
     const body = await request.json()
     const data = requestSchema.parse(body)
@@ -66,17 +67,22 @@ export async function POST(request: NextRequest) {
 
     const personalCaps = getPlanCaps(personalPlanKey)
 
-    const planRunCap = orgPlanKey
+    let planRunCap = orgPlanKey
       ? getPlanCaps(orgPlanKey).runsPerDay
       : orgPlan === 'enterprise'
         ? orgRunCapByPlan.enterprise
         : personalCaps.runsPerDay
 
-    const planTokenCap = orgPlanKey
+    let planTokenCap = orgPlanKey
       ? getPlanCaps(orgPlanKey).tokensPerDay
       : orgPlan === 'enterprise'
         ? orgAiTokenCapByPlan.enterprise
         : personalCaps.tokensPerDay
+
+    if (isAdmin) {
+      planRunCap = 999999
+      planTokenCap = 999999
+    }
 
     const trialStatus =
       personalPlan === 'free' && !orgPlanKey ? await getFreeTrialStatus(userId, 'free') : null
@@ -86,7 +92,7 @@ export async function POST(request: NextRequest) {
     const tokenBalance = await getTokenBalance(userId)
 
     const results: ToolPreflightResult[] = data.toolIds.map((toolId) => {
-      if (trialExpired) {
+      if (!isAdmin && trialExpired) {
         return {
           toolId,
           status: 'locked',
@@ -94,7 +100,7 @@ export async function POST(request: NextRequest) {
           message: 'Your 7-day free trial has ended. Choose Pro or Elite to keep running tools.',
         }
       }
-      if (membership?.role === 'viewer') {
+      if (!isAdmin && membership?.role === 'viewer') {
         return { toolId, status: 'locked', lockCode: 'locked_role', message: 'Viewer seats cannot run tools.' }
       }
 
@@ -105,12 +111,12 @@ export async function POST(request: NextRequest) {
         return { toolId, status: 'locked', lockCode: 'locked_plan', message: 'Tool not found.' }
       }
 
-      if (!tool.enabled) {
+      if (!isAdmin && !tool.enabled) {
         return { toolId: tool.id, status: 'locked', lockCode: 'locked_plan', message: 'Tool is offline.' }
       }
 
       const toolCapForPlan = tool.dailyRunsByPlan?.[personalPlan] ?? 0
-      if (toolCapForPlan <= 0) {
+      if (!isAdmin && toolCapForPlan <= 0) {
         return {
           toolId: tool.id,
           status: 'locked',
@@ -132,7 +138,7 @@ export async function POST(request: NextRequest) {
       const toolRunsUsed = (usage.per_tool_runs_used as Record<string, number>)?.[tool.id] ?? 0
       const toolCap = toolCapForPlan || planRunCap
 
-      if (usage.runs_used >= planRunCap) {
+      if (!isAdmin && usage.runs_used >= planRunCap) {
         return {
           toolId: tool.id,
           status: 'locked',
@@ -153,7 +159,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      if (usage.ai_tokens_used >= planTokenCap && tool.aiLevel !== 'none') {
+      if (!isAdmin && usage.ai_tokens_used >= planTokenCap && tool.aiLevel !== 'none') {
         return {
           toolId: tool.id,
           status: 'locked',
@@ -174,7 +180,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      if (toolRunsUsed >= toolCap) {
+      if (!isAdmin && toolRunsUsed >= toolCap) {
         return {
           toolId: tool.id,
           status: 'locked',
@@ -195,7 +201,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      if (tokenBalance < tool.tokensPerRun) {
+      if (!isAdmin && tokenBalance < tool.tokensPerRun) {
         return {
           toolId: tool.id,
           status: 'locked',

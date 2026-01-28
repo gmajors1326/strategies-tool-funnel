@@ -12,7 +12,7 @@ import { requireUser } from '@/src/lib/auth/requireUser'
 import { getFreeTrialStatus } from '@/src/lib/usage/freeTrial'
 
 type UserPlanState = {
-  user: { id: string; email: string; planId: 'free' | 'pro_monthly' | 'team' | 'lifetime' }
+  user: { id: string; email: string; planId: 'free' | 'pro_monthly' | 'team' | 'lifetime'; role?: 'user' | 'admin' }
 }
 
 export const resolveUserPlanState = async (): Promise<UserPlanState> => {
@@ -22,6 +22,7 @@ export const resolveUserPlanState = async (): Promise<UserPlanState> => {
       id: session.id,
       email: session.email,
       planId: session.planId,
+      role: session.role,
     },
   }
 }
@@ -34,16 +35,21 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
   const personalPlanKey = getPlanKeyFromEntitlement(user.planId)
   const orgPlanKey = getPlanKeyFromOrgPlan(orgPlan)
   const personalCaps = getPlanCaps(personalPlanKey)
-  const planRunCap = orgPlanKey
+  let planRunCap = orgPlanKey
     ? getPlanCaps(orgPlanKey).runsPerDay
     : orgPlan === 'enterprise'
       ? orgRunCapByPlan.enterprise
       : personalCaps.runsPerDay
-  const planTokenCap = orgPlanKey
+  let planTokenCap = orgPlanKey
     ? getPlanCaps(orgPlanKey).tokensPerDay
     : orgPlan === 'enterprise'
       ? orgAiTokenCapByPlan.enterprise
       : personalCaps.tokensPerDay
+  const isAdmin = user.role === 'admin'
+  if (isAdmin) {
+    planRunCap = 999999
+    planTokenCap = 999999
+  }
   const trialStatus =
     user.planId === 'free' && !orgPlanKey ? await getFreeTrialStatus(user.id, 'free') : null
   const trialExpired = Boolean(trialStatus?.expired)
@@ -61,15 +67,15 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
       let reason: string | undefined
       let cta = { label: 'Run tool', href: `/app/tools/${tool.id}` }
 
-      if (trialExpired) {
+      if (!isAdmin && trialExpired) {
         lockState = 'locked'
         reason = 'Your 7-day free trial has ended. Choose Pro or Elite to keep running tools.'
         cta = { label: 'Choose a plan', href: '/pricing' }
-      } else if (membership?.role === 'viewer') {
+      } else if (!isAdmin && membership?.role === 'viewer') {
         lockState = 'locked'
         reason = 'Viewer role cannot run tools'
         cta = { label: 'Upgrade seat', href: `/orgs/${activeOrg?.slug}/members` }
-      } else if (toolCap <= 0) {
+      } else if (!isAdmin && toolCap <= 0) {
         lockState = 'trial'
         if (trial.allowed || bonus.remainingRuns > 0) {
           reason = bonus.remainingRuns > 0 ? 'Bonus sandbox runs available' : 'Sandbox available'
@@ -79,15 +85,15 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
           cta = { label: 'Unlock tool', href: '/pricing' }
           lockState = 'locked'
         }
-      } else if (usageWindow.runs_used >= planRunCap) {
+      } else if (!isAdmin && usageWindow.runs_used >= planRunCap) {
         lockState = 'limited'
         reason = 'Daily run cap reached'
         cta = { label: 'Wait for reset', href: '/app/usage' }
-      } else if (toolRunsUsed >= toolCap) {
+      } else if (!isAdmin && toolRunsUsed >= toolCap) {
         lockState = 'limited'
         reason = 'Daily tool cap reached'
         cta = { label: 'Wait for reset', href: '/app/usage' }
-      } else if (tool.aiLevel !== 'none' && usageWindow.ai_tokens_used >= planTokenCap) {
+      } else if (!isAdmin && tool.aiLevel !== 'none' && usageWindow.ai_tokens_used >= planTokenCap) {
         lockState = 'locked'
         reason = 'Daily token cap reached'
         cta = { label: 'Buy tokens', href: '/pricing' }

@@ -268,6 +268,7 @@ export async function POST(request: NextRequest) {
   }
 
   const userId = session.id
+  const isAdmin = session.role === 'admin'
   log('auth_ok', { userIdPresent: Boolean(userId) })
 
   const entitlement = await getOrCreateEntitlement(userId)
@@ -288,17 +289,22 @@ export async function POST(request: NextRequest) {
 
   const personalCaps = getPlanCaps(personalPlanKey)
 
-  const planRunCap = orgPlanKey
+  let planRunCap = orgPlanKey
     ? getPlanCaps(orgPlanKey).runsPerDay
     : orgPlan === 'enterprise'
       ? orgRunCapByPlan.enterprise
       : personalCaps.runsPerDay
 
-  const planTokenCap = orgPlanKey
+  let planTokenCap = orgPlanKey
     ? getPlanCaps(orgPlanKey).tokensPerDay
     : orgPlan === 'enterprise'
       ? orgAiTokenCapByPlan.enterprise
       : personalCaps.tokensPerDay
+
+  if (isAdmin) {
+    planRunCap = 999999
+    planTokenCap = 999999
+  }
 
   const trialStatus = personalPlan === 'free' && !orgPlanKey ? await getFreeTrialStatus(userId, 'free') : null
 
@@ -378,7 +384,7 @@ export async function POST(request: NextRequest) {
     return res
   }
 
-  if (trialStatus?.expired) {
+  if (!isAdmin && trialStatus?.expired) {
     log('locked_trial_expired')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
@@ -417,7 +423,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (membership?.role === 'viewer') {
+  if (!isAdmin && membership?.role === 'viewer') {
     log('locked_role')
     await recordRun({ status: 'locked', lockCode: 'locked_role', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_role' })
@@ -469,7 +475,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (!tool.enabled) {
+  if (!isAdmin && !tool.enabled) {
     log('tool_disabled')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
@@ -488,7 +494,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (personalPlan === 'free' && (tool.category === 'Analytics' || tool.category === 'Competitive')) {
+  if (!isAdmin && personalPlan === 'free' && (tool.category === 'Analytics' || tool.category === 'Competitive')) {
     log('locked_plan_category')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
@@ -509,7 +515,7 @@ export async function POST(request: NextRequest) {
 
   const toolCapForPlan = tool.dailyRunsByPlan?.[personalPlan] ?? 0
 
-  if (data.mode === 'paid' && toolCapForPlan <= 0) {
+  if (!isAdmin && data.mode === 'paid' && toolCapForPlan <= 0) {
     log('locked_plan_tool_cap')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
@@ -532,7 +538,7 @@ export async function POST(request: NextRequest) {
   const toolCap = data.mode === 'trial' && toolCapForPlan <= 0 ? 1 : toolCapForPlan || planRunCap
   const toolRunsUsed = (usage.per_tool_runs_used as Record<string, number>)?.[tool.id] ?? 0
 
-  if (usage.runs_used >= planRunCap) {
+  if (!isAdmin && usage.runs_used >= planRunCap) {
     log('locked_usage_daily')
     await recordRun({ status: 'locked', lockCode: 'locked_usage_daily', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_usage_daily' })
@@ -561,7 +567,7 @@ export async function POST(request: NextRequest) {
   }
 
   // NOTE: If your ToolMeta doesn't have aiLevel, consider adding it.
-  if (usage.ai_tokens_used >= planTokenCap && (tool as any).aiLevel !== 'none') {
+  if (!isAdmin && usage.ai_tokens_used >= planTokenCap && (tool as any).aiLevel !== 'none') {
     log('locked_tokens_cap')
     await recordRun({ status: 'locked', lockCode: 'locked_tokens', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_tokens' })
@@ -589,7 +595,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (toolRunsUsed >= toolCap) {
+  if (!isAdmin && toolRunsUsed >= toolCap) {
     log('locked_tool_daily')
     await recordRun({ status: 'locked', lockCode: 'locked_tool_daily', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_tool_daily' })
@@ -620,7 +626,7 @@ export async function POST(request: NextRequest) {
   const trial = getTrialState(userId, tool.id)
   const bonusRemaining = await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
 
-  if (data.mode === 'trial' && !trial.allowed && bonusRemaining <= 0) {
+  if (!isAdmin && data.mode === 'trial' && !trial.allowed && bonusRemaining <= 0) {
     log('locked_trial')
     await recordRun({ status: 'locked', lockCode: 'locked_trial', meteringMode: 'trial', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_trial' })
@@ -642,10 +648,15 @@ export async function POST(request: NextRequest) {
   const tokenBalance = await getTokenBalance(userId)
   const requiredTokens = tool.tokensPerRun
 
-  const meteringMode =
-    bonusRemaining > 0 && data.mode !== 'trial' ? 'bonus_run' : data.mode === 'trial' ? 'trial' : 'tokens'
+  const meteringMode = isAdmin
+    ? 'admin'
+    : bonusRemaining > 0 && data.mode !== 'trial'
+      ? 'bonus_run'
+      : data.mode === 'trial'
+        ? 'trial'
+        : 'tokens'
 
-  if (meteringMode === 'tokens' && tokenBalance < requiredTokens) {
+  if (!isAdmin && meteringMode === 'tokens' && tokenBalance < requiredTokens) {
     log('locked_tokens_balance')
     await recordRun({ status: 'locked', lockCode: 'locked_tokens', meteringMode: 'tokens', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_tokens' })
@@ -763,36 +774,38 @@ export async function POST(request: NextRequest) {
     let chargedTokens = 0
 
     try {
-      await prisma.$transaction(async (tx) => {
-        if (meteringMode === 'bonus_run') {
-          const consumed = await consumeOneBonusRun({ userId, toolId: tool.id })
-          remainingBonusRuns = consumed.ok
-            ? await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
-            : bonusRemaining
-        }
+      if (!isAdmin) {
+        await prisma.$transaction(async (tx) => {
+          if (meteringMode === 'bonus_run') {
+            const consumed = await consumeOneBonusRun({ userId, toolId: tool.id })
+            remainingBonusRuns = consumed.ok
+              ? await getBonusRunsRemainingForTool({ userId, toolId: tool.id })
+              : bonusRemaining
+          }
 
-        if (meteringMode === 'tokens') {
-          await tx.tokenLedger.create({
-            data: {
-              user_id: userId,
-              event_type: 'spend_tool',
-              tokens_delta: -requiredTokens,
-              tool_id: tool.id,
-              run_id: runId,
-              reason: 'tool_run',
-            },
+          if (meteringMode === 'tokens') {
+            await tx.tokenLedger.create({
+              data: {
+                user_id: userId,
+                event_type: 'spend_tool',
+                tokens_delta: -requiredTokens,
+                tool_id: tool.id,
+                run_id: runId,
+                reason: 'tool_run',
+              },
+            })
+            chargedTokens = requiredTokens
+          }
+
+          await incrementUsageTx({
+            tx,
+            userId,
+            windowEnd: usage.window_end,
+            toolId: tool.id,
+            tokensUsed: meteringMode === 'tokens' ? requiredTokens : 0,
           })
-          chargedTokens = requiredTokens
-        }
-
-        await incrementUsageTx({
-          tx,
-          userId,
-          windowEnd: usage.window_end,
-          toolId: tool.id,
-          tokensUsed: meteringMode === 'tokens' ? requiredTokens : 0,
         })
-      })
+      }
     } catch (err: any) {
       log('metering_write_failed', { message: err?.message || 'Unknown error' })
     }

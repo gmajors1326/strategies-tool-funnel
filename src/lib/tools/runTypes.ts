@@ -60,7 +60,7 @@ export type RunResponse = {
     runsUsed: number
     runsCap: number
     resetsAtISO: string
-    meteringMode?: 'bonus_run' | 'tokens' | 'trial'
+    meteringMode?: 'bonus_run' | 'tokens' | 'trial' | 'admin'
     remainingBonusRuns?: number
     orgId?: string | null
   }
