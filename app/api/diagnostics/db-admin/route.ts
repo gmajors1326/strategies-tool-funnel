@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { requireAdminAccess } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
+  try {
+    await requireAdminAccess(request, {
+      action: 'admin.diagnostics.db',
+      policy: 'admin',
+    })
+  } catch {
+    return NextResponse.json({ status: 'forbidden' }, { status: 403 })
+  }
+
   const start = Date.now()
 
   try {
