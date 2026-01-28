@@ -1,21 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { requireAdminAccess } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
-  let isAdmin = false
-  try {
-    await requireAdminAccess(request, {
-      action: 'admin.diagnostics.db',
-      policy: 'admin',
-    })
-    isAdmin = true
-  } catch {
-    isAdmin = false
-  }
-
+export async function GET() {
   const start = Date.now()
 
   try {
@@ -26,7 +14,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         status: 'unhealthy',
-        error: isAdmin ? (error?.message ?? 'db_unreachable') : 'db_unreachable',
+        error: error?.message ?? 'db_unreachable',
       },
       { status: 503 }
     )
