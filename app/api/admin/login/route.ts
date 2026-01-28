@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/db'
+import { createSessionCookie } from '@/lib/auth'
 
 const ADMIN_COOKIE_NAME = 'admin_session'
 // TODO: replace (auth): validate admin login against real identity provider.
@@ -23,8 +25,20 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ success: true })
     // TODO: replace (auth): use real admin user ID from auth provider.
+    const user = await prisma.user.upsert({
+      where: { email: ADMIN_EMAIL },
+      create: {
+        email: ADMIN_EMAIL,
+        plan: 'FREE',
+      },
+      update: {},
+    })
+
+    const sessionCookie = await createSessionCookie(user.id, ADMIN_EMAIL, 'pro_monthly')
+    response.cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.options)
+
     const session = encodeSession({
-      userId: 'admin-user',
+      userId: user.id,
       email: ADMIN_EMAIL,
       role: 'admin',
     })
