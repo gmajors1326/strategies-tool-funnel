@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
     const trialStatus =
       personalPlan === 'free' && !orgPlanKey ? await getFreeTrialStatus(userId, 'free') : null
     const trialExpired = Boolean(trialStatus?.expired)
+    const trialActive = personalPlan === 'free' && !orgPlanKey && !trialExpired
 
     const usage = await ensureUsageWindow(userId)
     const tokenBalance = await getTokenBalance(userId)
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
         return { toolId: tool.id, status: 'locked', lockCode: 'locked_plan', message: 'Tool is offline.' }
       }
 
-      const toolCapForPlan = tool.dailyRunsByPlan?.[personalPlan] ?? 0
+      const toolCapForPlan = trialActive ? planRunCap : tool.dailyRunsByPlan?.[personalPlan] ?? 0
       if (!isAdmin && toolCapForPlan <= 0) {
         return {
           toolId: tool.id,

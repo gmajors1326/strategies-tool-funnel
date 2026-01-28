@@ -53,6 +53,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
   const trialStatus =
     user.planId === 'free' && !orgPlanKey ? await getFreeTrialStatus(user.id, 'free') : null
   const trialExpired = Boolean(trialStatus?.expired)
+  const trialActive = user.planId === 'free' && !orgPlanKey && !trialExpired
   const usageWindow = await ensureUsageWindow(user.id)
   const tokenBalance = await getTokenBalance(user.id)
 
@@ -60,7 +61,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
     listTools().filter((tool) => isLaunchTool(tool.id)).map(async (tool) => {
       const trial = getTrialState(user.id, tool.id)
       const bonus = await getBonusRunsSummary({ userId: user.id, toolId: tool.id })
-      const toolCap = tool.dailyRunsByPlan?.[user.planId] ?? 0
+      const toolCap = trialActive ? planRunCap : tool.dailyRunsByPlan?.[user.planId] ?? 0
       const toolRunsUsed = (usageWindow.per_tool_runs_used as Record<string, number>)?.[tool.id] ?? 0
 
       let lockState: UiConfig['catalog'][number]['lockState'] = 'available'
@@ -75,7 +76,7 @@ export const buildUiConfig = async (): Promise<UiConfig> => {
         lockState = 'locked'
         reason = 'Viewer role cannot run tools'
         cta = { label: 'Upgrade seat', href: `/orgs/${activeOrg?.slug}/members` }
-      } else if (!isAdmin && toolCap <= 0) {
+      } else if (!isAdmin && !trialActive && toolCap <= 0) {
         lockState = 'trial'
         if (trial.allowed || bonus.remainingRuns > 0) {
           reason = bonus.remainingRuns > 0 ? 'Bonus sandbox runs available' : 'Sandbox available'

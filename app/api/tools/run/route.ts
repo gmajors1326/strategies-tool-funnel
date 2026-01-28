@@ -307,6 +307,7 @@ export async function POST(request: NextRequest) {
   }
 
   const trialStatus = personalPlan === 'free' && !orgPlanKey ? await getFreeTrialStatus(userId, 'free') : null
+  const trialActive = personalPlan === 'free' && !orgPlanKey && !trialStatus?.expired
 
   const summarizeValue = (value: unknown, limit = 180) => {
     try {
@@ -494,7 +495,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (!isAdmin && personalPlan === 'free' && (tool.category === 'Analytics' || tool.category === 'Competitive')) {
+  if (!isAdmin && !trialActive && personalPlan === 'free' && (tool.category === 'Analytics' || tool.category === 'Competitive')) {
     log('locked_plan_category')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
@@ -513,9 +514,9 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const toolCapForPlan = tool.dailyRunsByPlan?.[personalPlan] ?? 0
+  const toolCapForPlan = trialActive ? planRunCap : tool.dailyRunsByPlan?.[personalPlan] ?? 0
 
-  if (!isAdmin && data.mode === 'paid' && toolCapForPlan <= 0) {
+  if (!isAdmin && !trialActive && data.mode === 'paid' && toolCapForPlan <= 0) {
     log('locked_plan_tool_cap')
     await recordRun({ status: 'locked', lockCode: 'locked_plan', errorCode: 'LOCKED' })
     await logProductEvent('tool_run_locked', { toolId: data.toolId, lock: 'locked_plan' })
