@@ -5,10 +5,16 @@ import { requireAdminAccess } from '@/lib/adminAuth'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
-  await requireAdminAccess(request, {
-    action: 'admin.diagnostics.db',
-    policy: 'admin',
-  })
+  let isAdmin = false
+  try {
+    await requireAdminAccess(request, {
+      action: 'admin.diagnostics.db',
+      policy: 'admin',
+    })
+    isAdmin = true
+  } catch {
+    isAdmin = false
+  }
 
   const start = Date.now()
 
@@ -20,7 +26,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         status: 'unhealthy',
-        error: error?.message ?? 'db_unreachable',
+        error: isAdmin ? (error?.message ?? 'db_unreachable') : 'db_unreachable',
       },
       { status: 503 }
     )
