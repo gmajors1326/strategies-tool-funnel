@@ -8,6 +8,9 @@ type AdminLoginPageProps = {
 
 export default async function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
   const cookieStore = await cookies()
+  if (searchParams?.force === '1') {
+    cookieStore.delete('admin_session')
+  }
   const adminSession = cookieStore.get('admin_session')?.value
   if (adminSession && searchParams?.force !== '1') {
     redirect('/admin/analytics')
