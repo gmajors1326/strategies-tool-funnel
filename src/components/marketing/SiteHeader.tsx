@@ -37,7 +37,7 @@ export async function SiteHeader({ pathname = '' }: SiteHeaderProps) {
           )}
         </div>
         <Button asChild size="sm" variant="outline">
-          <Link href="/admin/login">Admin</Link>
+          <Link href="/admin/login?force=1">Admin</Link>
         </Button>
       </div>
     </div>
