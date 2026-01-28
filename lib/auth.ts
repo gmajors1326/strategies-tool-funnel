@@ -35,7 +35,10 @@ export type SessionCookie = {
 }
 
 function getSecret(): string {
-  const secret = process.env.AUTH_SESSION_SECRET
+  const secret =
+    process.env.AUTH_SESSION_SECRET ||
+    process.env.SESSION_SECRET ||
+    process.env.NEXTAUTH_SECRET
   if (!secret) throw new Error('Missing AUTH_SESSION_SECRET env var')
   return secret
 }
