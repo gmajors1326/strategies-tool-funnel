@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
+import { requireAdminAccess } from '@/lib/adminAuth'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,7 +9,7 @@ export const dynamic = 'force-dynamic'
  * Health check endpoint
  * Returns the health status of the application and its dependencies
  */
-export async function GET() {
+export async function GET(request: Request) {
   const startTime = Date.now()
   const health: {
     status: 'healthy' | 'degraded' | 'unhealthy'
@@ -16,7 +17,7 @@ export async function GET() {
     uptime: number
     version: string
     checks: {
-      database: { status: 'healthy' | 'unhealthy'; latency?: number }
+      database: { status: 'healthy' | 'unhealthy'; latency?: number; error?: string }
       memory: { status: 'healthy' | 'unhealthy'; usage?: number }
     }
   } = {
@@ -30,6 +31,14 @@ export async function GET() {
     },
   }
 
+  let isAdmin = false
+  try {
+    await requireAdminAccess(request, { action: 'admin.health.check', policy: 'admin' })
+    isAdmin = true
+  } catch {
+    isAdmin = false
+  }
+
   // Check database connection
   try {
     const dbStartTime = Date.now()
@@ -41,7 +50,10 @@ export async function GET() {
     }
   } catch (error) {
     logger.error('Database health check failed', error as Error)
-    health.checks.database = { status: 'unhealthy' }
+    health.checks.database = {
+      status: 'unhealthy',
+      ...(isAdmin ? { error: (error as Error)?.message ?? 'db_unreachable' } : {}),
+    }
     health.status = 'unhealthy'
   }
 
