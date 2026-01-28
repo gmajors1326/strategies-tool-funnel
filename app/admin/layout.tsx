@@ -11,8 +11,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const h = await headers()
   const path = h.get('x-pathname') || h.get('next-url') || ''
   const isNotAuthorized = path.includes('/admin/not-authorized')
+  const isLogin = path.includes('/admin/login')
 
-  if (!isNotAuthorized) {
+  if (!isNotAuthorized && !isLogin) {
     try {
       await requireAdmin()
     } catch (e: any) {
@@ -25,7 +26,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         msg.includes('session invalid') ||
         msg.includes('sign in via /verify')
       ) {
-        redirect('/verify')
+        redirect('/admin/login?force=1')
       }
 
       // Signed in but not admin
