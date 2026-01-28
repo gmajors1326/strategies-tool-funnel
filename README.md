@@ -56,6 +56,8 @@ GMAIL_APP_PASSWORD="your-app-password"
 
 # Admin
 ADMIN_EMAIL="admin@example.com"
+ADMIN_LOGIN_EMAIL="admin@example.com"
+ADMIN_LOGIN_PASSWORD="set-a-strong-password"
 
 # Stripe
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_xxxxxxxxxxxxx"

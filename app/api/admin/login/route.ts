@@ -4,9 +4,10 @@ import { createSessionCookie } from '@/lib/auth'
 
 const ADMIN_COOKIE_NAME = 'admin_session'
 // TODO: replace (auth): validate admin login against real identity provider.
-const ADMIN_EMAIL = process.env.ADMIN_LOGIN_EMAIL || 'gmajors1326@gmail.com'
+const ADMIN_EMAIL = (process.env.ADMIN_LOGIN_EMAIL || '').trim()
 // TODO: replace (auth): remove hardcoded fallback password and use secure auth flow.
-const ADMIN_PASSWORD = process.env.ADMIN_LOGIN_PASSWORD || '123456'
+const ADMIN_PASSWORD = process.env.ADMIN_LOGIN_PASSWORD || ''
+const ADMIN_LOGIN_CONFIGURED = ADMIN_EMAIL.length > 0 && ADMIN_PASSWORD.length > 0
 
 function encodeSession(payload: { userId: string; email: string; role: 'admin' }): string {
   const json = JSON.stringify(payload)
@@ -19,6 +20,10 @@ export async function POST(request: NextRequest) {
     if (!body) {
       return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
     }
+    if (!ADMIN_LOGIN_CONFIGURED) {
+      return NextResponse.json({ error: 'Admin login not configured' }, { status: 503 })
+    }
+
     const email = String(body?.email || '').trim().toLowerCase()
     const password = String(body?.password || '')
 
