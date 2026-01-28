@@ -1243,7 +1243,7 @@ export function ToolRunner(props: {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 tool-readable">
       {header ? <ToolPageHeader title={header.title} description={header.description} status={headerStatus} /> : null}
       <div className="rounded-2xl border border-[#d2c1a8] bg-[#eadcc7] p-4 text-sm text-[#1f3b2b] shadow-[0_12px_24px_rgba(48,40,28,0.18)]">
         <div className="flex flex-wrap items-center justify-between gap-3">

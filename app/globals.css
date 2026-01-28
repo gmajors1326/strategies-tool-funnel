@@ -130,6 +130,14 @@
   }
 }
 
+@layer components {
+  .tool-readable {
+    --muted: 150 20% 20%;
+    --muted-foreground: 150 20% 20%;
+    --card-foreground: 150 20% 20%;
+  }
+}
+
 @layer utilities {
   .bg-hero-cactus {
     background:
