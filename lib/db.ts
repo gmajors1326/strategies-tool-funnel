@@ -11,10 +11,10 @@ let loggedDbHost = false
 // Serverless-friendly Prisma Client configuration
 const createPrismaClient = () => {
   let databaseUrl =
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_PRISMA_URL ||
-    process.env.POSTGRES_URL ||
     process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.DATABASE_URL ||
     ''
   
   // Clean up any trailing newlines/whitespace
@@ -48,21 +48,12 @@ const createPrismaClient = () => {
     }
   }
 
-  let allowSelfSigned = false
-  try {
-    const parsed = new URL(databaseUrl)
-    allowSelfSigned = parsed.hostname.includes('supabase.')
-  } catch {
-    allowSelfSigned = false
-  }
-  if (process.env.DATABASE_SSL_ALLOW_SELF_SIGNED === 'true') {
-    allowSelfSigned = true
+  if (databaseUrl && !databaseUrl.includes('sslmode=')) {
+    const separator = databaseUrl.includes('?') ? '&' : '?'
+    databaseUrl += `${separator}sslmode=require`
   }
 
-  const adapter = new PrismaPg({
-    connectionString: databaseUrl,
-    ...(allowSelfSigned ? { ssl: { rejectUnauthorized: false } } : {}),
-  })
+  const adapter = new PrismaPg({ connectionString: databaseUrl })
   const prisma = new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === 'development'

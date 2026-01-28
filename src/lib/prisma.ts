@@ -6,30 +6,21 @@ declare global {
   var __prisma: PrismaClient | undefined
 }
 
-const rawUrl =
-  process.env.DATABASE_URL ||
-  process.env.POSTGRES_PRISMA_URL ||
-  process.env.POSTGRES_URL ||
+let rawUrl =
   process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.DATABASE_URL ||
   ''
-let allowSelfSigned = false
-try {
-  const parsed = new URL(rawUrl)
-  allowSelfSigned = parsed.hostname.includes('supabase.')
-} catch {
-  allowSelfSigned = false
-}
-if (process.env.DATABASE_SSL_ALLOW_SELF_SIGNED === 'true') {
-  allowSelfSigned = true
+if (rawUrl && !rawUrl.includes('sslmode=')) {
+  const separator = rawUrl.includes('?') ? '&' : '?'
+  rawUrl += `${separator}sslmode=require`
 }
 
 export const prisma: PrismaClient =
   global.__prisma ??
   new PrismaClient({
-    adapter: new PrismaPg({
-      connectionString: rawUrl,
-      ...(allowSelfSigned ? { ssl: { rejectUnauthorized: false } } : {}),
-    }),
+    adapter: new PrismaPg({ connectionString: rawUrl }),
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   })
 
