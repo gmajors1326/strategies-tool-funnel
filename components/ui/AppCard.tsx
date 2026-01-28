@@ -34,10 +34,7 @@ const AppCardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn(
-      "text-xl sm:text-2xl font-semibold leading-none tracking-tight text-[hsl(var(--text))]",
-      className
-    )}
+    className={cn("text-xl sm:text-2xl font-semibold leading-none tracking-tight text-[#1f3b2b]", className)}
     {...props}
   />
 ))
@@ -49,7 +46,7 @@ const AppCardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-xs sm:text-sm text-[hsl(var(--muted))]", className)}
+    className={cn("text-xs sm:text-sm text-[#1f3b2b]", className)}
     {...props}
   />
 ))
