@@ -15,7 +15,10 @@ function encodeSession(payload: { userId: string; email: string; role: 'admin' }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = await request.json().catch(() => null)
+    if (!body) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
     const email = String(body?.email || '').trim().toLowerCase()
     const password = String(body?.password || '')
 
@@ -24,21 +27,26 @@ export async function POST(request: NextRequest) {
     }
 
     const response = NextResponse.json({ success: true })
-    // TODO: replace (auth): use real admin user ID from auth provider.
-    const user = await prisma.user.upsert({
-      where: { email: ADMIN_EMAIL },
-      create: {
-        email: ADMIN_EMAIL,
-        plan: 'FREE',
-      },
-      update: {},
-    })
+    let userId = 'admin-user'
+    try {
+      const user = await prisma.user.upsert({
+        where: { email: ADMIN_EMAIL },
+        create: {
+          email: ADMIN_EMAIL,
+          plan: 'FREE',
+        },
+        update: {},
+      })
+      userId = user.id
+    } catch (err) {
+      console.error('[admin-login] prisma upsert failed', (err as any)?.message || err)
+    }
 
-    const sessionCookie = await createSessionCookie(user.id, ADMIN_EMAIL, 'pro_monthly')
+    const sessionCookie = await createSessionCookie(userId, ADMIN_EMAIL, 'pro_monthly')
     response.cookies.set(sessionCookie.name, sessionCookie.value, sessionCookie.options)
 
     const session = encodeSession({
-      userId: user.id,
+      userId,
       email: ADMIN_EMAIL,
       role: 'admin',
     })
@@ -52,7 +60,7 @@ export async function POST(request: NextRequest) {
     })
 
     return response
-  } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message || 'Invalid request' }, { status: 400 })
   }
 }
