@@ -14,7 +14,11 @@ if (!DATABASE_URL) {
 const cleanUrl = DATABASE_URL.replace(/^["']|["']$/g, '').replace(/\r\n/g, '').trim()
 const migrationsRoot = path.join(__dirname, '..', 'prisma', 'migrations')
 
-const client = new Client({ connectionString: cleanUrl })
+const rejectUnauthorized = process.env.PGSSL_REJECT_UNAUTHORIZED === 'true'
+const client = new Client({
+  connectionString: cleanUrl,
+  ssl: { rejectUnauthorized },
+})
 
 const migrationTableSql = `
   CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
