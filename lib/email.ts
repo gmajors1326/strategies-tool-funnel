@@ -115,3 +115,35 @@ export async function sendLeadNotification(email: string, source = 'open_tools',
     })
   }
 }
+
+export async function sendSupportTicketNotification(params: {
+  ticketId: string
+  category: string
+  subject: string
+  message?: string | null
+  userId: string
+  planId: string | null
+}): Promise<void> {
+  if (!ADMIN_EMAIL || !resend) return
+
+  const subject = `Support ticket ${params.ticketId}: ${params.subject}`
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333;">
+      <h2>New Support Ticket</h2>
+      <p><strong>Ticket:</strong> ${params.ticketId}</p>
+      <p><strong>Category:</strong> ${params.category}</p>
+      <p><strong>Subject:</strong> ${params.subject}</p>
+      <p><strong>User ID:</strong> ${params.userId}</p>
+      <p><strong>Plan:</strong> ${params.planId ?? 'unknown'}</p>
+      ${params.message ? `<p><strong>Message:</strong><br/>${params.message}</p>` : ''}
+      <p style="margin-top: 16px;"><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://strategy-tools-funnel.vercel.app'}/admin/support">Open admin support</a></p>
+    </div>
+  `
+
+  await resend.emails.send({
+    from: `${RESEND_FROM_NAME} <${RESEND_FROM}>`,
+    to: ADMIN_EMAIL,
+    subject,
+    html,
+  })
+}

@@ -34,5 +34,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     }
   }
 
+  if (isLogin || isNotAuthorized) {
+    return <>{children}</>
+  }
+
   return <AdminShell>{children}</AdminShell>
 }

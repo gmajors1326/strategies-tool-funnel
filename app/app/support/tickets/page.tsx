@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { requireUser } from '@/src/lib/auth/requireUser'
 import { listTicketsForUser } from '@/src/lib/support/tickets'
 import { Button } from '@/components/app/Button'
@@ -16,7 +17,9 @@ export default async function SupportTicketsPage() {
           <h1 className="text-lg font-semibold">Support Tickets</h1>
           <p className="text-sm text-[hsl(var(--muted))]">Track your support requests.</p>
         </div>
-        <Button>Create ticket</Button>
+        <Button asChild>
+          <Link href="/app/support/tickets/new">Create ticket</Link>
+        </Button>
       </div>
       <div className="space-y-3">
         {tickets.map((ticket) => (
