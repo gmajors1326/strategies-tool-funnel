@@ -39,6 +39,7 @@ Create a `.env` file in the root directory:
 ```env
 # Database
 DATABASE_URL="postgresql://user:password@host:5432/database"
+DIRECT_URL="postgresql://user:password@db.<project-ref>.supabase.co:5432/postgres"
 
 # Auth
 NEXTAUTH_SECRET="your-secret-key-here-min-32-chars"
@@ -227,7 +228,8 @@ If you want to use the full GitHub Actions deployment workflow, add these secret
 
 1. Go to GitHub → Settings → Secrets and variables → Actions
 2. Add secrets:
-   - `DATABASE_URL`
+    - `DATABASE_URL`
+    - `DIRECT_URL`
    - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
    - `STRIPE_SECRET_KEY`
    - `VERCEL_TOKEN` (optional, for GitHub Actions → Vercel)
